@@ -1,83 +1,176 @@
-____________________________________________________________________________________
+# 🍎 Clasificación Automática de Calidad de Frutas por Visión por Computadora
 
+Proyecto Final — **Algoritmos y Programación III**, Semestre 2026-2
+Facultad de Ingeniería, Diseño y Ciencias Aplicadas · Departamento de Computación y Sistemas Inteligentes · Ingeniería de Sistemas.
 
-# Project Template
-This is the template for the Project I course at the IA Master, Universidad Icesi, Cali Colombia
+#### -- Estado del proyecto: `Activo` 🟢
 
-This template is based on the template proposed by the [Data Science Working Group] (https://github.com/sfbrigade/data-science-wg) Code for the [San Francisco’s Code initiative](https://github.com/sfbrigade/data-science-wg) 
+---
 
-*Instructions: Edit this template filling in the titles, information, and links! Feel free to stray a bit to suit your project but try to provide the main information for reviews and feedback purposes.*
-## Remove this table after updating your project's information
-____________________________________________________________________________________
+## 📌 Descripción general
 
-# Project Name
-This project is a part of the  **Proyecto 1 de Innovación Tecnológica** course in the Applied Artificial Intelligence Master, Universidad Icesi, Cali Colombia. 
+En mercados y agroindustrias, la clasificación manual de productos frescos (tomates, manzanas,
+papas, etc.) según su tamaño, madurez o defectos visibles es un proceso **lento, subjetivo y
+propenso a errores**, lo que genera pérdidas económicas, desperdicio de alimentos y falta de
+estandarización.
 
-#### -- Project Status: [Active, On-Hold, Completed]
+Este proyecto desarrolla un **sistema automático de clasificación de calidad basado en visión por
+computadora** que, a partir de una imagen de una fruta individual sobre fondo simple, entrega:
 
-## Contributing Members
+1. **Clase de calidad** — 3 categorías: `Buena`, `Defectuosa` (golpes/manchas) y `Podrida`.
+2. **Estimación de tamaño** — `Pequeño`, `Mediano` o `Grande` (a partir del diámetro en píxeles normalizados).
 
-**Team Leader: [Full Name](https://github.com/[github handle])(@slackHandle)**
-**Instructor: [Full Name](https://github.com/[github handle])(@slackHandle)**
+El sistema se entrena combinando el dataset público **Fruit Quality Classification** con imágenes
+recolectadas y anotadas por el equipo, y se evalúa con métricas rigurosas. El desarrollo sigue la
+metodología **CRISP-DM** documentada fase por fase (ver [`ROADMAP.md`](ROADMAP.md) y
+[`docs/crisp-dm.md`](docs/crisp-dm.md)).
 
-#### Other Members:
+---
 
-|Name     |  Email   | 
-|---------|-----------------|
-|[Full Name](https://github.com/[github handle])| @johnDoe        |
-|[Full Name](https://github.com/[github handle]) |     @janeDoe    |
+## 👥 Integrantes
 
-## Contact
-* Feel free to contact the team leader or the instructor with any questions or if you are interested in contributing!
+| Nombre | Rol |
+|--------|-----|
+| **Juan Manuel Ramírez** | Desarrollo / Modelado |
+| **Juan Sebastián Poveda** | Desarrollo / Datos |
+| **Samuel José Rengifo** | Desarrollo / Despliegue |
 
+> Curso: Algoritmos y Programación III — Semestre 2026-2.
 
-## Project Intro/Objective
-The purpose of this project is ________. (Describe the main goals of the project and potential civic impact. Limit to a short paragraph, 3-6 Sentences)
+---
 
-### Partner
-This section should be added when there's a partner institution 
-* [Name of Partner organization/Government department etc..]
-* Website for partner
-* Partner contact: [Name of Contact], [slack handle of contact if any]
-* If you do not have a partner leave this section out
+## 🎯 Objetivos
 
-### Methods Used
-* Inferential Statistics
-* Machine Learning
-* Data Visualization
-* Predictive Modeling
-* etc.
+- **General:** construir y evaluar un sistema de clasificación de calidad de frutas por visión por
+  computadora que sea reproducible, riguroso y desplegable en una interfaz sencilla.
+- **Específicos:**
+  - Comprender el problema y su impacto económico/social (Comprensión del negocio).
+  - Realizar análisis exploratorio del dataset y detectar desbalanceo/variabilidad.
+  - Recolectar y anotar **30–50 imágenes propias** que enriquezcan el dataset base.
+  - Entrenar y comparar **≥ 2 modelos de ML tradicional + 1 de Deep Learning (CNN)**.
+  - Ajustar hiperparámetros con validación cruzada / búsqueda en rejilla.
+  - Analizar resultados (métricas, sobreajuste, comparación con línea base y literatura).
+  - Desplegar una GUI (Streamlit) que clasifique en tiempo real desde cámara/imagen.
+  - Documentar los aspectos éticos e impactos (social, económico, ambiental, global).
 
-### Technologies
-* R 
-* Python
-* D3
-* PostGres, MySql
-* Pandas, jupyter
-* HTML
-* JavaScript
-* etc. 
+---
 
-## Project Description
-(Provide a more detailed overview of the project.  Talk a bit about your data sources and what questions and hypotheses you are exploring. What specific data analysis/visualization and modeling work are you using to solve the problem? What blockers and challenges are you facing?  Feel free to number or bullet point things here)
+## 🧪 Métodos y modelos
 
-## Getting Started
-Instructions for contributors
-1. Clone this repo (for help see this [tutorial](https://help.github.com/articles/cloning-a-repository/)).
-2. Raw Data is being kept [here](Repo folder containing raw data) within this repo.
+Según el enunciado se emplean **al menos dos modelos de ML tradicional y uno de Deep Learning**:
 
-    *If using offline data mention that and how contributors may obtain the data )*
-    
-3. Data processing/transformation scripts are being kept [here](Repo folder containing data processing scripts/notebooks)
-4. etc...
+- **ML tradicional** (sobre características extraídas manualmente — color, textura, forma, tamaño):
+  Regresión Logística, KNN, SVM, Árboles de Decisión, Random Forest, XGBoost, Bagging.
+  Ajuste de hiperparámetros con `GridSearchCV` / validación cruzada.
+- **Deep Learning:** CNN pequeña entrenada desde cero (2–3 capas conv + pooling + densas).
+  Opcionalmente transfer learning con capas congeladas.
+- **MLP:** opcional, sobre características extraídas manualmente.
 
-*If your project is well underway and setup is fairly complicated (ie. requires installation of many packages) create another "setup.md" file and link to it here*  
+---
 
-5. Follow setup [instructions](Link to file)
+## 🛠️ Tecnologías
 
-## Featured Notebooks/Analysis/Deliverables
-* [Notebook/Markdown/Slide Deck Title](link)
-* [Notebook/Markdown/Slide DeckTitle](link)
-* [Blog Post](link)
+`Python 3.11` · `scikit-learn` · `XGBoost` · `TensorFlow/Keras` · `OpenCV` ·
+`scikit-image` · `pandas` · `NumPy` · `Matplotlib` / `Seaborn` · `Streamlit` · `Kaggle API`.
 
+---
 
+## 📂 Estructura del repositorio
+
+```
+fruit-quality-classification/
+├── README.md                  # Este archivo
+├── ROADMAP.md                 # Plan de desarrollo por fases (CRISP-DM)
+├── requirements.txt           # Dependencias (pip)
+├── environment.yml            # Dependencias (conda)
+├── LICENSE
+│
+├── docs/                      # Documentación y entregables
+│   ├── crisp-dm.md            # Fases CRISP-DM + diagrama de flujo
+│   ├── arquitectura.md        # Arquitectura de software y de modelos
+│   ├── instalacion.md         # Guía de instalación y datos
+│   ├── etica.md               # Dilemas éticos (PI1) + matriz de impactos (PI2)
+│   ├── formulacion_matematica.md  # Formulación matemática del problema (PI3)
+│   ├── informe/               # Informe final (estructura IEEE, máx. 7 págs.)
+│   └── ...                     # Enunciado, rúbrica, competencias (PDF/XLSX)
+│
+├── src/                       # Código fuente
+│   ├── config.py              # Rutas, constantes, clases, hiperparámetros
+│   ├── data/                  # Descarga, segmentación y preprocesamiento
+│   ├── features/              # Extracción de características (color/textura/forma)
+│   ├── models/                # Definición de modelos ML y CNN
+│   ├── training/              # Entrenamiento y tuning de hiperparámetros
+│   ├── evaluation/            # Métricas, matrices de confusión, análisis de error
+│   ├── utils/                 # Utilidades comunes
+│   ├── app/                   # Interfaz Streamlit (despliegue)
+│   └── main.py                # Punto de entrada / orquestación
+│
+├── notebooks/                 # EDA y experimentación (Jupyter)
+├── data/                      # Datos (ignorados por git; ver instalacion.md)
+│   ├── raw/  interim/  processed/  external/
+├── experiments/               # logs / checkpoints / results
+├── assets/                    # Imágenes y figuras para docs/informe
+└── tests/                     # Pruebas
+```
+
+---
+
+## 🚀 Puesta en marcha
+
+```bash
+# 1. Clonar
+git clone <URL-del-repo> && cd fruit-quality-classification
+
+# 2. Entorno (opción pip)
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+#    (opción conda)
+# conda env create -f environment.yml && conda activate fruit-quality
+
+# 3. Descargar dataset base (requiere kaggle.json configurado)
+python -m src.data.download
+
+# 4. Ejecutar la app de despliegue
+streamlit run src/app/app.py
+```
+
+Guía detallada de instalación y obtención de datos: [`docs/instalacion.md`](docs/instalacion.md).
+
+---
+
+## 📊 Datos
+
+- **Dataset base:** [Fruit Quality Classification (Kaggle)](https://www.kaggle.com/datasets/ryandpark/fruit-quality-classification).
+  Se usa además la carpeta `mixed_quality`, segmentando individualmente cada fruta.
+- **Recolección propia:** 30–50 imágenes por equipo (mercados, supermercados, hogar) cubriendo
+  distintos estados de madurez, tamaños y defectos. Se anotan con clase de calidad y tamaño, y se
+  comparten con el resto de la clase para construir un dataset más grande y diverso.
+
+> ⚠️ Los datos **no se versionan** en git (ver `.gitignore`). Cualquier dato o código de terceros se
+> referencia de forma explícita para evitar fraude académico.
+
+---
+
+## 📈 Métricas de evaluación
+
+Accuracy, Precision/Recall/F1 (macro y por clase), matriz de confusión y curvas ROC-AUC para la
+clasificación de calidad; MAE/accuracy por bin para la estimación de tamaño. Comparación siempre
+contra una **línea base** (clasificador trivial / mayoría). Detalle en [`docs/crisp-dm.md`](docs/crisp-dm.md).
+
+---
+
+## 📦 Entregables
+
+- [ ] Repositorio organizado por fases CRISP-DM.
+- [ ] Informe final (máx. 7 págs., formato IEEE) — ver [`docs/informe/`](docs/informe/).
+- [ ] Interfaz de despliegue funcional (Streamlit).
+- [ ] Video de presentación (≤ 10 min).
+- [ ] Análisis ético y de impactos.
+
+Cronograma y checklist completos en [`ROADMAP.md`](ROADMAP.md).
+
+---
+
+## 📄 Licencia
+
+Ver [`LICENSE`](LICENSE).

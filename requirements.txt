@@ -1,0 +1,38 @@
+# ─── Núcleo científico ───────────────────────────────────
+numpy>=1.26
+pandas>=2.1
+scipy>=1.11
+
+# ─── Machine Learning tradicional ────────────────────────
+scikit-learn>=1.4
+xgboost>=2.0
+imbalanced-learn>=0.12      # manejo de clases desbalanceadas (SMOTE, etc.)
+
+# ─── Deep Learning (CNN) ─────────────────────────────────
+tensorflow>=2.15            # alternativa: torch>=2.2 + torchvision
+# torch>=2.2
+# torchvision>=0.17
+
+# ─── Visión por computadora / imágenes ───────────────────
+opencv-python>=4.9          # segmentación, estimación de tamaño
+Pillow>=10.2
+scikit-image>=0.22
+
+# ─── Visualización ───────────────────────────────────────
+matplotlib>=3.8
+seaborn>=0.13
+
+# ─── Interfaz de despliegue ──────────────────────────────
+streamlit>=1.32             # GUI web para cargar/capturar imágenes
+
+# ─── Datos y utilidades ──────────────────────────────────
+kaggle>=1.6                 # descarga del dataset base
+pyyaml>=6.0
+tqdm>=4.66
+
+# ─── Experimentación / notebooks ─────────────────────────
+jupyter>=1.0
+ipykernel>=6.29
+
+# ─── Pruebas ─────────────────────────────────────────────
+pytest>=8.0

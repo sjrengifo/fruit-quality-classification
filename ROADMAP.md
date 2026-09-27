@@ -1,0 +1,235 @@
+# 🗺️ Roadmap de Desarrollo — CRISP-DM
+
+Plan de trabajo del proyecto **Clasificación Automática de Calidad de Frutas**, organizado según las
+seis fases de **CRISP-DM** (Cross-Industry Standard Process for Data Mining). Cada fase lista los
+objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que se cumple todo lo pedido.
+
+> Leyenda de estado: ⬜ Pendiente · 🟨 En progreso · ✅ Completado
+
+---
+
+## 🔁 Diagrama de flujo CRISP-DM (adaptado)
+
+```
+                 ┌───────────────────────────┐
+                 │ 1. Comprensión del negocio│
+                 │  ¿Por qué clasificar       │
+                 │   calidad? Impacto.        │
+                 └────────────┬──────────────┘
+                              │
+                 ┌────────────▼──────────────┐
+        ┌───────►│ 2. Comprensión de los     │
+        │        │    datos (EDA, desbalanceo)│
+        │        └────────────┬──────────────┘
+        │                     │
+        │        ┌────────────▼──────────────┐
+        │        │ 3. Preparación de datos   │
+        │ (iterar│  segmentación, features,   │
+        │  según │  balanceo, splits)         │
+        │  hallaz└────────────┬──────────────┘
+        │  gos)               │
+        │        ┌────────────▼──────────────┐
+        │        │ 4. Modelado (ML + CNN,     │
+        └────────┤    tuning hiperparámetros) │
+                 └────────────┬──────────────┘
+                              │
+                 ┌────────────▼──────────────┐
+                 │ 5. Evaluación (métricas,   │
+                 │  errores, vs. línea base)  │
+                 └────────────┬──────────────┘
+                    ¿objetivos cumplidos?
+                        │ sí        │ no → volver a fase 2/3/4
+                 ┌──────▼─────────────────────┐
+                 │ 6. Despliegue (GUI Streamlit,│
+                 │  video, informe final)      │
+                 └─────────────────────────────┘
+```
+
+> El diagrama definitivo (vectorial, para el informe) se generará y guardará en `assets/`.
+
+---
+
+## Fase 0 — Configuración inicial del proyecto  ✅ / 🟨
+
+**Objetivo:** dejar el repositorio listo para trabajar de forma reproducible.
+
+- [x] Definir problema, clases de calidad (Buena / Defectuosa / Podrida) y tamaño (Peq/Med/Grande).
+- [x] Reestructurar repositorio (`src/`, `data/`, `notebooks/`, `docs/`, `experiments/`, `tests/`).
+- [x] `README.md`, `requirements.txt`, `environment.yml`, `.gitignore`.
+- [ ] Crear entorno virtual e instalar dependencias en cada máquina.
+- [ ] Configurar acceso a Kaggle (`kaggle.json`) y descargar dataset base.
+- [ ] Definir división de roles y flujo de trabajo con git (ramas, PRs).
+
+**Entregable:** repositorio inicializado y reproducible.
+
+---
+
+## Fase 1 — Comprensión del negocio  ⬜
+
+> **Rúbrica:** Criterio 3 (formulación), Criterio 1 (ética), Criterio 2 (impactos).
+
+**Objetivo:** justificar por qué el problema importa y traducirlo a objetivos de analítica.
+
+- [ ] Redactar contexto: pérdidas económicas, desperdicio de alimentos, subjetividad manual.
+- [ ] Definir objetivos de negocio vs. objetivos de minería de datos (KPIs).
+- [ ] **Formulación matemática del problema** (variables, clasificación multiclase, función de
+      pérdida) → [`docs/formulacion_matematica.md`](docs/formulacion_matematica.md).
+- [ ] Argumentar por qué es un **problema complejo de ingeniería**.
+- [ ] Definir criterios de éxito y métricas objetivo (p. ej. F1-macro ≥ X).
+- [ ] Borrador inicial de **análisis ético e impactos** → [`docs/etica.md`](docs/etica.md).
+
+**Entregables:** sección "Comprensión del negocio" en `docs/crisp-dm.md`, `formulacion_matematica.md`, borrador `etica.md`.
+
+---
+
+## Fase 2 — Comprensión de los datos  ⬜
+
+> **Rúbrica:** Criterio 6 (análisis), Criterio 8 (figuras).
+
+**Objetivo:** conocer a fondo los datos disponibles y su calidad.
+
+- [ ] Descargar y explorar el dataset base (`src/data/download.py`).
+- [ ] EDA en `notebooks/01_eda.ipynb`:
+  - [ ] Distribución de clases (calidad y tamaño) → **detectar desbalanceo**.
+  - [ ] Resolución, iluminación, fondos, variabilidad de las imágenes.
+  - [ ] Ejemplos por clase; casos ambiguos.
+  - [ ] Análisis de la carpeta `mixed_quality` (múltiples frutas por imagen).
+- [ ] Documentar calidad de datos y problemas encontrados.
+- [ ] Definir estrategia de recolección propia (30–50 imágenes).
+
+**Entregables:** notebook de EDA con figuras, resumen en `docs/crisp-dm.md`.
+
+---
+
+## Fase 3 — Preparación de los datos  ⬜
+
+> **Rúbrica:** Criterio 5 (fundamentos matemáticos: normalización), Criterio 6.
+
+**Objetivo:** obtener datasets limpios, balanceados y listos para modelar.
+
+- [ ] **Recolección propia:** capturar y organizar 30–50 imágenes reales.
+- [ ] **Anotación manual:** etiquetar calidad + tamaño con criterios consistentes.
+      Definir mecanismo para compartir anotaciones con la clase.
+- [ ] **Segmentación** de frutas individuales en imágenes con varias (`src/data/segment.py`,
+      OpenCV: umbralización/contornos).
+- [ ] **Preprocesamiento** (`src/data/preprocess.py`): redimensionado, normalización de píxeles,
+      corrección de color, data augmentation.
+- [ ] **Estimación de tamaño**: diámetro en píxeles → normalización → bins (Peq/Med/Grande).
+- [ ] **Extracción de características** para ML tradicional (`src/features/`): histogramas de color
+      (HSV), textura (GLCM/LBP), momentos de forma, área/perímetro.
+- [ ] **Manejo de desbalanceo**: class weights, SMOTE o augmentation dirigida.
+- [ ] **Splits** train/val/test estratificados y reproducibles (semilla fija).
+
+**Entregables:** datos en `data/processed/`, scripts de preparación, dataset propio anotado.
+
+---
+
+## Fase 4 — Modelado  ⬜
+
+> **Rúbrica:** Criterio 4 (estrategia y justificación), Criterio 5 (fundamentos matemáticos).
+
+**Objetivo:** entrenar y ajustar modelos (≥ 2 ML tradicional + 1 CNN).
+
+- [ ] **Línea base** (baseline): clasificador de mayoría / trivial.
+- [ ] **ML tradicional** (`src/models/classic_ml.py`, `notebooks/03_modeling_ml.ipynb`):
+  - [ ] Elegir ≥ 2 modelos (p. ej. SVM, Random Forest, XGBoost, KNN, Reg. Logística).
+  - [ ] **Ajuste de hiperparámetros** con `GridSearchCV` / validación cruzada.
+- [ ] **CNN** (`src/models/cnn.py`, `notebooks/04_modeling_cnn.ipynb`):
+  - [ ] Arquitectura pequeña desde cero (2–3 conv + pooling + densas).
+  - [ ] Opcional: transfer learning con capas congeladas.
+  - [ ] Callbacks (early stopping, checkpoints en `experiments/checkpoints/`).
+- [ ] Registrar experimentos (logs/resultados en `experiments/`).
+- [ ] Justificar selección de modelos y **alternativas descartadas**.
+
+**Entregables:** modelos entrenados, notebooks de modelado, logs de experimentos.
+
+---
+
+## Fase 5 — Evaluación  ⬜
+
+> **Rúbrica:** Criterio 6 (análisis e interpretación), Criterio 7 (conclusiones).
+
+**Objetivo:** medir desempeño real y analizar críticamente los resultados.
+
+- [ ] Evaluar en **conjunto de prueba** (`src/evaluation/evaluate.py`).
+- [ ] Métricas: accuracy, precision/recall/F1 (macro y por clase), matriz de confusión, ROC-AUC.
+- [ ] Métricas de tamaño (MAE / accuracy por bin).
+- [ ] **Análisis de errores** (casos mal clasificados, confusiones frecuentes).
+- [ ] Diagnóstico de **sobreajuste** (train vs. val/test, curvas de aprendizaje).
+- [ ] **Comparación**: modelos entre sí, vs. línea base y vs. literatura (NeurIPS/ICML/ICLR).
+- [ ] Extraer *insights* conectados con el problema.
+
+**Entregables:** tablas y figuras de resultados, sección de análisis en el informe.
+
+---
+
+## Fase 6 — Despliegue  ⬜
+
+> **Rúbrica:** Criterio 8 (calidad del entregable). Enunciado: GUI + video.
+
+**Objetivo:** poner el modelo a funcionar para un usuario final.
+
+- [ ] **Interfaz Streamlit** (`src/app/app.py`): cargar imagen o **capturar desde cámara** y mostrar
+      predicción (clase de calidad + tamaño) en tiempo real.
+- [ ] Cargar el mejor modelo entrenado y pipeline de preprocesamiento.
+- [ ] Guía de uso en `docs/instalacion.md` / `docs/arquitectura.md`.
+- [ ] *(Opcional)* simulación de línea de empaque con cámara + Raspberry Pi.
+- [ ] **Video de presentación** (≤ 10 min): contexto, técnicas, resultados, logros.
+
+**Entregables:** app funcional, video, instrucciones de despliegue.
+
+---
+
+## Fase 7 — Informe final y cierre  ⬜
+
+> **Rúbrica:** Criterios 1, 2, 7 y 8. Enunciado §7 (estructura del informe).
+
+**Objetivo:** consolidar toda la evidencia en el informe (máx. 7 págs., IEEE).
+
+- [ ] Redactar `docs/informe/` siguiendo la estructura: Título, Abstract, Introducción,
+      Fundamentos teóricos, Metodología, Resultados, Análisis, Conclusiones, Referencias (IEEE).
+- [ ] **Tabla de dilemas éticos** y su relación con el código de ética (PI1).
+- [ ] **Matriz de impactos** social/económico/ambiental/global + mitigaciones (PI2).
+- [ ] **Justificación matemática** completa del modelado (PI3).
+- [ ] Diagramas de calidad **vectorial** (CRISP-DM, arquitectura, resultados).
+- [ ] Verificar referencias en formato **IEEE** y documentación del código.
+- [ ] Revisión final contra la rúbrica (checklist abajo).
+
+---
+
+## ✅ Checklist de cumplimiento (rúbrica + enunciado)
+
+| # | Requisito | Fuente | Dónde se cubre |
+|---|-----------|--------|----------------|
+| 1 | Metodología CRISP-DM documentada por fase | Enunciado §4 | `docs/crisp-dm.md`, este roadmap |
+| 2 | Diagrama de flujo CRISP-DM personalizado | Enunciado §4 | `assets/`, `docs/crisp-dm.md` |
+| 3 | ≥ 2 modelos ML + 1 CNN, con tuning | Enunciado §3 | Fase 4 |
+| 4 | Salidas: clase de calidad (≥3) + tamaño | Enunciado §1.3 | Fases 3–4 |
+| 5 | Recolección propia de 30–50 imágenes | Enunciado §2.2 | Fase 3 |
+| 6 | Anotación manual + compartir con la clase | Enunciado §2.3 | Fase 3 |
+| 7 | Segmentación de frutas en `mixed_quality` | Enunciado §2.1 | Fase 3 |
+| 8 | GUI de despliegue (Streamlit) | Enunciado §1.4 | Fase 6 |
+| 9 | Video ≤ 10 min | Enunciado §6 | Fase 6 |
+| 10 | Dilemas éticos + código de ética (PI1) | Competencias / Rúbrica 1 | `docs/etica.md` |
+| 11 | Matriz de impactos (PI2) | Competencias / Rúbrica 2 | `docs/etica.md` |
+| 12 | Formulación matemática (PI3) | Competencias / Rúbrica 3 | `docs/formulacion_matematica.md` |
+| 13 | Estrategia de solución justificada | Rúbrica 4 | Fase 4 / informe |
+| 14 | Fundamentos matemáticos aplicados | Rúbrica 5 | Fases 3–5 |
+| 15 | Análisis e interpretación de resultados | Rúbrica 6 | Fase 5 |
+| 16 | Conclusiones técnicas coherentes | Rúbrica 7 | Fase 7 |
+| 17 | Informe IEEE ≤ 7 págs, figuras vectoriales | Enunciado §7 / Rúbrica 8 | `docs/informe/` |
+| 18 | Referencias IEEE + código documentado | Enunciado §6 / Rúbrica 8 | Todo el repo |
+
+---
+
+## 📅 Cronograma sugerido
+
+| Semana | Fases | Hito |
+|--------|-------|------|
+| 1 | 0–1 | Setup + comprensión del negocio + formulación matemática |
+| 2 | 2 | EDA completo + estrategia de recolección |
+| 3 | 3 | Recolección, anotación, segmentación y features |
+| 4 | 4 | Entrenamiento ML + CNN con tuning |
+| 5 | 5 | Evaluación y análisis de resultados |
+| 6 | 6 | Despliegue (Streamlit) + grabación del video |
+| 7 | 7 | Informe final + revisión contra rúbrica |
