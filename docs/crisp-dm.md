@@ -8,19 +8,75 @@ El plan operativo y el checklist de rúbrica están en [`../ROADMAP.md`](../ROAD
 
 ## 1. Comprensión del negocio
 
-**Problema.** La clasificación manual de frutas por calidad/tamaño es lenta, subjetiva y propensa a
-errores, generando pérdidas económicas y desperdicio.
+### 1.1 Contexto y justificación
 
-**Objetivo de negocio.** Automatizar y estandarizar la clasificación de calidad para reducir errores y
-pérdidas.
+En mercados y agroindustrias la clasificación de frutas frescas según su **calidad** (madurez,
+defectos visibles) y **tamaño** se hace mayoritariamente de forma **manual**: un operario inspecciona
+cada producto y lo separa. Este proceso es **lento, subjetivo (varía entre operarios y a lo largo de la
+jornada) y propenso a errores**, lo que provoca:
 
-**Objetivo de analítica.** Dada una imagen de una fruta individual, predecir (a) su clase de calidad
-`{Buena, Defectuosa, Podrida}` y (b) su tamaño `{Pequeño, Mediano, Grande}`.
+- **Pérdidas económicas** por producto mal clasificado (fruta buena descartada o fruta dañada que
+  llega al consumidor y se devuelve).
+- **Desperdicio de alimentos:** según la FAO, alrededor del **14 % de los alimentos se pierde entre
+  la cosecha y la venta minorista**, y el PNUMA estima que cerca del **17 % adicional se desperdicia**
+  en venta y consumo — las frutas y verduras están entre los productos más afectados por su
+  perecibilidad. *(Cifras a citar en formato IEEE en el informe final.)*
+- **Falta de estandarización**, que dificulta fijar precios justos y cumplir requisitos de calidad.
 
-**Criterios de éxito.** Superar la línea base y alcanzar un F1-macro objetivo (definir umbral).
-Formulación matemática detallada en [`formulacion_matematica.md`](formulacion_matematica.md).
+En el contexto local (plazas de mercado y supermercados de Colombia), un sistema **asistivo** de
+clasificación por visión por computadora puede aumentar la consistencia, reducir mermas y liberar
+tiempo del personal para tareas de mayor valor.
 
-> _Por completar: impacto económico/social cuantificado, KPIs._
+### 1.2 Objetivos de negocio
+
+- Aumentar la **consistencia y objetividad** de la clasificación de calidad.
+- **Reducir mermas** (fruta buena descartada) y el **riesgo de dejar pasar fruta dañada**.
+- Ofrecer una herramienta **accesible y de bajo costo** (cámara web/celular + software).
+
+### 1.3 Objetivos de analítica (traducción del negocio a datos)
+
+Dada una imagen de una fruta individual sobre fondo simple, el sistema debe:
+
+1. **Clasificar la calidad** en 3 categorías definidas por el grupo: `Buena`, `Defectuosa`
+   (golpes/manchas leves, apto con reservas) y `Podrida` (no apto).
+2. **Estimar el tamaño**: `Pequeño`, `Mediano`, `Grande` (a partir del diámetro en píxeles normalizados).
+
+> **Origen de las clases (decisión de proyecto — opción A).** El dataset base de Kaggle aporta solo
+> **2 niveles** de calidad (`Good`/`Bad`). Mapeamos `Good → Buena` y `Bad → Podrida`, y construimos
+> la clase intermedia **`Defectuosa`** mediante (i) la **recolección propia** de 30–50 imágenes y
+> (ii) la **anotación de la carpeta `Mixed Quality`** (que viene sin etiqueta de calidad). Así se
+> cumple el requisito del enunciado de "3 o más categorías definidas por grupo" y se le da valor a la
+> recolección propia.
+
+### 1.4 Criterios de éxito y KPIs
+
+| KPI | Meta objetivo | Justificación |
+|-----|---------------|---------------|
+| **F1-macro** (calidad) en test | **≥ 0.85** | Métrica principal; robusta ante el desbalanceo de clases |
+| **Recall de `Podrida`** | **≥ 0.90** | El error más costoso es *dejar pasar fruta podrida*; se penaliza el falso negativo |
+| **Accuracy de tamaño** (Peq/Med/Grande) | **≥ 0.80** | Salida secundaria del sistema |
+| **Mejora sobre línea base** (clasificador de mayoría) | Significativa (≫ baseline) | Demuestra aprendizaje real |
+| **Latencia de inferencia** | **< 1 s / imagen** en CPU | Requisito de uso "en tiempo real" en la GUI |
+
+> Los umbrales son metas iniciales; se revisarán tras el EDA (Fase 2) según el desbalanceo real.
+
+### 1.5 ¿Por qué es un problema complejo de ingeniería?
+
+- **Alta dimensionalidad** de la entrada (imágenes de ~128×128×3 ≈ 49k valores).
+- **Alta variabilidad:** iluminación, fondo, orientación, oclusión y **múltiples especies** de fruta
+  (manzana, banano, guayaba, lima/limón, naranja, granada) con apariencias muy distintas.
+- **Clases desbalanceadas** (p. ej. `Pomegranate_Good` ≈ 5940 vs. ~1100 en otras).
+- **Fronteras de decisión no lineales** entre calidades (la diferencia Buena/Defectuosa es sutil).
+- **Restricción de despliegue:** inferencia rápida en hardware modesto.
+
+La formulación matemática completa (variables, softmax, entropía cruzada, métricas) está en
+[`formulacion_matematica.md`](formulacion_matematica.md) (PI3).
+
+### 1.6 Ética e impactos (borrador — se profundiza en Fases 6–7)
+
+Los dilemas éticos (privacidad en la recolección, sesgos entre especies, impacto laboral de la
+automatización) y la matriz de impactos social/económico/ambiental/global se documentan en
+[`etica.md`](etica.md) (PI1/PI2).
 
 ---
 

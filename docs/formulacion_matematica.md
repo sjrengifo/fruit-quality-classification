@@ -18,6 +18,11 @@ Se buscan dos funciones de decisión:
 Para el enfoque de ML tradicional se extrae un vector de características
 $\phi(x) \in \mathbb{R}^d$ (color, textura, forma) y se aprende $f_\theta(\phi(x))$.
 
+> **Origen de las etiquetas de calidad (opción A).** El dataset base aporta 2 niveles
+> ($\text{Good}, \text{Bad}$); se mapea $\text{Good}\!\to\!\text{Buena}$, $\text{Bad}\!\to\!\text{Podrida}$
+> y la clase intermedia $\text{Defectuosa}$ se obtiene por anotación propia (recolección + `Mixed Quality`).
+> El problema resultante es de **clasificación multiclase con $K=3$**.
+
 **Por qué es un problema complejo de ingeniería:** alta dimensionalidad de la entrada, variabilidad
 (iluminación, fondo, oclusión, variedad de fruta), clases desbalanceadas, fronteras de decisión no
 lineales y necesidad de generalización a datos nuevos e inferencia en tiempo real.
@@ -68,6 +73,11 @@ boosting)** se documentarán con su formulación al seleccionarlos.
 Se comparan **≥ 2 modelos de ML tradicional + 1 CNN** para contrastar enfoques basados en
 características diseñadas a mano vs. aprendizaje de representaciones. Alternativas y por qué se
 descartan (o no) se argumentarán en el informe (ver Criterio 4).
+
+**Criterio de éxito cuantitativo (definido en la Fase 1).** El modelo debe alcanzar
+$F1\text{-macro} \ge 0.85$ en el conjunto de prueba, con $\text{Recall}(\text{Podrida}) \ge 0.90$
+(minimizar el falso negativo más costoso: dejar pasar fruta podrida), superando de forma
+significativa la línea base (clasificador de mayoría). Ver KPIs en [`crisp-dm.md`](crisp-dm.md) §1.4.
 
 > _Por completar con hiperparámetros óptimos, resultados cuantitativos e interpretación
 > (precisión, error, generalización, sobreajuste) en la fase de evaluación._
