@@ -56,27 +56,35 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Definir problema, clases de calidad (Buena / Defectuosa / Podrida) y tamaño (Peq/Med/Grande).
 - [x] Reestructurar repositorio (`src/`, `data/`, `notebooks/`, `docs/`, `experiments/`, `tests/`).
 - [x] `README.md`, `requirements.txt`, `environment.yml`, `.gitignore`.
-- [ ] Crear entorno virtual e instalar dependencias en cada máquina.
-- [ ] Configurar acceso a Kaggle (`kaggle.json`) y descargar dataset base.
-- [ ] Definir división de roles y flujo de trabajo con git (ramas, PRs).
+- [x] Crear entorno virtual (`.venv`, Python 3.12) e instalar dependencias — verificado con `pytest` (3/3) y arranque de la app Streamlit.
+- [x] Definir flujo de trabajo con git: ramas `main` (estable) y `dev` (desarrollo); trabajo en ramas `feature/*` con PR hacia `dev`.
+- [x] Configurar acceso a Kaggle y descargar dataset base en `data/raw/` (~18.4k imágenes).
+
+> **Nota sobre el dataset base:** trae **2 clases de calidad** (`Good` / `Bad`) para 6 frutas
+> (Apple, Banana, Guava, Lime/Lemon, Orange, Pomegranate) + una carpeta `Mixed Quality` sin
+> etiqueta de calidad. Nuestra **3ª clase (`Defectuosa`)** se construirá a partir de la recolección
+> propia y de la anotación de `Mixed Quality` (Fase 3). Hay **fuerte desbalanceo**:
+> `Pomegranate_Good` ≈ 5940 imágenes vs. ~1100 del resto (a tratar en Fases 2–3).
 
 **Entregable:** repositorio inicializado y reproducible.
 
 ---
 
-## Fase 1 — Comprensión del negocio  ⬜
+## Fase 1 — Comprensión del negocio  ✅
 
 > **Rúbrica:** Criterio 3 (formulación), Criterio 1 (ética), Criterio 2 (impactos).
 
 **Objetivo:** justificar por qué el problema importa y traducirlo a objetivos de analítica.
 
-- [ ] Redactar contexto: pérdidas económicas, desperdicio de alimentos, subjetividad manual.
-- [ ] Definir objetivos de negocio vs. objetivos de minería de datos (KPIs).
-- [ ] **Formulación matemática del problema** (variables, clasificación multiclase, función de
+- [x] Redactar contexto: pérdidas económicas, desperdicio de alimentos, subjetividad manual → `docs/crisp-dm.md` §1.1.
+- [x] Definir objetivos de negocio vs. objetivos de minería de datos (KPIs) → `docs/crisp-dm.md` §1.2–1.4.
+- [x] **Formulación matemática del problema** (variables, clasificación multiclase, función de
       pérdida) → [`docs/formulacion_matematica.md`](docs/formulacion_matematica.md).
-- [ ] Argumentar por qué es un **problema complejo de ingeniería**.
-- [ ] Definir criterios de éxito y métricas objetivo (p. ej. F1-macro ≥ X).
-- [ ] Borrador inicial de **análisis ético e impactos** → [`docs/etica.md`](docs/etica.md).
+- [x] Argumentar por qué es un **problema complejo de ingeniería** → `docs/crisp-dm.md` §1.5.
+- [x] Definir criterios de éxito y métricas objetivo (F1-macro ≥ 0.85; Recall Podrida ≥ 0.90).
+- [x] Borrador inicial de **análisis ético e impactos** → [`docs/etica.md`](docs/etica.md).
+
+> _Pendiente de equipo:_ cuantificar el impacto local con cifras citadas (IEEE) al redactar el informe.
 
 **Entregables:** sección "Comprensión del negocio" en `docs/crisp-dm.md`, `formulacion_matematica.md`, borrador `etica.md`.
 
