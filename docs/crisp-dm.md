@@ -82,13 +82,41 @@ automatización) y la matriz de impactos social/económico/ambiental/global se d
 
 ## 2. Comprensión de los datos
 
-- Dataset base: **Fruit Quality Classification** (Kaggle) + carpeta `mixed_quality`.
-- Análisis exploratorio (ver `notebooks/01_eda.ipynb`):
-  - Distribución de clases y **desbalanceo**.
-  - Calidad de imágenes (resolución, iluminación, fondo), variabilidad.
-  - Casos ambiguos / múltiples frutas por imagen.
+Análisis exploratorio completo en [`../notebooks/01_eda.ipynb`](../notebooks/01_eda.ipynb);
+figuras en `assets/eda/`.
 
-> _Por completar: hallazgos del EDA con figuras._
+### 2.1 Inventario
+
+- **19.526 imágenes** en formato **`.jpg`** (100 %), de **6 frutas**: manzana, banano, guayaba,
+  lima/limón, naranja y granada.
+- Estructura en 3 grupos: `Good Quality_Fruits` (**11.664**, 60 %), `Bad Quality_Fruits`
+  (**6.788**, 35 %) y `Mixed Qualit_Fruits` (**1.074**, 5 %, sin etiqueta de calidad).
+
+### 2.2 Distribución y desbalanceo (hallazgo crítico)
+
+- El dataset base solo trae **2 niveles etiquetados** (`Good`/`Bad`). → la 3.ª clase `Defectuosa`
+  se construye por anotación propia + `Mixed Quality` (**opción A**, ver §1.3).
+- **Desbalanceo fuerte:** `Pomegranate_Good` ≈ **5.940** imágenes domina frente a ~1.100 del resto
+  (**ratio ≈ 5×**). Además `Good` > `Bad` a nivel global.
+- **Implicación:** usar `F1-macro` como métrica (no accuracy) y aplicar *class weights* /
+  *augmentation* / submuestreo en la Fase 3. Ver figuras `dist_calidad.svg`, `dist_fruta_calidad.svg`.
+
+### 2.3 Propiedades de las imágenes
+
+- **Dimensiones heterogéneas:** la mayoría son 256×256 (y 192×256 / 256×192), pero hay imágenes de
+  hasta miles de píxeles (p. ej. 3000×4000, 8000×6000). → **redimensionado y normalización
+  obligatorios** en la Fase 3 (figura `dimensiones.svg`).
+
+### 2.4 Señal de color
+
+- El color/brillo promedio **difiere entre clases** (en la muestra, brillo `Bad` ≈ 163 vs. `Good`
+  ≈ 138). → el color es una **característica prometedora** para los modelos de ML tradicional
+  (figura `brillo_por_calidad.svg`).
+
+### 2.5 `Mixed Quality`
+
+- ~1.074 imágenes sin etiqueta de calidad; requieren **segmentación/anotación** manual y son
+  candidatas a la clase `Defectuosa`.
 
 ---
 

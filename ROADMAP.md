@@ -90,20 +90,21 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 ---
 
-## Fase 2 — Comprensión de los datos  ⬜
+## Fase 2 — Comprensión de los datos  🟨
 
 > **Rúbrica:** Criterio 6 (análisis), Criterio 8 (figuras).
 
 **Objetivo:** conocer a fondo los datos disponibles y su calidad.
 
-- [ ] Descargar y explorar el dataset base (`src/data/download.py`).
-- [ ] EDA en `notebooks/01_eda.ipynb`:
-  - [ ] Distribución de clases (calidad y tamaño) → **detectar desbalanceo**.
-  - [ ] Resolución, iluminación, fondos, variabilidad de las imágenes.
-  - [ ] Ejemplos por clase; casos ambiguos.
-  - [ ] Análisis de la carpeta `mixed_quality` (múltiples frutas por imagen).
-- [ ] Documentar calidad de datos y problemas encontrados.
-- [ ] Definir estrategia de recolección propia (30–50 imágenes).
+- [x] Descargar y explorar el dataset base (`src/data/download.py`).
+- [x] EDA en `notebooks/01_eda.ipynb` (figuras en `assets/eda/`):
+  - [x] Distribución de clases → **desbalanceo detectado** (ratio ≈ 5×, `Pomegranate_Good`).
+  - [x] Resolución/dimensiones (heterogéneas) y formato (`.jpg`).
+  - [x] Ejemplos por fruta y calidad (grids).
+  - [x] Análisis de color/brillo por clase (señal separable).
+  - [x] Análisis de la carpeta `Mixed Quality`.
+- [x] Documentar hallazgos en `docs/crisp-dm.md` §2.
+- [ ] Definir estrategia de recolección propia (30–50 imágenes) — _pendiente de equipo_.
 
 **Entregables:** notebook de EDA con figuras, resumen en `docs/crisp-dm.md`.
 
