@@ -19,7 +19,10 @@ pip install -r requirements.txt
 pytest                                    # pytest.ini sets pythonpath=. so `src` is importable
 pytest tests/test_smoke.py::test_diameter_to_size_class   # single test
 
-python -m src.main download               # Kaggle dataset → data/raw/ (needs ~/.kaggle/kaggle.json)
+python -m src.main download               # Kaggle → data/raw/ (needs ~/.kaggle/kaggle.json) + Healthy-Defective-Fruits real images → data/external/
+python -m src.main index                  # unified index of all sources → data/processed/index.csv
+streamlit run src/app/anotar.py           # tool to re-label Kaggle `Bad` into Defectuosa/Podrida
+python -m src.data.relabel                # re-labeling progress + inter-annotator kappa
 python -m src.main train                  # or: python -m src.training.train --model {cnn,classic}
 streamlit run src/app/app.py              # deployment GUI (app.py prepends repo root to sys.path)
 
@@ -37,9 +40,12 @@ Notebooks are authored as **jupytext percent-format `.py` files** (`notebooks/01
 - Many functions are stubs raising `NotImplementedError("Implementar en Fase N")`; the phase number tells where they belong in `ROADMAP.md`.
 - Notebooks should reuse code from `src/` rather than duplicate logic.
 
-## Data findings that constrain design (from Phase 2 EDA)
+## Data strategy (decided in Phase 3 — see `docs/criterios_anotacion.md`, `docs/crisp-dm.md` §3.1)
 
-- Kaggle dataset has 19,526 `.jpg` images, 6 fruits, but only **2 quality labels (Good/Bad)**; the 3-class scheme requires mapping plus the unlabeled `Mixed Quality` folder (segmented per fruit) and team-collected images (30–50) for `Defectuosa`.
+- One fruit-agnostic model, 3 quality classes. The required Kaggle dataset (FruitNet, 6 fruits) only has `Good`/`Bad`, and `Bad` mixes mild defects with rot, so a fixed sample of `Bad` (200/fruit, seed 42) is **manually re-labeled** (`src/data/relabel.py`; one CSV per annotator in `data/anotaciones/` — versioned — to avoid merge conflicts; 10/fruit are labeled by everyone for Cohen's kappa; majority vote, ties → `Descartar`).
+- Complemented by **Healthy-Defective-Fruits** (apple + mango, real images only; folder→class map in `config.HDF_LABELS`).
+- All 3 classes must draw from the same sources, otherwise the model learns the source instead of quality. Known shortcut risk: half of HDF `rot` is PNG and HDF is all 256×256 → preprocessing must normalize format/size.
+- Team photos (`data/external/propias/`) are an **external test set**, never used for training.
 - Strong class imbalance (~5×) → use F1-macro and class weights / resampling (`imbalanced-learn` available); always compare against a majority-class baseline.
 - Image sizes vary from 256×256 to 8000×6000 → resizing is mandatory.
 

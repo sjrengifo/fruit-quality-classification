@@ -1,7 +1,7 @@
 # Recolección propia de imágenes
 
-Imágenes tomadas por el equipo (meta: **30–50**) para enriquecer el dataset base y, sobre todo,
-construir la clase **`Defectuosa`**, que no existe en Kaggle (solo trae `Good`/`Bad`).
+Imágenes tomadas por el equipo (meta: **30–50**). Se usan como **conjunto de prueba externo**:
+fotos reales, en condiciones propias, que el modelo nunca ve al entrenar. Miden si generaliza.
 A diferencia del resto de `data/`, **esta carpeta sí se versiona en git**.
 
 ## Protocolo de captura
@@ -12,8 +12,8 @@ A diferencia del resto de `data/`, **esta carpeta sí se versiona en git**.
 | Iluminación | Buena luz, idealmente natural difusa; evitar sombras duras, reflejos y flash directo |
 | Encuadre | **Una sola fruta** por foto, centrada y completa, vista cenital (desde arriba) |
 | Distancia | Fija (~30 cm) para que el tamaño en píxeles sea comparable entre fotos |
-| Frutas | Solo las 6 del dataset base: `Apple`, `Banana`, `Guava`, `Lime`, `Orange`, `Pomegranate` |
-| Clases | Repartir entre `Buena`, `Defectuosa` (golpes/manchas) y `Podrida`; priorizar `Defectuosa` |
+| Frutas | Las del dataset: `Apple`, `Banana`, `Guava`, `Lime`, `Orange`, `Pomegranate`, `Mango` |
+| Clases | Repartir parejo entre `Buena`, `Defectuosa` y `Podrida` (criterios en `docs/criterios_anotacion.md`) |
 | Privacidad | Sin personas, rostros, marcas ni datos de establecimientos (ver `docs/etica.md`) |
 
 Si es posible, medir el diámetro de la fruta con una regla y anotarlo en `diametro_cm`; sirve para
@@ -32,7 +32,7 @@ validar la estimación de tamaño de la Fase 3.
    | Columna | Valores |
    |---------|---------|
    | `archivo` | nombre del archivo en `imagenes/` |
-   | `fruta` | `Apple` · `Banana` · `Guava` · `Lime` · `Orange` · `Pomegranate` |
+   | `fruta` | `Apple` · `Banana` · `Guava` · `Lime` · `Orange` · `Pomegranate` · `Mango` |
    | `calidad` | `Buena` · `Defectuosa` · `Podrida` |
    | `tamano` | `Pequeño` · `Mediano` · `Grande` |
    | `diametro_cm` | número (opcional) |

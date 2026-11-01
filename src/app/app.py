@@ -32,7 +32,7 @@ def main() -> None:
         file = st.camera_input("Captura")
 
     if file is not None:
-        st.image(file, caption="Entrada", use_container_width=True)
+        st.image(file, caption="Entrada", width="stretch")
         # TODO(Fase 6): cargar el mejor modelo desde experiments/checkpoints/,
         # preprocesar la imagen y ejecutar la predicción.
         st.info(

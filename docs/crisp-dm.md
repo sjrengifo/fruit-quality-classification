@@ -133,6 +133,28 @@ figuras en `assets/eda/`.
 
 ## 3. Preparación de los datos
 
+### 3.1 Construcción de las 3 clases
+
+El dataset base solo trae `Good`/`Bad`, y `Bad` mezcla defectos superficiales con podredumbre.
+Para obtener `Buena / Defectuosa / Podrida` con **las 3 clases de las mismas fuentes** (evitando que
+el modelo aprenda a reconocer el dataset de origen en lugar de la calidad):
+
+| Clase | Kaggle (FruitNet) | Healthy-Defective-Fruits (reales) | Propias |
+|-------|-------------------|-----------------------------------|---------|
+| Buena | `Good` (11.664) | `fresh` (5.000) | prueba externa |
+| Defectuosa | `Bad` re-anotado | `bruise`, `scab`, `black_spot` (3.000) | prueba externa |
+| Podrida | `Bad` re-anotado | `rot` (2.000) | prueba externa |
+
+- **Re-anotación de `Bad`:** muestra de 200 imágenes por fruta (semilla 42); 10 por fruta las
+  anotan todos para medir el **acuerdo entre anotadores** (kappa de Cohen). Criterios en
+  [`criterios_anotacion.md`](criterios_anotacion.md).
+- **Riesgo de atajo detectado:** en Healthy-Defective-Fruits la mitad de `rot` está en **PNG** y el
+  resto en JPEG; todas las imágenes de ese dataset son 256×256 mientras que Kaggle llega a 8000×6000.
+  El preprocesamiento debe unificar formato y tamaño para que la clase no sea deducible del archivo.
+- Las imágenes propias (fondo blanco) se reservan como **prueba externa** de generalización.
+
+### 3.2 Pasos pendientes
+
 - Segmentación de frutas individuales (OpenCV).
 - Preprocesamiento: redimensionado, **normalización de píxeles**, augmentation.
 - Extracción de características para ML (color HSV, textura GLCM/LBP, forma).

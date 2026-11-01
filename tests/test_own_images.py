@@ -33,7 +33,7 @@ def test_detects_errors(tmp_path):
     csv_path, images_dir = _setup(
         tmp_path,
         [
-            "falta.jpg,Mango,Regular,Enorme,abc,Samuel,2026-11-01,",
+            "falta.jpg,Fresa,Regular,Enorme,abc,Samuel,2026-11-01,",
         ],
         ["sin_anotar.jpg"],
     )
