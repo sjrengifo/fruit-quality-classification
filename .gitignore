@@ -26,6 +26,8 @@ data/interim/*
 data/processed/*
 data/external/*
 !data/**/.gitkeep
+# Excepción: la recolección propia sí se versiona
+!data/external/propias/
 
 # ─── Experimentos / artefactos de modelos ─────────────────
 experiments/logs/*

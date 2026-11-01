@@ -7,9 +7,15 @@ Uso:  streamlit run src/app/app.py
 """
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import streamlit as st
 
-from src import config
+# `streamlit run` solo agrega src/app/ al sys.path; se añade la raíz para poder importar `src`.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from src import config  # noqa: E402
 
 
 def main() -> None:

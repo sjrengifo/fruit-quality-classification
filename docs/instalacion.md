@@ -40,8 +40,10 @@ en `data/raw/`. Los datos **no se versionan** (ver `.gitignore`).
 
 ## 5. Datos propios
 
-Coloca las 30–50 imágenes recolectadas y anotadas por el equipo en `data/external/` siguiendo la
-convención de carpetas por clase de calidad. Ver [`../ROADMAP.md`](../ROADMAP.md), Fase 3.
+Las imágenes recolectadas por el equipo **sí se versionan**, en `data/external/propias/imagenes/`,
+con sus etiquetas en `data/external/propias/anotaciones.csv`. El protocolo de captura, la convención de
+nombres y los comandos (`python -m src.data.own_images redimensionar|validar`) están en
+[`../data/external/propias/README.md`](../data/external/propias/README.md).
 
 ## 6. Ejecutar la aplicación
 

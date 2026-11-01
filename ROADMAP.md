@@ -90,7 +90,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 ---
 
-## Fase 2 — Comprensión de los datos  🟨
+## Fase 2 — Comprensión de los datos  ✅
 
 > **Rúbrica:** Criterio 6 (análisis), Criterio 8 (figuras).
 
@@ -104,7 +104,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
   - [x] Análisis de color/brillo por clase (señal separable).
   - [x] Análisis de la carpeta `Mixed Quality`.
 - [x] Documentar hallazgos en `docs/crisp-dm.md` §2.
-- [ ] Definir estrategia de recolección propia (30–50 imágenes) — _pendiente de equipo_.
+- [x] Definir estrategia de recolección propia (30–50 imágenes): fondo blanco, buena iluminación,
+      una fruta por foto; se versionan en `data/external/propias/` (protocolo en su `README.md`).
 
 **Entregables:** notebook de EDA con figuras, resumen en `docs/crisp-dm.md`.
 
@@ -117,8 +118,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 **Objetivo:** obtener datasets limpios, balanceados y listos para modelar.
 
 - [ ] **Recolección propia:** capturar y organizar 30–50 imágenes reales.
-- [ ] **Anotación manual:** etiquetar calidad + tamaño con criterios consistentes.
-      Definir mecanismo para compartir anotaciones con la clase.
+- [ ] **Anotación manual:** etiquetar calidad + tamaño en `data/external/propias/anotaciones.csv`
+      (validar con `python -m src.data.own_images validar`). Se comparte con la clase vía el repo.
 - [ ] **Segmentación** de frutas individuales en imágenes con varias (`src/data/segment.py`,
       OpenCV: umbralización/contornos).
 - [ ] **Preprocesamiento** (`src/data/preprocess.py`): redimensionado, normalización de píxeles,

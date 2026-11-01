@@ -118,6 +118,17 @@ figuras en `assets/eda/`.
 - ~1.074 imágenes sin etiqueta de calidad; requieren **segmentación/anotación** manual y son
   candidatas a la clase `Defectuosa`.
 
+### 2.6 Estrategia de recolección propia
+
+- **30–50 imágenes** de las 6 frutas del dataset base, priorizando la clase `Defectuosa`.
+- **Condiciones controladas:** fondo blanco liso, buena iluminación (luz difusa, sin flash directo),
+  una fruta por foto, vista cenital y distancia fija (~30 cm) para que el tamaño en píxeles sea
+  comparable.
+- Se redimensionan a lado mayor ≤ 1024 px y se **versionan en el repositorio**
+  (`data/external/propias/`), lo que sirve también como mecanismo para compartirlas con la clase.
+- Anotación en `anotaciones.csv` (fruta, calidad, tamaño y diámetro medido en cm cuando sea posible).
+  Protocolo completo en [`../data/external/propias/README.md`](../data/external/propias/README.md).
+
 ---
 
 ## 3. Preparación de los datos
