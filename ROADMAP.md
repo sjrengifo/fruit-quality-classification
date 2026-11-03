@@ -90,7 +90,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 ---
 
-## Fase 2 — Comprensión de los datos  🟨
+## Fase 2 — Comprensión de los datos  ✅
 
 > **Rúbrica:** Criterio 6 (análisis), Criterio 8 (figuras).
 
@@ -104,21 +104,34 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
   - [x] Análisis de color/brillo por clase (señal separable).
   - [x] Análisis de la carpeta `Mixed Quality`.
 - [x] Documentar hallazgos en `docs/crisp-dm.md` §2.
-- [ ] Definir estrategia de recolección propia (30–50 imágenes) — _pendiente de equipo_.
+- [x] Definir estrategia de recolección propia (30–50 imágenes): fondo blanco, buena iluminación,
+      una fruta por foto; se versionan en `data/external/propias/` (protocolo en su `README.md`).
 
 **Entregables:** notebook de EDA con figuras, resumen en `docs/crisp-dm.md`.
 
 ---
 
-## Fase 3 — Preparación de los datos  ⬜
+## Fase 3 — Preparación de los datos  🟨
 
 > **Rúbrica:** Criterio 5 (fundamentos matemáticos: normalización), Criterio 6.
 
 **Objetivo:** obtener datasets limpios, balanceados y listos para modelar.
 
+> **Decisión de datos:** un solo modelo para todas las frutas, 3 clases (Buena / Defectuosa /
+> Podrida). `Bad` de Kaggle mezcla defectos leves y podredumbre → se **re-anota** a mano; se
+> complementa con **Healthy-Defective-Fruits** (ESPOL, CC BY 4.0, manzana y mango con 3 niveles).
+> La recolección propia queda como **conjunto de prueba externo**. Criterios en
+> `docs/criterios_anotacion.md`.
+
+- [x] Criterios de anotación de las 3 clases (`docs/criterios_anotacion.md`).
+- [x] Descarga de Healthy-Defective-Fruits, solo imágenes reales (`python -m src.main download`).
+- [x] Herramienta de re-anotación de `Bad` con medición de acuerdo (kappa) — `streamlit run src/app/anotar.py`.
+- [x] Índice unificado de fuentes (`python -m src.main index` → `data/processed/index.csv`).
+- [ ] **Re-anotar la muestra de `Bad`** (1.200 imágenes, 60 compartidas) — _equipo_.
+
 - [ ] **Recolección propia:** capturar y organizar 30–50 imágenes reales.
-- [ ] **Anotación manual:** etiquetar calidad + tamaño con criterios consistentes.
-      Definir mecanismo para compartir anotaciones con la clase.
+- [ ] **Anotación manual:** etiquetar calidad + tamaño en `data/external/propias/anotaciones.csv`
+      (validar con `python -m src.data.own_images validar`). Se comparte con la clase vía el repo.
 - [ ] **Segmentación** de frutas individuales en imágenes con varias (`src/data/segment.py`,
       OpenCV: umbralización/contornos).
 - [ ] **Preprocesamiento** (`src/data/preprocess.py`): redimensionado, normalización de píxeles,

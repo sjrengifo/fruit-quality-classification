@@ -33,6 +33,7 @@ tqdm>=4.66
 # ─── Experimentación / notebooks ─────────────────────────
 jupyter>=1.0
 ipykernel>=6.29
+jupytext>=1.16             # notebooks fuente en .py (percent format)
 
 # ─── Pruebas ─────────────────────────────────────────────
 pytest>=8.0
