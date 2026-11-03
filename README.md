@@ -146,7 +146,9 @@ Guía detallada de instalación y obtención de datos: [`docs/instalacion.md`](d
   distintos estados de madurez, tamaños y defectos. Se anotan con clase de calidad y tamaño, y se
   comparten con el resto de la clase para construir un dataset más grande y diverso.
 
-> ⚠️ Los datos **no se versionan** en git (ver `.gitignore`). Cualquier dato o código de terceros se
+  Se guardan en [`data/external/propias/`](data/external/propias/) (fondo blanco, buena iluminación).
+
+> ⚠️ Los datos **no se versionan** en git (ver `.gitignore`), salvo la recolección propia. Cualquier dato o código de terceros se
 > referencia de forma explícita para evitar fraude académico.
 
 ---
