@@ -127,7 +127,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Descarga de Healthy-Defective-Fruits, solo imágenes reales (`python -m src.main download`).
 - [x] Herramienta de re-anotación de `Bad` con medición de acuerdo (kappa) — `streamlit run src/app/anotar.py`.
 - [x] Índice unificado de fuentes (`python -m src.main index` → `data/processed/index.csv`).
-- [ ] **Re-anotar la muestra de `Bad`** (1.200 imágenes, 60 compartidas) — _equipo_.
+- [x] **Re-anotar la muestra de `Bad`** (1.200 imágenes): Podrida 842 · Defectuosa 211 · Buena 13 · Descartar 137.
+- [ ] Anotación de las 60 imágenes de acuerdo por los otros integrantes (kappa) — _equipo_.
 
 - [ ] **Recolección propia:** capturar y organizar 30–50 imágenes reales.
 - [ ] **Anotación manual:** etiquetar calidad + tamaño en `data/external/propias/anotaciones.csv`
