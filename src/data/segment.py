@@ -116,7 +116,7 @@ def segment_index(size: tuple[int, int] | None = None, workers: int | None = Non
     tasks = [(r["ruta"], r["id"], size) for r in rows if not cache_path(r["id"], size, "mask").exists()]
 
     stats_path = config.INTERIM_DIR / "seg_stats.csv"
-    new_file = not stats_path.exists()
+    new_file = not stats_path.exists() or stats_path.stat().st_size == 0
     workers = workers or SEG_WORKERS
     threads = max(1, (os.cpu_count() or 2) // workers)
     errors = []

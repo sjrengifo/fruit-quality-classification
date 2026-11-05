@@ -22,7 +22,7 @@ pytest tests/test_smoke.py::test_diameter_to_size_class   # single test
 python -m src.main download               # Kaggle → data/raw/ (needs ~/.kaggle/kaggle.json) + Healthy-Defective-Fruits real images → data/external/
 python -m src.main index                  # unified index of all sources → data/processed/index.csv
 python -m src.main preprocess             # cache every indexed image at 128×128 → data/interim/img128/ (incremental)
-python -m src.main segment                # U²-Net (rembg) background removal → data/interim/seg128/ + mask128/ (incremental, ~0.1–0.3 s/img)
+python -m src.main segment                # U²-Net (rembg) background removal → data/interim/seg128/ + mask128/ (incremental, ~0.7 s/img with 2 workers)
 python -m src.evaluation.shortcut         # does the background alone predict the class? (raw vs. segmented)
 streamlit run src/app/anotar.py           # tool to re-label Kaggle `Bad` into Defectuosa/Podrida
 python -m src.data.relabel                # re-labeling progress + inter-annotator kappa
