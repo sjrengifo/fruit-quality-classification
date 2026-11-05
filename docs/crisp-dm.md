@@ -212,7 +212,7 @@ extraer características y entrenar; repetir este diagnóstico después (debe ac
 ### 3.5 Imágenes en escala de grises (excluidas)
 
 1.292 imágenes no tienen color (saturación HSV media < 8): **1.188 granadas `Good` de Kaggle** (copias
-aumentadas) y 99 mangos de Healthy-Defective-Fruits, casi todas en `Buena`. Sin color no se puede
+aumentadas) y 104 de Healthy-Defective-Fruits (91 `fresh`, 13 `scab_defect`), casi todas en `Buena`. Sin color no se puede
 juzgar la calidad y el modelo aprendería "gris = Buena" → se **excluyen** del índice
 (`data/processed/excluidas.csv`). Quedan **21.438 imágenes**: Buena 15.398 · Defectuosa 3.198 ·
 Podrida 2.842.
