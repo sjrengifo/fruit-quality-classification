@@ -6,20 +6,22 @@ Fase 3 de CRISP-DM. Fuentes:
 - Healthy-Defective-Fruits     → según config.HDF_LABELS (solo imágenes reales)
 - Recolección propia           → anotaciones.csv (fuente "propias": reservada como prueba externa)
 
-Escribe data/processed/index.csv con una fila por imagen: ruta (relativa a data/), fuente, fruta,
-calidad, ancho, alto, formato. Ancho/alto/formato permiten verificar que ninguna clase se distinga
-por propiedades del archivo en lugar del contenido.
+Escribe data/processed/index.csv con una fila por imagen: id (hash estable de la ruta), ruta
+(relativa a data/), fuente, fruta, calidad, ancho, alto, formato, grupo y split (ver split.py).
+Ancho/alto/formato permiten verificar que ninguna clase se distinga por propiedades del archivo en
+lugar del contenido.
 
 Uso:  python -m src.main index
 """
 from __future__ import annotations
 
 import csv
+import hashlib
 from pathlib import Path
 
 from src import config
 
-INDEX_COLUMNS = ["ruta", "fuente", "fruta", "calidad", "ancho", "alto", "formato"]
+INDEX_COLUMNS = ["id", "ruta", "fuente", "fruta", "calidad", "ancho", "alto", "formato", "grupo", "split"]
 
 
 def _images(folder: Path):
@@ -64,8 +66,10 @@ def own_rows() -> list[dict]:
 
 
 def build_index() -> list[dict]:
-    """Une todas las fuentes y agrega ancho/alto/formato (lee solo el encabezado de cada imagen)."""
+    """Une todas las fuentes y agrega metadatos, grupo y split (lee solo el encabezado de cada imagen)."""
     from PIL import Image  # import diferido
+
+    from src.data.split import assign_split, group_key
 
     rows = kaggle_good_rows() + kaggle_bad_rows() + hdf_rows() + own_rows()
     for row in rows:
@@ -73,6 +77,9 @@ def build_index() -> list[dict]:
             row["ancho"], row["alto"] = img.size
             row["formato"] = img.format
         row["ruta"] = Path(row["ruta"]).relative_to(config.DATA_DIR).as_posix()
+        row["id"] = hashlib.sha1(row["ruta"].encode()).hexdigest()[:16]
+        row["grupo"] = group_key(row["ruta"], row["fuente"])
+        row["split"] = assign_split(row["grupo"], row["fuente"])
     return rows
 
 
@@ -96,6 +103,14 @@ def main() -> None:
     for quality in config.QUALITY_CLASSES:
         detail = ", ".join(f"{src}={counts[(src, quality)]}" for src in ("kaggle", "hdf", "propias"))
         print(f"  {quality:11s} {sum(counts[(s, quality)] for s in ('kaggle', 'hdf', 'propias')):6d}  ({detail})")
+
+    from src.data.split import SPLITS
+
+    by_split = Counter((r["split"], r["calidad"]) for r in rows)
+    print(f"\n  {'split':8s}" + "".join(f"{q:>12s}" for q in config.QUALITY_CLASSES))
+    for split in SPLITS:
+        print(f"  {split:8s}" + "".join(f"{by_split[(split, q)]:12d}" for q in config.QUALITY_CLASSES))
+    print(f"  grupos: {len({r['grupo'] for r in rows})}")
 
 
 if __name__ == "__main__":
