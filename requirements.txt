@@ -17,6 +17,7 @@ tensorflow>=2.15            # alternativa: torch>=2.2 + torchvision
 opencv-python>=4.9          # segmentación, estimación de tamaño
 Pillow>=10.2
 scikit-image>=0.22
+rembg[cpu]>=2.0.86         # segmentación con U²-Net preentrenada (solo quitar fondo)
 
 # ─── Visualización ───────────────────────────────────────
 matplotlib>=3.8

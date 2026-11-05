@@ -42,3 +42,14 @@ def test_assign_split_is_stable_and_proportional():
     share = first.count("test") / len(first)
     assert abs(share - config.TEST_SIZE) < 0.03
     assert assign_split("cualquiera", "propias") == "externa"
+
+
+def test_remove_background_and_diameter():
+    from src.data.segment import estimate_diameter_px, remove_background
+
+    image = np.zeros((128, 128, 3), dtype=np.uint8)
+    yy, xx = np.mgrid[:128, :128]
+    mask = (yy - 64) ** 2 + (xx - 64) ** 2 <= 30 ** 2  # círculo de diámetro 60
+    out = remove_background(image, mask)
+    assert (out[~mask] == 255).all() and (out[mask] == 0).all()
+    assert abs(estimate_diameter_px(mask) - 60) < 3

@@ -48,13 +48,14 @@ def resize_and_normalize(image, size: tuple[int, int] | None = None) -> np.ndarr
     return normalize(prepare_image(image, size))
 
 
-def cache_dir(size: tuple[int, int] | None = None) -> Path:
+def cache_dir(size: tuple[int, int] | None = None, variant: str = "img") -> Path:
+    """Carpeta de caché: `img` (preprocesada), `seg` (sin fondo) o `mask` (máscara de la fruta)."""
     size = size or config.IMAGE_SIZE
-    return config.INTERIM_DIR / f"img{size[0]}"
+    return config.INTERIM_DIR / f"{variant}{size[0]}"
 
 
-def cache_path(image_id: str, size: tuple[int, int] | None = None) -> Path:
-    return cache_dir(size) / f"{image_id}.png"
+def cache_path(image_id: str, size: tuple[int, int] | None = None, variant: str = "img") -> Path:
+    return cache_dir(size, variant) / f"{image_id}.png"
 
 
 def _process(task: tuple[str, str, tuple[int, int]]) -> str | None:
@@ -89,13 +90,17 @@ def preprocess_index(index_path: Path | None = None, size: tuple[int, int] | Non
     return len(tasks), errors
 
 
-def load_split(split: str, index_path: Path | None = None, size: tuple[int, int] | None = None):
-    """Carga un split desde la caché: (X uint8 [n, alto, ancho, 3], filas del índice)."""
+def load_split(split: str, index_path: Path | None = None, size: tuple[int, int] | None = None,
+               variant: str = "seg"):
+    """Carga un split desde la caché: (X uint8 [n, alto, ancho, 3], filas del índice).
+
+    Por defecto usa las imágenes segmentadas (`seg`); `img` para las originales preprocesadas.
+    """
     from PIL import Image
 
     with open(index_path or config.DATASET_INDEX, newline="", encoding="utf-8") as f:
         rows = [r for r in csv.DictReader(f) if r["split"] == split]
-    X = np.stack([np.asarray(Image.open(cache_path(r["id"], size))) for r in rows]) if rows else \
+    X = np.stack([np.asarray(Image.open(cache_path(r["id"], size, variant))) for r in rows]) if rows else \
         np.empty((0, *(size or config.IMAGE_SIZE), 3), dtype=np.uint8)
     return X, rows
 
