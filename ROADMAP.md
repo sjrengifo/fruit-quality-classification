@@ -134,8 +134,10 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [ ] **Anotación manual:** etiquetar calidad + tamaño en `data/external/propias/anotaciones.csv`
       (validar con `python -m src.data.own_images validar`). Se comparte con la clase vía el repo.
 - [x] Diagnóstico de atajo por fondo (`python -m src.evaluation.shortcut`): F1 solo-fondo 0,67 (azar 0,33).
-- [ ] **Segmentación** (`src/data/segment.py`): separar la fruta y uniformar el fondo — **prioritario**
-      por el atajo de fondo; también sirve para frutas múltiples (`Mixed Quality`) y para el tamaño.
+- [x] Exclusión de imágenes en escala de grises (1.292, solo `Buena` → atajo).
+- [x] **Segmentación** con U²-Net (`python -m src.main segment`): fruta sobre fondo blanco + máscara.
+- [ ] Verificar con `python -m src.evaluation.shortcut` que el atajo de fondo desapareció.
+- [ ] `Mixed Quality`: separar frutas múltiples por componentes de la máscara.
 - [x] **Preprocesamiento** (`src/data/preprocess.py`): formato/orientación unificados, 128×128 sin
       deformar, normalización [0, 1], caché incremental (`python -m src.main preprocess`).
 - [ ] Data augmentation (en el entrenamiento de la CNN, Fase 4).

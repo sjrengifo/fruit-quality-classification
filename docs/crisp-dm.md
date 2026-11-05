@@ -209,7 +209,28 @@ exterior de 10 px** de la imagen (fondo), F1-macro en validación:
 (fondo blanco). **Mitigación:** segmentar la fruta y reemplazar el fondo por uno uniforme antes de
 extraer características y entrenar; repetir este diagnóstico después (debe acercarse al azar).
 
-### 3.5 Pasos pendientes
+### 3.5 Imágenes en escala de grises (excluidas)
+
+1.292 imágenes no tienen color (saturación HSV media < 8): **1.188 granadas `Good` de Kaggle** (copias
+aumentadas) y 99 mangos de Healthy-Defective-Fruits, casi todas en `Buena`. Sin color no se puede
+juzgar la calidad y el modelo aprendería "gris = Buena" → se **excluyen** del índice
+(`data/processed/excluidas.csv`). Quedan **21.438 imágenes**: Buena 15.398 · Defectuosa 3.198 ·
+Podrida 2.842.
+
+### 3.6 Segmentación (mitigación del atajo de fondo)
+
+- **Método:** U²-Net (Qin et al., 2020, *Pattern Recognition* 106:107404) vía `rembg`, una red
+  **preentrenada solo para separar el objeto principal del fondo**. Se eligió frente a GrabCut
+  (OpenCV) porque las imágenes de Healthy-Defective-Fruits tienen fondos complejos (árbol, hojas,
+  fondo negro) y manos; en una comparación visual U²-Net quitó incluso manos con guante, y la
+  variante liviana `u2netp` dejaba restos de fondo. El clasificador de calidad se entrena **desde cero**.
+- **Pipeline** (`src/data/segment.py`): imagen a 320 px → máscara (umbral 0,5) → se eliminan
+  componentes < 1 % del área → fondo **blanco** (como la recolección propia) → 128×128. Se guardan la
+  imagen sin fondo y la máscara (sirve para forma y tamaño). Si la máscara queda casi vacía (< 2 %) se
+  conserva la imagen original.
+- **Costo:** ~0,3 s/imagen (≈ 2 h para todo el dataset en un portátil de 16 GB; incremental).
+
+### 3.7 Pasos pendientes
 
 - Segmentación de frutas individuales (OpenCV).
 - Preprocesamiento: redimensionado, **normalización de píxeles**, augmentation.

@@ -22,6 +22,8 @@ pytest tests/test_smoke.py::test_diameter_to_size_class   # single test
 python -m src.main download               # Kaggle → data/raw/ (needs ~/.kaggle/kaggle.json) + Healthy-Defective-Fruits real images → data/external/
 python -m src.main index                  # unified index of all sources → data/processed/index.csv
 python -m src.main preprocess             # cache every indexed image at 128×128 → data/interim/img128/ (incremental)
+python -m src.main segment                # U²-Net (rembg) background removal → data/interim/seg128/ + mask128/ (incremental, ~0.1–0.3 s/img)
+python -m src.evaluation.shortcut         # does the background alone predict the class? (raw vs. segmented)
 streamlit run src/app/anotar.py           # tool to re-label Kaggle `Bad` into Defectuosa/Podrida
 python -m src.data.relabel                # re-labeling progress + inter-annotator kappa
 python -m src.main train                  # or: python -m src.training.train --model {cnn,classic}
@@ -49,7 +51,8 @@ Notebooks are authored as **jupytext percent-format `.py` files** (`notebooks/01
 - Team photos (`data/external/propias/`) are an **external test set**, never used for training.
 - **Everything downstream reads `data/processed/index.csv`** (id, ruta, fuente, fruta, calidad, grupo, split). Adding data = add a source loader in `src/data/dataset.py`, re-run `index` + `preprocess`; model/eval code must not special-case sources.
 - Splits (`src/data/split.py`) are **hash-based per group**, so existing images never change split when data is added. Kaggle contains augmented copies (`<timestamp>_<n>.jpg`, 79 % of Pomegranate) → groups = folder + capture timestamp; never split by image. Weight samples by 1/group size when training.
-- `prepare_image` in `src/data/preprocess.py` is the single preprocessing function — the app must use it too.
+- `prepare_image` (`src/data/preprocess.py`) + `segment_image` (`src/data/segment.py`) are the single preprocessing path — the app must use them too. Models train on the **segmented** cache (`load_split(..., variant="seg")`, white background) because the raw background predicts the class (shortcut).
+- Grayscale images are excluded at index time (`data/processed/excluidas.csv`): they are augmented copies that only exist in `Buena`.
 - Strong class imbalance (~5×) → use F1-macro and class weights / resampling (`imbalanced-learn` available); always compare against a majority-class baseline.
 - Image sizes vary from 256×256 to 8000×6000 → resizing is mandatory.
 

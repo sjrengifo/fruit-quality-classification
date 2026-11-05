@@ -11,6 +11,10 @@ Escribe data/processed/index.csv con una fila por imagen: id (hash estable de la
 Ancho/alto/formato permiten verificar que ninguna clase se distinga por propiedades del archivo en
 lugar del contenido.
 
+Se excluyen las imágenes en **escala de grises** (copias aumentadas: 1.188 granadas `Good` de Kaggle):
+no permiten juzgar la calidad y solo aparecen en `Buena`, por lo que serían un atajo. Las excluidas
+se registran en data/processed/excluidas.csv con su motivo.
+
 Uso:  python -m src.main index
 """
 from __future__ import annotations
@@ -21,6 +25,8 @@ from pathlib import Path
 
 from src import config
 
+EXCLUDED = config.PROCESSED_DIR / "excluidas.csv"
+GRAY_SATURATION = 8  # saturación HSV media (0-255) por debajo de la cual la imagen es gris
 INDEX_COLUMNS = ["id", "ruta", "fuente", "fruta", "calidad", "ancho", "alto", "formato", "grupo", "split"]
 
 
@@ -65,13 +71,32 @@ def own_rows() -> list[dict]:
                  "fruta": r["fruta"], "calidad": r["calidad"]} for r in csv.DictReader(f)]
 
 
-def build_index() -> list[dict]:
-    """Une todas las fuentes y agrega metadatos, grupo y split (lee solo el encabezado de cada imagen)."""
+def is_grayscale(path: Path) -> bool:
+    """True si la imagen no tiene color (saturación media muy baja); decodifica reducida."""
+    import numpy as np
+    from PIL import Image
+
+    with Image.open(path) as img:
+        img.draft("RGB", (64, 64))
+        img = img.convert("RGB")
+        img.thumbnail((64, 64))
+        return np.asarray(img.convert("HSV"))[..., 1].mean() < GRAY_SATURATION
+
+
+def build_index() -> tuple[list[dict], list[dict]]:
+    """Une todas las fuentes y agrega metadatos, grupo y split. Devuelve (incluidas, excluidas)."""
+    from concurrent.futures import ThreadPoolExecutor
+
     from PIL import Image  # import diferido
 
     from src.data.split import assign_split, group_key
 
     rows = kaggle_good_rows() + kaggle_bad_rows() + hdf_rows() + own_rows()
+    with ThreadPoolExecutor() as pool:
+        gray = list(pool.map(is_grayscale, [r["ruta"] for r in rows]))
+    excluded = [{"ruta": Path(r["ruta"]).relative_to(config.DATA_DIR).as_posix(), "motivo": "escala de grises"}
+                for r, g in zip(rows, gray) if g]
+    rows = [r for r, g in zip(rows, gray) if not g]
     for row in rows:
         with Image.open(row["ruta"]) as img:
             row["ancho"], row["alto"] = img.size
@@ -80,7 +105,7 @@ def build_index() -> list[dict]:
         row["id"] = hashlib.sha1(row["ruta"].encode()).hexdigest()[:16]
         row["grupo"] = group_key(row["ruta"], row["fuente"])
         row["split"] = assign_split(row["grupo"], row["fuente"])
-    return rows
+    return rows, excluded
 
 
 def write_index(rows: list[dict], path: Path | None = None) -> Path:
@@ -96,9 +121,13 @@ def write_index(rows: list[dict], path: Path | None = None) -> Path:
 def main() -> None:
     from collections import Counter
 
-    rows = build_index()
+    rows, excluded = build_index()
     path = write_index(rows)
-    print(f"{len(rows)} imágenes → {path}")
+    with open(EXCLUDED, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=["ruta", "motivo"])
+        writer.writeheader()
+        writer.writerows(excluded)
+    print(f"{len(rows)} imágenes → {path} · {len(excluded)} excluidas → {EXCLUDED.name}")
     counts = Counter((r["fuente"], r["calidad"]) for r in rows)
     for quality in config.QUALITY_CLASSES:
         detail = ", ".join(f"{src}={counts[(src, quality)]}" for src in ("kaggle", "hdf", "propias"))
