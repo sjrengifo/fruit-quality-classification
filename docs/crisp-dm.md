@@ -153,7 +153,63 @@ el modelo aprenda a reconocer el dataset de origen en lugar de la calidad):
   El preprocesamiento debe unificar formato y tamaño para que la clase no sea deducible del archivo.
 - Las imágenes propias (fondo blanco) se reservan como **prueba externa** de generalización.
 
-### 3.2 Pasos pendientes
+### 3.2 Copias aumentadas en Kaggle (hallazgo crítico)
+
+Kaggle incluye **copias aumentadas** de una misma foto (`20190820_143522.jpg` + `_22896`, `_22897`, …)
+y variantes numeradas (`IMG…_01.jpg`). Agrupando por carpeta + instante de captura:
+
+| Fruta | Imágenes | Fotos únicas | Copias |
+|-------|---------:|-------------:|-------:|
+| Apple | 1.349 | 1.324 | 1,9 % |
+| Banana | 1.301 | 1.265 | 2,8 % |
+| Guava | 1.342 | 1.307 | 2,6 % |
+| Lime | 1.263 | 966 | 23,5 % |
+| Orange | 1.386 | 1.196 | 13,7 % |
+| **Pomegranate** | **6.089** | **1.291** | **78,8 %** |
+
+- El desbalanceo de `Pomegranate_Good` (≈ 5×) detectado en el EDA (§2.2) es **artificial**: en fotos
+  únicas, las 6 frutas están balanceadas (~1.000–1.300 cada una).
+- **Riesgo de fuga:** si una copia queda en entrenamiento y otra en prueba, las métricas se inflan.
+  → los splits se hacen **por grupo** (`src/data/split.py`); ningún grupo cruza splits.
+- **Para el modelado (Fase 4):** ponderar cada imagen por `1 / tamaño de su grupo` para que las
+  fotos con muchas copias no dominen el entrenamiento.
+
+### 3.3 Preprocesamiento y splits
+
+- **Preprocesamiento único** (`prepare_image`, usado también por la app): orientación EXIF → RGB →
+  lado mayor a 128 px sin deformar → relleno a cuadrado replicando el borde → caché PNG sin pérdida
+  (`data/interim/img128/`). Elimina las diferencias de formato y resolución entre fuentes y clases.
+- **Splits estables y agrupados:** cada grupo va a train/val/test según un hash de su clave
+  (≈ 60/20/20). Al agregar imágenes, las existentes no cambian de split, así los resultados de
+  distintas versiones del dataset son comparables. Las fotos propias van siempre a `externa`.
+
+| Split | Buena | Defectuosa | Podrida |
+|-------|------:|-----------:|--------:|
+| train | 9.913 | 1.944 | 1.703 |
+| val | 3.434 | 666 | 553 |
+| test | 3.330 | 601 | 586 |
+
+### 3.4 Atajo por fondo (hallazgo crítico)
+
+La revisión visual (`assets/preparacion/muestras_preprocesadas.svg`) muestra que el **fondo está
+correlacionado con la clase**: en Healthy-Defective-Fruits las `Buena` están recortadas sobre blanco,
+las `Defectuosa` sobre fondo negro o en el árbol y varias `Podrida` tienen esquinas negras de rotación;
+en Kaggle, `Good` tiene fondos variados y casi todo `Bad` está sobre la misma mesa gris.
+
+Diagnóstico (`python -m src.evaluation.shortcut`): regresión logística que **solo ve el anillo
+exterior de 10 px** de la imagen (fondo), F1-macro en validación:
+
+| Subconjunto | F1 al azar | F1 solo-fondo |
+|-------------|-----------:|--------------:|
+| Todas | 0,33 | **0,67** |
+| Kaggle | 0,33 | 0,50 |
+| Healthy-Defective-Fruits | 0,32 | **0,91** |
+
+→ Sin corregirlo, el modelo puede aprender el fondo en lugar de la calidad y fallar con fotos reales
+(fondo blanco). **Mitigación:** segmentar la fruta y reemplazar el fondo por uno uniforme antes de
+extraer características y entrenar; repetir este diagnóstico después (debe acercarse al azar).
+
+### 3.5 Pasos pendientes
 
 - Segmentación de frutas individuales (OpenCV).
 - Preprocesamiento: redimensionado, **normalización de píxeles**, augmentation.
