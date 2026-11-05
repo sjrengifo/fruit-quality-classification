@@ -228,16 +228,36 @@ Podrida 2.842.
   componentes < 1 % del área → fondo **blanco** (como la recolección propia) → 128×128. Se guardan la
   imagen sin fondo y la máscara (sirve para forma y tamaño). Si la máscara queda casi vacía (< 2 %) se
   conserva la imagen original.
-- **Costo:** ~0,3 s/imagen (≈ 2 h para todo el dataset en un portátil de 16 GB; incremental).
+- **Costo:** ~0,7 s/imagen con 2 procesos (21.438 imágenes en ≈ 4 h 20 min en un portátil de 16 GB;
+  incremental, se puede interrumpir y retomar).
+- **Resultado:** 0 errores; 39 imágenes (0,2 %) con máscara casi vacía conservan la original
+  (19 `Defectuosa` de HDF, 18 `Buena` y 2 `Podrida` de Kaggle). Área mediana de la fruta: 17 % de la
+  imagen (p5 = 5,5 %, p95 = 48 %). Muestras: `assets/preparacion/muestras_segmentadas.svg`.
+
+**Verificación del atajo** (`python -m src.evaluation.shortcut`, F1-macro en validación):
+
+| Prueba | Todas | Kaggle | HDF |
+|--------|------:|-------:|----:|
+| Al azar | 0,32 | 0,34 | 0,33 |
+| Fondo, imagen original | **0,68** | 0,52 | **0,90** |
+| Fondo, imagen segmentada | 0,20 | 0,36 | 0,38 |
+| Silueta (área, caja, centroide, forma; sin color) | 0,44 | 0,33 | **0,64** |
+
+- **El atajo de fondo desapareció:** con fondo blanco el anillo exterior ya no predice la clase
+  (todas las cifras al nivel del azar).
+- **Queda un atajo de encuadre en HDF:** sin ver color, la silueta predice la clase (0,64). En HDF las
+  `Buena` llenan el cuadro (recortadas) y muchas `Podrida` están lejos y pequeñas; en Kaggle no ocurre
+  (0,33). Mitigación propuesta para la Fase 4: recortar la caja de la máscara y reescalar
+  (normaliza el zoom) antes de extraer características/entrenar, y repetir esta prueba. La máscara
+  original se conserva para estimar el tamaño.
 
 ### 3.7 Pasos pendientes
 
-- Segmentación de frutas individuales (OpenCV).
+- Normalización del encuadre (recorte a la caja de la máscara) contra el atajo de silueta en HDF.
 - Preprocesamiento: redimensionado, **normalización de píxeles**, augmentation.
 - Extracción de características para ML (color HSV, textura GLCM/LBP, forma).
 - Estimación de tamaño (diámetro en píxeles normalizados → bins).
 - Manejo de **clases desbalanceadas** (class weights / SMOTE / augmentation).
-- Splits estratificados train/val/test reproducibles.
 
 > _Por completar: decisiones de preprocesamiento y su justificación._
 

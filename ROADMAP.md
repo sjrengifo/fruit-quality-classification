@@ -136,7 +136,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Diagnóstico de atajo por fondo (`python -m src.evaluation.shortcut`): F1 solo-fondo 0,67 (azar 0,33).
 - [x] Exclusión de imágenes en escala de grises (1.292, solo `Buena` → atajo).
 - [x] **Segmentación** con U²-Net (`python -m src.main segment`): fruta sobre fondo blanco + máscara.
-- [ ] Verificar con `python -m src.evaluation.shortcut` que el atajo de fondo desapareció.
+- [x] Verificado con `python -m src.evaluation.shortcut`: F1 solo-fondo 0,68 → 0,20 (azar 0,32). Queda un atajo de encuadre en HDF (silueta 0,64).
+- [ ] Normalizar el encuadre (recorte a la caja de la máscara) y repetir la prueba de silueta.
 - [ ] `Mixed Quality`: separar frutas múltiples por componentes de la máscara.
 - [x] **Preprocesamiento** (`src/data/preprocess.py`): formato/orientación unificados, 128×128 sin
       deformar, normalización [0, 1], caché incremental (`python -m src.main preprocess`).
