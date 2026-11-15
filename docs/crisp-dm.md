@@ -153,14 +153,111 @@ el modelo aprenda a reconocer el dataset de origen en lugar de la calidad):
   El preprocesamiento debe unificar formato y tamaño para que la clase no sea deducible del archivo.
 - Las imágenes propias (fondo blanco) se reservan como **prueba externa** de generalización.
 
-### 3.2 Pasos pendientes
+### 3.2 Copias aumentadas en Kaggle (hallazgo crítico)
 
-- Segmentación de frutas individuales (OpenCV).
+Kaggle incluye **copias aumentadas** de una misma foto (`20190820_143522.jpg` + `_22896`, `_22897`, …)
+y variantes numeradas (`IMG…_01.jpg`). Agrupando por carpeta + instante de captura:
+
+| Fruta | Imágenes | Fotos únicas | Copias |
+|-------|---------:|-------------:|-------:|
+| Apple | 1.349 | 1.324 | 1,9 % |
+| Banana | 1.301 | 1.265 | 2,8 % |
+| Guava | 1.342 | 1.307 | 2,6 % |
+| Lime | 1.263 | 966 | 23,5 % |
+| Orange | 1.386 | 1.196 | 13,7 % |
+| **Pomegranate** | **6.089** | **1.291** | **78,8 %** |
+
+- El desbalanceo de `Pomegranate_Good` (≈ 5×) detectado en el EDA (§2.2) es **artificial**: en fotos
+  únicas, las 6 frutas están balanceadas (~1.000–1.300 cada una).
+- **Riesgo de fuga:** si una copia queda en entrenamiento y otra en prueba, las métricas se inflan.
+  → los splits se hacen **por grupo** (`src/data/split.py`); ningún grupo cruza splits.
+- **Para el modelado (Fase 4):** ponderar cada imagen por `1 / tamaño de su grupo` para que las
+  fotos con muchas copias no dominen el entrenamiento.
+
+### 3.3 Preprocesamiento y splits
+
+- **Preprocesamiento único** (`prepare_image`, usado también por la app): orientación EXIF → RGB →
+  lado mayor a 128 px sin deformar → relleno a cuadrado replicando el borde → caché PNG sin pérdida
+  (`data/interim/img128/`). Elimina las diferencias de formato y resolución entre fuentes y clases.
+- **Splits estables y agrupados:** cada grupo va a train/val/test según un hash de su clave
+  (≈ 60/20/20). Al agregar imágenes, las existentes no cambian de split, así los resultados de
+  distintas versiones del dataset son comparables. Las fotos propias van siempre a `externa`.
+
+| Split | Buena | Defectuosa | Podrida |
+|-------|------:|-----------:|--------:|
+| train | 9.913 | 1.944 | 1.703 |
+| val | 3.434 | 666 | 553 |
+| test | 3.330 | 601 | 586 |
+
+### 3.4 Atajo por fondo (hallazgo crítico)
+
+La revisión visual (`assets/preparacion/muestras_preprocesadas.svg`) muestra que el **fondo está
+correlacionado con la clase**: en Healthy-Defective-Fruits las `Buena` están recortadas sobre blanco,
+las `Defectuosa` sobre fondo negro o en el árbol y varias `Podrida` tienen esquinas negras de rotación;
+en Kaggle, `Good` tiene fondos variados y casi todo `Bad` está sobre la misma mesa gris.
+
+Diagnóstico (`python -m src.evaluation.shortcut`): regresión logística que **solo ve el anillo
+exterior de 10 px** de la imagen (fondo), F1-macro en validación:
+
+| Subconjunto | F1 al azar | F1 solo-fondo |
+|-------------|-----------:|--------------:|
+| Todas | 0,33 | **0,67** |
+| Kaggle | 0,33 | 0,50 |
+| Healthy-Defective-Fruits | 0,32 | **0,91** |
+
+→ Sin corregirlo, el modelo puede aprender el fondo en lugar de la calidad y fallar con fotos reales
+(fondo blanco). **Mitigación:** segmentar la fruta y reemplazar el fondo por uno uniforme antes de
+extraer características y entrenar; repetir este diagnóstico después (debe acercarse al azar).
+
+### 3.5 Imágenes en escala de grises (excluidas)
+
+1.292 imágenes no tienen color (saturación HSV media < 8): **1.188 granadas `Good` de Kaggle** (copias
+aumentadas) y 104 de Healthy-Defective-Fruits (91 `fresh`, 13 `scab_defect`), casi todas en `Buena`. Sin color no se puede
+juzgar la calidad y el modelo aprendería "gris = Buena" → se **excluyen** del índice
+(`data/processed/excluidas.csv`). Quedan **21.438 imágenes**: Buena 15.398 · Defectuosa 3.198 ·
+Podrida 2.842.
+
+### 3.6 Segmentación (mitigación del atajo de fondo)
+
+- **Método:** U²-Net (Qin et al., 2020, *Pattern Recognition* 106:107404) vía `rembg`, una red
+  **preentrenada solo para separar el objeto principal del fondo**. Se eligió frente a GrabCut
+  (OpenCV) porque las imágenes de Healthy-Defective-Fruits tienen fondos complejos (árbol, hojas,
+  fondo negro) y manos; en una comparación visual U²-Net quitó incluso manos con guante, y la
+  variante liviana `u2netp` dejaba restos de fondo. El clasificador de calidad se entrena **desde cero**.
+- **Pipeline** (`src/data/segment.py`): imagen a 320 px → máscara (umbral 0,5) → se eliminan
+  componentes < 1 % del área → fondo **blanco** (como la recolección propia) → 128×128. Se guardan la
+  imagen sin fondo y la máscara (sirve para forma y tamaño). Si la máscara queda casi vacía (< 2 %) se
+  conserva la imagen original.
+- **Costo:** ~0,7 s/imagen con 2 procesos (21.438 imágenes en ≈ 4 h 20 min en un portátil de 16 GB;
+  incremental, se puede interrumpir y retomar).
+- **Resultado:** 0 errores; 39 imágenes (0,2 %) con máscara casi vacía conservan la original
+  (19 `Defectuosa` de HDF, 18 `Buena` y 2 `Podrida` de Kaggle). Área mediana de la fruta: 17 % de la
+  imagen (p5 = 5,5 %, p95 = 48 %). Muestras: `assets/preparacion/muestras_segmentadas.svg`.
+
+**Verificación del atajo** (`python -m src.evaluation.shortcut`, F1-macro en validación):
+
+| Prueba | Todas | Kaggle | HDF |
+|--------|------:|-------:|----:|
+| Al azar | 0,32 | 0,34 | 0,33 |
+| Fondo, imagen original | **0,68** | 0,52 | **0,90** |
+| Fondo, imagen segmentada | 0,20 | 0,36 | 0,38 |
+| Silueta (área, caja, centroide, forma; sin color) | 0,44 | 0,33 | **0,64** |
+
+- **El atajo de fondo desapareció:** con fondo blanco el anillo exterior ya no predice la clase
+  (todas las cifras al nivel del azar).
+- **Queda un atajo de encuadre en HDF:** sin ver color, la silueta predice la clase (0,64). En HDF las
+  `Buena` llenan el cuadro (recortadas) y muchas `Podrida` están lejos y pequeñas; en Kaggle no ocurre
+  (0,33). Mitigación propuesta para la Fase 4: recortar la caja de la máscara y reescalar
+  (normaliza el zoom) antes de extraer características/entrenar, y repetir esta prueba. La máscara
+  original se conserva para estimar el tamaño.
+
+### 3.7 Pasos pendientes
+
+- Normalización del encuadre (recorte a la caja de la máscara) contra el atajo de silueta en HDF.
 - Preprocesamiento: redimensionado, **normalización de píxeles**, augmentation.
 - Extracción de características para ML (color HSV, textura GLCM/LBP, forma).
 - Estimación de tamaño (diámetro en píxeles normalizados → bins).
 - Manejo de **clases desbalanceadas** (class weights / SMOTE / augmentation).
-- Splits estratificados train/val/test reproducibles.
 
 > _Por completar: decisiones de preprocesamiento y su justificación._
 

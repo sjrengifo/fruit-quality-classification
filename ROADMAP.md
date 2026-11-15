@@ -133,15 +133,20 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [ ] **Recolección propia:** capturar y organizar 30–50 imágenes reales.
 - [ ] **Anotación manual:** etiquetar calidad + tamaño en `data/external/propias/anotaciones.csv`
       (validar con `python -m src.data.own_images validar`). Se comparte con la clase vía el repo.
-- [ ] **Segmentación** de frutas individuales en imágenes con varias (`src/data/segment.py`,
-      OpenCV: umbralización/contornos).
-- [ ] **Preprocesamiento** (`src/data/preprocess.py`): redimensionado, normalización de píxeles,
-      corrección de color, data augmentation.
+- [x] Diagnóstico de atajo por fondo (`python -m src.evaluation.shortcut`): F1 solo-fondo 0,67 (azar 0,33).
+- [x] Exclusión de imágenes en escala de grises (1.292, solo `Buena` → atajo).
+- [x] **Segmentación** con U²-Net (`python -m src.main segment`): fruta sobre fondo blanco + máscara.
+- [x] Verificado con `python -m src.evaluation.shortcut`: F1 solo-fondo 0,68 → 0,20 (azar 0,32). Queda un atajo de encuadre en HDF (silueta 0,64).
+- [ ] Normalizar el encuadre (recorte a la caja de la máscara) y repetir la prueba de silueta.
+- [ ] `Mixed Quality`: separar frutas múltiples por componentes de la máscara.
+- [x] **Preprocesamiento** (`src/data/preprocess.py`): formato/orientación unificados, 128×128 sin
+      deformar, normalización [0, 1], caché incremental (`python -m src.main preprocess`).
+- [ ] Data augmentation (en el entrenamiento de la CNN, Fase 4).
 - [ ] **Estimación de tamaño**: diámetro en píxeles → normalización → bins (Peq/Med/Grande).
 - [ ] **Extracción de características** para ML tradicional (`src/features/`): histogramas de color
       (HSV), textura (GLCM/LBP), momentos de forma, área/perímetro.
 - [ ] **Manejo de desbalanceo**: class weights, SMOTE o augmentation dirigida.
-- [ ] **Splits** train/val/test estratificados y reproducibles (semilla fija).
+- [x] **Splits** train/val/test estables por hash y **agrupados** (copias aumentadas de Kaggle) — `src/data/split.py`.
 
 **Entregables:** datos en `data/processed/`, scripts de preparación, dataset propio anotado.
 
