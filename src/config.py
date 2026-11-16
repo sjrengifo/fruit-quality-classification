@@ -20,6 +20,7 @@ DATASET_INDEX = PROCESSED_DIR / "index.csv"
 EXPERIMENTS_DIR = ROOT_DIR / "experiments"
 CHECKPOINTS_DIR = EXPERIMENTS_DIR / "checkpoints"
 RESULTS_DIR = EXPERIMENTS_DIR / "results"
+LOGS_DIR = EXPERIMENTS_DIR / "logs"
 
 # ─── Definición del problema ──────────────────────────────
 QUALITY_CLASSES = ["Buena", "Defectuosa", "Podrida"]      # 3 clases de calidad
@@ -59,4 +60,4 @@ RANDOM_SEED = 42            # reproducibilidad
 TEST_SIZE = 0.2
 VAL_SIZE = 0.2
 BATCH_SIZE = 32
-EPOCHS = 30
+EPOCHS = 40                 # máximo; se detiene antes si el F1 de validación no mejora
