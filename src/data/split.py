@@ -8,6 +8,11 @@ Dos decisiones:
 - **Estables:** el split de cada grupo sale de un hash de su clave, no de un sorteo global. Al
   agregar imágenes nuevas, las existentes no cambian de split y los resultados siguen comparables.
 
+- **Casi-duplicados (HDF):** Healthy-Defective-Fruits no trae metadatos de captura y repite la
+  misma fruta decenas o cientos de veces (ráfagas, copias exactas). `near_duplicate_groups` agrupa
+  dentro de cada carpeta las imágenes con histograma de color casi idéntico (enlace simple), y el
+  grupo completo va a un solo split. Sin esto el F1 en HDF sale inflado (0,99).
+
 La recolección propia siempre va al split `externa` (prueba externa, nunca se entrena con ella).
 """
 from __future__ import annotations
@@ -21,6 +26,8 @@ from src import config
 SPLITS = ["train", "val", "test", "externa"]
 _TIMESTAMP = re.compile(r"(\d{8})_?(\d{6})")
 _VARIANT = re.compile(r"(_\d{1,2})?$")
+DUP_BINS = (12, 4, 4)     # histograma H, S, V de la imagen completa
+DUP_THRESHOLD = 0.25      # distancia L1 (0–2) por debajo de la cual dos imágenes son la misma toma
 
 
 def group_key(ruta: str, fuente: str) -> str:
@@ -31,6 +38,35 @@ def group_key(ruta: str, fuente: str) -> str:
         stem = m.group(1) + m.group(2) if m else _VARIANT.sub("", path.stem)
         return f"{path.parent}/{stem}"
     return ruta
+
+
+def color_signature(path) -> "np.ndarray":
+    """Histograma HSV 3D normalizado de la imagen (reducida a 128 px)."""
+    import numpy as np
+    from PIL import Image
+
+    with Image.open(path) as img:
+        img.draft("RGB", (128, 128))
+        img = img.convert("RGB")
+        img.thumbnail((128, 128))
+        hsv = np.asarray(img.convert("HSV")).reshape(-1, 3)
+    hist, _ = np.histogramdd(hsv, bins=DUP_BINS, range=[(0, 256)] * 3)
+    return hist.ravel() / len(hsv)
+
+
+def near_duplicate_groups(paths: list, threshold: float = DUP_THRESHOLD) -> list[int]:
+    """Etiqueta de grupo por imagen: componentes conexos de las parejas a distancia L1 < threshold."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    import numpy as np
+    from scipy.sparse.csgraph import connected_components
+    from scipy.spatial.distance import cdist
+
+    if not paths:
+        return []
+    with ThreadPoolExecutor() as pool:
+        X = np.stack(list(pool.map(color_signature, paths)))
+    return connected_components(cdist(X, X, "cityblock") < threshold)[1].tolist()
 
 
 def assign_split(grupo: str, fuente: str) -> str:

@@ -137,37 +137,41 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Exclusión de imágenes en escala de grises (1.292, solo `Buena` → atajo).
 - [x] **Segmentación** con U²-Net (`python -m src.main segment`): fruta sobre fondo blanco + máscara.
 - [x] Verificado con `python -m src.evaluation.shortcut`: F1 solo-fondo 0,68 → 0,20 (azar 0,32). Queda un atajo de encuadre en HDF (silueta 0,64).
-- [ ] Normalizar el encuadre (recorte a la caja de la máscara) y repetir la prueba de silueta.
+- [x] Normalizar el encuadre (`python -m src.main crop`): silueta en HDF 0,64 → 0,37 (azar 0,31).
+- [x] Agrupar casi-duplicados de HDF (la misma fruta repetida cientos de veces): F1 en HDF 0,99 → 0,79.
 - [ ] `Mixed Quality`: separar frutas múltiples por componentes de la máscara.
 - [x] **Preprocesamiento** (`src/data/preprocess.py`): formato/orientación unificados, 128×128 sin
       deformar, normalización [0, 1], caché incremental (`python -m src.main preprocess`).
-- [ ] Data augmentation (en el entrenamiento de la CNN, Fase 4).
+- [x] Data augmentation dentro de la CNN (giros, rotación, zoom, brillo/contraste).
 - [ ] **Estimación de tamaño**: diámetro en píxeles → normalización → bins (Peq/Med/Grande).
-- [ ] **Extracción de características** para ML tradicional (`src/features/`): histogramas de color
+- [x] **Extracción de características** para ML tradicional (`src/features/`): histogramas de color
       (HSV), textura (GLCM/LBP), momentos de forma, área/perímetro.
-- [ ] **Manejo de desbalanceo**: class weights, SMOTE o augmentation dirigida.
+- [x] **Manejo de desbalanceo**: pesos por muestra (1/tamaño del grupo, clases equilibradas); SMOTE descartado.
 - [x] **Splits** train/val/test estables por hash y **agrupados** (copias aumentadas de Kaggle) — `src/data/split.py`.
 
 **Entregables:** datos en `data/processed/`, scripts de preparación, dataset propio anotado.
 
 ---
 
-## Fase 4 — Modelado  ⬜
+## Fase 4 — Modelado  🟨
 
 > **Rúbrica:** Criterio 4 (estrategia y justificación), Criterio 5 (fundamentos matemáticos).
 
 **Objetivo:** entrenar y ajustar modelos (≥ 2 ML tradicional + 1 CNN).
 
-- [ ] **Línea base** (baseline): clasificador de mayoría / trivial.
-- [ ] **ML tradicional** (`src/models/classic_ml.py`, `notebooks/03_modeling_ml.ipynb`):
-  - [ ] Elegir ≥ 2 modelos (p. ej. SVM, Random Forest, XGBoost, KNN, Reg. Logística).
-  - [ ] **Ajuste de hiperparámetros** con `GridSearchCV` / validación cruzada.
-- [ ] **CNN** (`src/models/cnn.py`, `notebooks/04_modeling_cnn.ipynb`):
-  - [ ] Arquitectura pequeña desde cero (2–3 conv + pooling + densas).
-  - [ ] Opcional: transfer learning con capas congeladas.
-  - [ ] Callbacks (early stopping, checkpoints en `experiments/checkpoints/`).
-- [ ] Registrar experimentos (logs/resultados en `experiments/`).
-- [ ] Justificar selección de modelos y **alternativas descartadas**.
+- [x] **Línea base**: mayoría (F1-macro val 0,27) y azar estratificado (0,34).
+- [x] **ML tradicional** (`src/models/classic_ml.py`, `python -m src.training.train --model classic`):
+  - [x] Regresión logística (0,76), **SVM RBF (0,84)** y Random Forest (0,84) — F1-macro en validación.
+  - [x] **Ajuste de hiperparámetros** con `GridSearchCV` y 5 pliegues estratificados por grupo.
+  - [x] Ablación de características y prueba entre fuentes (`python -m src.evaluation.ablation`).
+- [x] **CNN** (`src/models/cnn.py`, `python -m src.training.train --model cnn`): F1-macro val 0,85–0,89.
+  - [x] Arquitectura pequeña desde cero (4 bloques conv + BN + pooling, GAP, densa; 341 mil parámetros).
+  - [x] Búsqueda de 5 configuraciones (`--model cnn_search`).
+  - [ ] Estabilizar el entrenamiento (el F1 de validación oscila ±0,1 entre épocas) y fijar la configuración final.
+  - [ ] Opcional: transfer learning con capas congeladas (no previsto: el enunciado pide CNN desde cero).
+  - [x] Callbacks (mejor época por F1-macro de validación, parada temprana, checkpoints en `experiments/checkpoints/`).
+- [x] Registrar experimentos (`experiments/results/*.json`, `experiments/logs/`; figuras en `assets/modelado/`).
+- [x] Justificar selección de modelos y **alternativas descartadas** (`docs/crisp-dm.md` §4).
 
 **Entregables:** modelos entrenados, notebooks de modelado, logs de experimentos.
 

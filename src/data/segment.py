@@ -10,7 +10,12 @@ componentes pequeños (< MIN_COMPONENT del área) → fondo blanco → reducció
 Cachés: data/interim/seg<N>/<id>.png (imagen) y data/interim/mask<N>/<id>.png (máscara), más
 data/interim/seg_stats.csv con el área de la máscara para control de calidad.
 
-Uso:  python -m src.main segment
+Después se **normaliza el encuadre** (`crop_fruit`): se recorta la caja de la máscara y se reescala,
+para que el zoom no prediga la clase (en HDF las `Buena` llenan el cuadro y las `Podrida` no).
+Cachés: data/interim/crop<N>/ y cropmask<N>/. La máscara sin recortar se conserva para el tamaño.
+
+Uso:  python -m src.main segment   (segmenta)
+      python -m src.main crop      (recorta; rápido, no usa la red)
 """
 from __future__ import annotations
 
@@ -27,6 +32,7 @@ SEG_INPUT = (320, 320)       # resolución de entrada de U²-Net
 MIN_COMPONENT = 0.01         # fracción mínima del área para conservar un componente
 EMPTY_MASK = 0.02            # máscara con menos área que esto = segmentación fallida
 BACKGROUND = 255             # blanco
+CROP_MARGIN = 0.05           # margen alrededor de la fruta al recortar (fracción del lado)
 
 _session = None
 
@@ -133,6 +139,69 @@ def segment_index(size: tuple[int, int] | None = None, workers: int | None = Non
     return len(tasks), errors
 
 
+def crop_fruit(image: np.ndarray, mask: np.ndarray, size: tuple[int, int] | None = None,
+               margin: float = CROP_MARGIN) -> tuple[np.ndarray, np.ndarray]:
+    """Recorta la fruta (caja cuadrada de la máscara + margen) sobre fondo blanco y la lleva a `size`.
+
+    `mask` puede venir a menor resolución que `image`. Con máscara llena (segmentación fallida) se
+    devuelve la imagen completa.
+    """
+    from PIL import Image
+
+    size = size or config.IMAGE_SIZE
+    h, w = image.shape[:2]
+    if mask.shape != (h, w):
+        mask = np.asarray(Image.fromarray(mask.astype(np.uint8) * 255).resize((w, h), Image.Resampling.NEAREST)) > 127
+    ys, xs = np.nonzero(mask)
+    if len(xs) == 0:
+        mask = np.ones((h, w), dtype=bool)
+        ys, xs = np.nonzero(mask)
+    x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
+    side = int(round(max(x1 - x0, y1 - y0) * (1 + 2 * margin)))
+    ox, oy = (side - (x1 - x0)) // 2, (side - (y1 - y0)) // 2
+    canvas = np.full((side, side, 3), BACKGROUND, dtype=np.uint8)
+    canvas_mask = np.zeros((side, side), dtype=bool)
+    canvas[oy:oy + y1 - y0, ox:ox + x1 - x0] = remove_background(image, mask)[y0:y1, x0:x1]
+    canvas_mask[oy:oy + y1 - y0, ox:ox + x1 - x0] = mask[y0:y1, x0:x1]
+    out = Image.fromarray(canvas).resize((size[1], size[0]), Image.Resampling.LANCZOS)
+    out_mask = Image.fromarray(canvas_mask.astype(np.uint8) * 255).resize((size[1], size[0]), Image.Resampling.NEAREST)
+    return np.asarray(out), np.asarray(out_mask) > 127
+
+
+def _crop_process(task: tuple[str, str, tuple[int, int]]) -> str | None:
+    from PIL import Image
+
+    from src.data.preprocess import cache_path, prepare_image
+
+    ruta, image_id, size = task
+    try:
+        mask = np.asarray(Image.open(cache_path(image_id, size, "mask"))) > 127
+        image, crop_mask = crop_fruit(prepare_image(config.DATA_DIR / ruta, SEG_INPUT), mask, size)
+        Image.fromarray(image).save(cache_path(image_id, size, "crop"))
+        Image.fromarray(crop_mask.astype(np.uint8) * 255).save(cache_path(image_id, size, "cropmask"))
+    except Exception as exc:
+        return f"{ruta}: {exc}"
+    return None
+
+
+def crop_index(size: tuple[int, int] | None = None, workers: int | None = None) -> tuple[int, list[str]]:
+    """Recorta todas las imágenes ya segmentadas del índice (incremental)."""
+    from tqdm import tqdm
+
+    from src.data.preprocess import cache_dir, cache_path
+
+    size = size or config.IMAGE_SIZE
+    with open(config.DATASET_INDEX, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    for variant in ("crop", "cropmask"):
+        cache_dir(size, variant).mkdir(parents=True, exist_ok=True)
+    tasks = [(r["ruta"], r["id"], size) for r in rows
+             if cache_path(r["id"], size, "mask").exists() and not cache_path(r["id"], size, "cropmask").exists()]
+    with ProcessPoolExecutor(max_workers=workers) as pool:
+        errors = [e for e in tqdm(pool.map(_crop_process, tasks, chunksize=64), total=len(tasks), desc="Recortando") if e]
+    return len(tasks), errors
+
+
 def estimate_diameter_px(mask: np.ndarray) -> float:
     """Diámetro (px) del círculo mínimo que envuelve el componente más grande de la máscara."""
     import cv2
@@ -159,6 +228,13 @@ def main() -> None:
     for e in errors:
         print(f"✗ {e}")
     print(f"{n - len(errors)} imágenes segmentadas · {len(errors)} error(es).")
+
+
+def crop_main() -> None:
+    n, errors = crop_index()
+    for e in errors:
+        print(f"✗ {e}")
+    print(f"{n - len(errors)} imágenes recortadas · {len(errors)} error(es).")
 
 
 if __name__ == "__main__":

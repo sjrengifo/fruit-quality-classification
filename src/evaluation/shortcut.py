@@ -33,12 +33,12 @@ def border_features(image_id: str, variant: str = "img") -> np.ndarray:
     return np.concatenate([ring.mean(0) / 255, ring.std(0) / 255, *hists])
 
 
-def silhouette_features(image_id: str) -> np.ndarray:
+def silhouette_features(image_id: str, variant: str = "mask") -> np.ndarray:
     """Área, caja envolvente, centroide, n.º de componentes y circularidad de la máscara."""
     import cv2
     from PIL import Image
 
-    mask = (np.asarray(Image.open(cache_path(image_id, variant="mask"))) > 127).astype(np.uint8)
+    mask = (np.asarray(Image.open(cache_path(image_id, variant=variant))) > 127).astype(np.uint8)
     h, w = mask.shape
     ys, xs = np.nonzero(mask)
     if len(xs) == 0:
@@ -79,6 +79,7 @@ def main() -> None:
         "fondo (original)": partial(border_features, variant="img"),
         "fondo (segmentada)": partial(border_features, variant="seg"),
         "silueta": silhouette_features,
+        "silueta (recortada)": partial(silhouette_features, variant="cropmask"),
     }
     subsets = [("todas", rows),
                ("kaggle", [r for r in rows if r["fuente"] == "kaggle"]),
