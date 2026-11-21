@@ -154,7 +154,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 ---
 
-## Fase 4 — Modelado  🟨
+## Fase 4 — Modelado  ✅
 
 > **Rúbrica:** Criterio 4 (estrategia y justificación), Criterio 5 (fundamentos matemáticos).
 
@@ -165,11 +165,13 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
   - [x] Regresión logística (0,76), **SVM RBF (0,84)** y Random Forest (0,84) — F1-macro en validación.
   - [x] **Ajuste de hiperparámetros** con `GridSearchCV` y 5 pliegues estratificados por grupo.
   - [x] Ablación de características y prueba entre fuentes (`python -m src.evaluation.ablation`).
-- [x] **CNN** (`src/models/cnn.py`, `python -m src.training.train --model cnn`): F1-macro val 0,85–0,89.
+- [x] **CNN** (`src/models/cnn.py`, `python -m src.training.train --model cnn`): F1-macro val 0,88–0,91.
   - [x] Arquitectura pequeña desde cero (4 bloques conv + BN + pooling, GAP, densa; 341 mil parámetros).
   - [x] Búsqueda de 5 configuraciones (`--model cnn_search`).
-  - [ ] Estabilizar el entrenamiento (el F1 de validación oscila ±0,1 entre épocas) y fijar la configuración final:
-        búsqueda `cnn_estable` (lote 128, decaimiento coseno, pesos 1/√grupo) en Colab con GPU (`notebooks/colab_entrenar_cnn`).
+  - [x] Estabilizar el entrenamiento: búsqueda `cnn_estable` (lote 128, decaimiento coseno) en Colab con GPU
+        (`notebooks/colab_entrenar_cnn`); la oscilación del F1 de validación baja de ±0,1 a ±0,007.
+- [x] **Selección del modelo final solo con validación** (`config.FINAL_MODEL`, `docs/crisp-dm.md` §4.3):
+      CNN sin aumento de datos (F1 0,91, recall Podrida 0,94), +0,07 [0,01; 0,12] sobre el SVM.
   - [ ] Opcional: transfer learning con capas congeladas (no previsto: el enunciado pide CNN desde cero).
   - [x] Callbacks (mejor época por F1-macro de validación, parada temprana, checkpoints en `experiments/checkpoints/`).
 - [x] Registrar experimentos (`experiments/results/*.json`, `experiments/logs/`; figuras en `assets/modelado/`).

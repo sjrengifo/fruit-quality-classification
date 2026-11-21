@@ -14,7 +14,11 @@ OUT = config.ROOT_DIR / "assets" / "modelado"
 BLUE, ORANGE, INK, MUTED, GRID, SURFACE = "#2a78d6", "#eb6834", "#0b0b0b", "#52514e", "#e4e3df", "#fcfcfb"
 MODEL_NAMES = {"mayoria": "Mayoría", "azar_estratificado": "Azar estratificado",
                "regresion_logistica": "Regresión logística", "svm": "SVM (RBF)", "random_forest": "Random Forest"}
-CNN_NAMES = ["Base", "Sin aumento de datos", "Red pequeña", "Más regularización", "Tasa de aprendizaje 3e-4"]
+CNN_NAMES = {
+    "cnn_busqueda": ["Base", "Sin aumento de datos", "Red pequeña", "Más regularización", "Tasa de aprendizaje 3e-4"],
+    "cnn_estable": ["Lote 128 + coseno", "Sin aumento de datos", "Pesos 1/√grupo", "Pesos 1/√grupo, lr 2e-3"],
+}
+FINAL_CNN_LABEL = "CNN (sin aumento, estable)"
 
 
 def _load(name: str):
@@ -39,10 +43,9 @@ def _save(fig, name: str) -> None:
 
 def compare_models(plt) -> None:
     """Barras horizontales: F1-macro en validación de cada modelo."""
-    classic, search = _load("classic"), _load("cnn_busqueda")
-    best = max(range(len(search)), key=lambda i: search[i]["f1_val"])
+    classic = _load("classic")
     items = [(MODEL_NAMES[k], v["val"]["f1_macro"]) for k, v in classic.items()]
-    items.append((f"CNN ({CNN_NAMES[best].lower()})", search[best]["f1_val"]))
+    items.append((FINAL_CNN_LABEL, _load(config.FINAL_MODEL)["val"]["f1_macro"]))
     items.sort(key=lambda t: t[1])
     fig, ax = plt.subplots(figsize=(6, 2.6))
     _style(ax)
@@ -58,37 +61,35 @@ def compare_models(plt) -> None:
     _save(fig, "comparacion_modelos")
 
 
-def cnn_curves(plt) -> None:
-    """Múltiplos pequeños: F1-macro de validación por época de cada configuración de la CNN."""
+def cnn_curves(plt, search: str = "cnn_busqueda", name: str = "cnn_curvas_validacion") -> None:
+    """Múltiplos pequeños: F1-macro de validación por época de cada configuración de una búsqueda."""
     import pandas as pd
 
-    search = _load("cnn_busqueda")
+    names = CNN_NAMES[search]
     svm = _load("classic")["svm"]["val"]["f1_macro"]
-    fig, axes = plt.subplots(1, len(search), figsize=(11, 2.4), sharey=True)
+    fig, axes = plt.subplots(1, len(names), figsize=(2.2 * len(names), 2.4), sharey=True)
     for i, ax in enumerate(axes):
         _style(ax)
-        f1 = pd.read_csv(config.LOGS_DIR / f"cnn_busqueda_{i}_historia.csv")["val_f1_macro"]
+        f1 = pd.read_csv(config.LOGS_DIR / f"{search}_{i}_historia.csv")["val_f1_macro"]
         ax.axhline(svm, color=MUTED, lw=1, ls=(0, (3, 3)))
         ax.plot(range(1, len(f1) + 1), f1, color=BLUE, lw=2, solid_capstyle="round")
         k = int(f1.idxmax())
         ax.plot(k + 1, f1[k], "o", ms=6, color=BLUE, mec=SURFACE, mew=1.5)
         ax.text(k + 1, f1[k] + 0.04, f"{f1[k]:.2f}".replace(".", ","), ha="center", fontsize=8, color=INK)
-        ax.set_title(CNN_NAMES[i], fontsize=8.5, color=INK, loc="left")
+        ax.set_title(names[i], fontsize=8.5, color=INK, loc="left")
         ax.set_ylim(0, 1.02)
         ax.set_xlabel("época", fontsize=8, color=MUTED)
         ax.grid(axis="y", color=GRID, lw=0.6)
     axes[0].set_ylabel("F1-macro en validación", fontsize=8, color=MUTED)
     axes[0].text(1, svm - 0.07, "SVM", fontsize=7.5, color=MUTED)
     fig.tight_layout()
-    _save(fig, "cnn_curvas_validacion")
+    _save(fig, name)
 
 
 def confusion_matrices(plt) -> None:
-    """Matrices de confusión en validación (normalizadas por fila) del SVM y la mejor CNN."""
-    search = _load("cnn_busqueda")
-    best = max(range(len(search)), key=lambda i: search[i]["f1_val"])
+    """Matrices de confusión en validación (normalizadas por fila) del SVM y la CNN final."""
     panels = [("SVM (RBF)", _load("classic")["svm"]["val"]["matriz_confusion"]),
-              (f"CNN ({CNN_NAMES[best].lower()})", _load(f"cnn_busqueda_{best}")["val"]["matriz_confusion"])]
+              (FINAL_CNN_LABEL, _load(config.FINAL_MODEL)["val"]["matriz_confusion"])]
     fig, axes = plt.subplots(1, 2, figsize=(7, 3.2))
     for ax, (title, cm) in zip(axes, panels):
         cm = np.array(cm)
@@ -119,6 +120,7 @@ def main() -> None:
 
     compare_models(plt)
     cnn_curves(plt)
+    cnn_curves(plt, "cnn_estable", "cnn_curvas_estable")
     confusion_matrices(plt)
     print(f"Figuras → {OUT}")
 

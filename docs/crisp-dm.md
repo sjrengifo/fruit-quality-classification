@@ -406,7 +406,48 @@ se regeneran con `python -m src.evaluation.figuras_modelado`).
 - No hay evidencia de que el aumento de datos ayude en validación; se mantiene como opción porque su
   beneficio esperado es fuera de distribución (fotos propias), que la validación no mide.
 
-### 4.3 Alternativas descartadas
+**Estabilización** (`--model cnn_stable`, entrenada en Google Colab con GPU T4 y precisión mixta,
+`notebooks/colab_entrenar_cnn`; ~5–10 min por configuración frente a ~1,5 h en CPU). Cambios sobre
+la base: lotes de **128** (el gradiente con pesos por muestra muy desiguales es menos ruidoso) y
+tasa de aprendizaje con **decaimiento coseno** hasta 0 en 40 épocas, sin parada temprana. Se reporta
+además la media y desviación del F1 de validación en las **últimas 5 épocas**, que no depende de
+elegir una época con la propia validación:
+
+| Configuración (lote 128 + coseno) | Mejor época | F1 val | IC95 (grupos) | Últimas 5 (media ± desv.) | F1 Kaggle | F1 HDF | Recall Podrida |
+|------------------------------------|------------:|-------:|:-------------:|:-------------------------:|----------:|-------:|---------------:|
+| Con aumento de datos               | 36 | 0,88 | 0,82–0,91 | 0,870 ± 0,004 | 0,74 | 0,87 | 0,85 |
+| **Sin aumento de datos**           | 30 | **0,91** | 0,85–0,95 | **0,890 ± 0,007** | **0,83** | **0,90** | **0,94** |
+| Pesos 1/√grupo                     | 40 | 0,88 | 0,82–0,92 | 0,879 ± 0,002 | 0,72 | 0,88 | 0,88 |
+| Pesos 1/√grupo, lr 2e-3            | 35 | 0,89 | 0,80–0,94 | 0,884 ± 0,002 | 0,74 | 0,88 | 0,91 |
+
+Figura: `assets/modelado/cnn_curvas_estable`.
+
+- **La inestabilidad era del optimizador, no del modelo:** con lote 128 y coseno, la desviación del
+  F1 en las últimas épocas baja de ±0,1 a ±0,002–0,007, y la mejor época queda a ≤ 0,02 de la media
+  final → la cifra de validación ya no depende de una época afortunada.
+- **Sin aumento de datos es mejor por segunda vez** (también en la búsqueda anterior) y es la única
+  configuración que supera al SVM **también en Kaggle** (0,83 vs. 0,79) y cumple el KPI de recall
+  de Podrida (0,94). Frente a las otras tres configuraciones, la diferencia pareada en F1-macro
+  (bootstrap por grupos, mismas imágenes) es positiva con IC95 por encima de 0 en las tres
+  (+0,02 a +0,04). Hipótesis: rotaciones de ±90° y brillo/contraste alteran justo las señales de
+  color y forma que distinguen la calidad, y el recorte (§3.6) ya normaliza encuadre y escala.
+- Riesgo asumido: sin aumento, la red puede ser más frágil ante fotos distintas (cámara, luz). Eso
+  lo mide la evaluación con las fotos propias (Fase 5), no la validación.
+- Los pesos 1/√grupo no aportan; se mantienen los pesos 1/grupo de §3.8.
+
+### 4.3 Selección del modelo final (antes de abrir `test`)
+
+Se decide **solo con validación** y se registra en `src/config.py` (`FINAL_MODEL`, `FINAL_CLASSIC`)
+antes de la evaluación final, para que la elección no pueda depender de `test`:
+
+- **Modelo final: CNN `cnn_estable_1`** (lote 128, coseno, sin aumento de datos). Frente al SVM, en
+  las mismas 4.490 imágenes de validación: **F1-macro +0,07, IC95 [+0,01; +0,12]** (diferencia
+  real); recall de Podrida +0,02, IC95 [−0,01; +0,06] (empate). Además es mejor en ambas fuentes.
+- **Comparación: SVM (RBF)**, el mejor modelo de ML tradicional. Se evalúa en `test` y fotos
+  propias junto a la CNN, porque el enunciado pide comparar ambos enfoques; esa evaluación no cambia
+  la elección.
+
+### 4.4 Alternativas descartadas
 
 - **SMOTE / sobremuestreo sintético:** ver §3.8.
 - **Transfer learning para clasificar:** el enunciado pide una CNN entrenada desde cero; la red

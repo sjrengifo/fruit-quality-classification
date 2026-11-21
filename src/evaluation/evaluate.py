@@ -87,6 +87,25 @@ def bootstrap_ci(y_true, y_pred, groups, metric, n_boot: int = N_BOOT, alpha: fl
     return float(lo), float(hi)
 
 
+def paired_diff_ci(y_true, pred_a, pred_b, groups, metric, n_boot: int = N_BOOT, alpha: float = 0.05,
+                   seed: int = config.RANDOM_SEED) -> tuple[float, float, float]:
+    """(diferencia, IC95) de metric(A) − metric(B) sobre las **mismas** imágenes, remuestreando grupos.
+
+    Si el intervalo no contiene 0, la diferencia entre los dos modelos no se explica por el azar del
+    muestreo de frutas.
+    """
+    y_true, pred_a, pred_b, groups = map(np.asarray, (y_true, pred_a, pred_b, groups))
+    uniq, inverse = np.unique(groups, return_inverse=True)
+    members = [np.flatnonzero(inverse == g) for g in range(len(uniq))]
+    rng = np.random.default_rng(seed)
+    stats = []
+    for _ in range(n_boot):
+        idx = np.concatenate([members[g] for g in rng.integers(0, len(uniq), len(uniq))])
+        stats.append(metric(y_true[idx], pred_a[idx]) - metric(y_true[idx], pred_b[idx]))
+    lo, hi = np.nanpercentile(stats, [100 * alpha / 2, 100 * (1 - alpha / 2)])
+    return metric(y_true, pred_a) - metric(y_true, pred_b), float(lo), float(hi)
+
+
 def evaluate(model_name: str, split: str = "val") -> dict:
     """Evalúa, guarda JSON + CSV de errores y devuelve el resultado."""
     from src.training.train import evaluate_split, save_results
