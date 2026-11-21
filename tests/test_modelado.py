@@ -61,3 +61,15 @@ def test_sample_weights_balance_classes_and_groups():
     assert np.isclose(w.mean(), 1.0)
     assert np.isclose(w[:9].sum(), w[9:].sum())      # cada clase pesa lo mismo
     assert np.isclose(w[:8].sum(), w[8])             # 8 copias de un grupo = 1 foto
+
+
+def test_bootstrap_ci_resamples_groups():
+    from src.evaluation.evaluate import bootstrap_ci, f1_macro, recall_of
+
+    y = np.array([0, 1, 2] * 10)
+    groups = np.repeat(np.arange(10), 3)
+    assert bootstrap_ci(y, y, groups, f1_macro, n_boot=200) == (1.0, 1.0)  # perfecto → [1, 1]
+    wrong = y.copy()
+    wrong[:6] = 0                                                             # 2 grupos con errores
+    lo, hi = bootstrap_ci(y, wrong, groups, recall_of(2), n_boot=500)
+    assert 0 <= lo < recall_of(2)(y, wrong) < hi <= 1

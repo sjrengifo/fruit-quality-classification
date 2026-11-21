@@ -168,7 +168,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] **CNN** (`src/models/cnn.py`, `python -m src.training.train --model cnn`): F1-macro val 0,85–0,89.
   - [x] Arquitectura pequeña desde cero (4 bloques conv + BN + pooling, GAP, densa; 341 mil parámetros).
   - [x] Búsqueda de 5 configuraciones (`--model cnn_search`).
-  - [ ] Estabilizar el entrenamiento (el F1 de validación oscila ±0,1 entre épocas) y fijar la configuración final.
+  - [ ] Estabilizar el entrenamiento (el F1 de validación oscila ±0,1 entre épocas) y fijar la configuración final:
+        búsqueda `cnn_estable` (lote 128, decaimiento coseno, pesos 1/√grupo) en Colab con GPU (`notebooks/colab_entrenar_cnn`).
   - [ ] Opcional: transfer learning con capas congeladas (no previsto: el enunciado pide CNN desde cero).
   - [x] Callbacks (mejor época por F1-macro de validación, parada temprana, checkpoints en `experiments/checkpoints/`).
 - [x] Registrar experimentos (`experiments/results/*.json`, `experiments/logs/`; figuras en `assets/modelado/`).
@@ -185,7 +186,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 **Objetivo:** medir desempeño real y analizar críticamente los resultados.
 
-- [ ] Evaluar en **conjunto de prueba** (`src/evaluation/evaluate.py`).
+- [x] Módulo de evaluación con IC95 por bootstrap de grupos y lista de errores (`python -m src.evaluation.evaluate`).
+- [ ] Evaluar **una sola vez** el modelo final en `test` y en las fotos propias (`--split test|externa --final`).
 - [ ] Métricas: accuracy, precision/recall/F1 (macro y por clase), matriz de confusión, ROC-AUC.
 - [ ] Métricas de tamaño (MAE / accuracy por bin).
 - [ ] **Análisis de errores** (casos mal clasificados, confusiones frecuentes).
