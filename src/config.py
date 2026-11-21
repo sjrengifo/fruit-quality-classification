@@ -61,3 +61,7 @@ TEST_SIZE = 0.2
 VAL_SIZE = 0.2
 BATCH_SIZE = 32
 EPOCHS = 40                 # máximo; se detiene antes si el F1 de validación no mejora
+
+# ─── Modelos finales (elegidos solo con validación, antes de abrir test — docs/crisp-dm.md §4.3) ─
+FINAL_MODEL = "cnn_estable_1"     # CNN desde cero: lote 128, coseno, sin aumento de datos
+FINAL_CLASSIC = "svm"             # mejor modelo de ML tradicional, se reporta como comparación

@@ -6,6 +6,7 @@
 #
 # ```bash
 # python -m src.training.train --model cnn_search   # 5 configuraciones → experiments/results/cnn_busqueda*.json
+# python -m src.training.train --model cnn_stable   # 4 configuraciones estables (en Colab con GPU: notebooks/colab_entrenar_cnn)
 # python -m src.training.train --model cnn          # solo la configuración por defecto (CNN_DEFAULT)
 # ```
 #
@@ -151,4 +152,68 @@ pd.concat({"SVM": pd.DataFrame(classic["svm"]["val"]["por_clase"]).T,
 #   debajo.
 # - El error más costoso (Podrida → Buena) es mayor en la CNN (9 % vs. 4 %) y su recall de Podrida no
 #   cumple la meta de 0,90.
-# - Pendiente: estabilizar el entrenamiento antes de fijar la configuración final (ROADMAP, Fase 4).
+# - Pendiente: estabilizar el entrenamiento antes de fijar la configuración final (§5).
+
+# %% [markdown]
+# ## 5. Estabilización (Colab, GPU T4)
+#
+# Cambios: lotes de **128** y tasa de aprendizaje con **decaimiento coseno** hasta 0 en 40 épocas,
+# sin parada temprana (`CNN_GRID_STABLE` en `src/models/cnn.py`). Además del F1 de la mejor época se
+# mira la **media de las últimas 5 épocas**, que no depende de elegir una época con la propia
+# validación. El IC95 se calcula remuestreando grupos (`src/evaluation/evaluate.py`).
+
+# %%
+from src.models.cnn import CNN_GRID_STABLE  # noqa: E402
+
+STABLE_NAMES = ["Lote 128 + coseno", "Sin aumento de datos", "Pesos 1/√grupo", "Pesos 1/√grupo, lr 2e-3"]
+stable = [json.load(open(config.RESULTS_DIR / f"cnn_estable_{i}.json", encoding="utf-8")) for i in range(len(CNN_GRID_STABLE))]
+stable_hist = [pd.read_csv(config.LOGS_DIR / f"cnn_estable_{i}_historia.csv") for i in range(len(CNN_GRID_STABLE))]
+stable_eval = [json.load(open(config.RESULTS_DIR / f"eval_cnn_estable_{i}_val.json", encoding="utf-8")) for i in range(len(CNN_GRID_STABLE))]
+pd.DataFrame([{
+    "configuración": STABLE_NAMES[i], "mejor época": r["mejor_epoca"], "minutos (T4)": r["minutos"],
+    "F1 val": r["val"]["f1_macro"], "IC95": "[{:.2f}, {:.2f}]".format(*e["ic95"]["f1_macro"]),
+    "últimas 5 media": r["f1_val_ultimas_5_media"], "últimas 5 desv.": r["f1_val_ultimas_5_desv"],
+    "F1 val Kaggle": r["val"]["por_fuente"]["kaggle"], "F1 val HDF": r["val"]["por_fuente"]["hdf"],
+    "recall Podrida": r["val"]["por_clase"]["Podrida"]["recall"],
+} for i, (r, e) in enumerate(zip(stable, stable_eval))])
+
+# %%
+fig, axes = plt.subplots(1, 2, figsize=(11, 3), sharey=True)
+for ax, hists, names, title in [(axes[0], histories, NAMES, "Antes: lote 32 + ReduceLROnPlateau"),
+                                (axes[1], stable_hist, STABLE_NAMES, "Después: lote 128 + coseno")]:
+    for h, n in zip(hists, names):
+        ax.plot(h["epoca"] + 1, h["val_f1_macro"], lw=1.3, label=n)
+    ax.axhline(svm, color="#52514e", ls=":", lw=1)
+    ax.set_title(title, fontsize=9, loc="left")
+    ax.set_xlabel("época", fontsize=8)
+    ax.set_ylim(0, 1)
+    ax.legend(fontsize=7, loc="lower right")
+axes[0].set_ylabel("F1-macro val", fontsize=8)
+plt.tight_layout()
+
+# %% [markdown]
+# Con el decaimiento coseno el F1 converge: en las últimas 5 épocas varía ±0,002–0,007 (antes ±0,1),
+# y la mejor época queda a ≤ 0,02 de la media final. **Sin aumento de datos** vuelve a ser la mejor
+# configuración, ahora también en Kaggle (0,83 vs. 0,79 del SVM).
+#
+# ## 6. Selección del modelo final
+#
+# Diferencia pareada (mismas imágenes de validación, bootstrap por grupos): si el IC95 no contiene
+# 0, la diferencia no se explica por el azar de qué frutas cayeron en validación.
+
+# %%
+from src.evaluation.evaluate import f1_macro, paired_diff_ci, predict, recall_of  # noqa: E402
+
+y, pred_final, rows_val = predict(config.FINAL_MODEL, "val")
+groups = [r["grupo"] for r in rows_val]
+rivals = {"SVM": predict("svm", "val")[1],
+          **{STABLE_NAMES[i]: predict(f"cnn_estable_{i}", "val")[1] for i in (0, 2, 3)}}
+pd.DataFrame([{"frente a": k, "métrica": m, **dict(zip(["diferencia", "IC95 inf.", "IC95 sup."],
+                                                       paired_diff_ci(y, pred_final, p, groups, fn)))}
+              for k, p in rivals.items()
+              for m, fn in [("F1-macro", f1_macro), ("recall Podrida", recall_of(2))]])
+
+# %% [markdown]
+# **Modelo final: `cnn_estable_1`** (lote 128, coseno, sin aumento; `config.FINAL_MODEL`). Supera al
+# SVM en F1-macro con diferencia significativa y empata en recall de Podrida; el SVM se mantiene como
+# comparación. La elección se registró antes de abrir `test` (`docs/crisp-dm.md` §4.3).

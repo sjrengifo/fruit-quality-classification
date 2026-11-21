@@ -73,3 +73,15 @@ def test_bootstrap_ci_resamples_groups():
     wrong[:6] = 0                                                             # 2 grupos con errores
     lo, hi = bootstrap_ci(y, wrong, groups, recall_of(2), n_boot=500)
     assert 0 <= lo < recall_of(2)(y, wrong) < hi <= 1
+
+
+def test_paired_diff_ci():
+    from src.evaluation.evaluate import f1_macro, paired_diff_ci
+
+    y = np.array([0, 1, 2] * 10)
+    groups = np.repeat(np.arange(10), 3)
+    assert paired_diff_ci(y, y, y, groups, f1_macro, n_boot=100) == (0.0, 0.0, 0.0)  # mismo modelo
+    worse = y.copy()
+    worse[::3] = 1                                                                    # falla en todos los grupos
+    diff, lo, hi = paired_diff_ci(y, y, worse, groups, f1_macro, n_boot=300)
+    assert 0 < lo <= diff <= hi
