@@ -51,6 +51,15 @@ nombres y los comandos (`python -m src.data.own_images redimensionar|validar`) e
 streamlit run src/app/app.py
 ```
 
+La app necesita los modelos entrenados en `experiments/checkpoints/` (no se versionan):
+`cnn_estable_1.keras` (CNN final, `config.FINAL_MODEL`) y `svm.joblib` (comparación). Si faltan,
+entrenarlos (`python -m src.training.train --model classic` y la búsqueda `cnn_stable` en Colab) o
+pedírselos al equipo. La primera foto tarda ~2 s (carga U²-Net); las siguientes ~0,4 s en CPU.
+
+Uso: elegir el modelo en la barra lateral, subir una o varias fotos (o usar la cámara) y leer la
+calidad, las probabilidades y "lo que ve el modelo" (fruta recortada sobre fondo blanco). Para una
+sola foto desde la terminal: `python -m src.models.predict ruta/foto.jpg [--model svm]`.
+
 ## 7. Pruebas
 
 ```bash

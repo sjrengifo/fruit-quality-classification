@@ -34,7 +34,8 @@ python -m src.training.colab                      # zip (src/ + index + train/va
 python -m src.evaluation.evaluate --model svm     # metrics + group-bootstrap 95% CI + error list on val; test/externa need --final (run once, final model)
 python -m src.evaluation.ablation         # feature ablation + cross-source generalization (uses saved SVM)
 python -m src.evaluation.figuras_modelado # Phase 4 figures from experiments/ → assets/modelado/
-streamlit run src/app/app.py              # deployment GUI (app.py prepends repo root to sys.path)
+streamlit run src/app/app.py              # deployment GUI: src/models/predict.Predictor (segment_and_crop + config.FINAL_MODEL); app.py prepends repo root to sys.path
+python -m src.models.predict foto.jpg      # predict one image from the terminal (--model svm)
 
 python -m src.data.own_images redimensionar   # shrink team photos to ≤1024 px before committing
 python -m src.data.own_images validar         # check anotaciones.csv vs images (also run by pytest)

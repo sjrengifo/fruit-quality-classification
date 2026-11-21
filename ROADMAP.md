@@ -202,16 +202,18 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 ---
 
-## Fase 6 — Despliegue  ⬜
+## Fase 6 — Despliegue  🟨
 
 > **Rúbrica:** Criterio 8 (calidad del entregable). Enunciado: GUI + video.
 
 **Objetivo:** poner el modelo a funcionar para un usuario final.
 
-- [ ] **Interfaz Streamlit** (`src/app/app.py`): cargar imagen o **capturar desde cámara** y mostrar
-      predicción (clase de calidad + tamaño) en tiempo real.
-- [ ] Cargar el mejor modelo entrenado y pipeline de preprocesamiento.
-- [ ] Guía de uso en `docs/instalacion.md` / `docs/arquitectura.md`.
+- [x] **Interfaz Streamlit** (`src/app/app.py`): subir una o varias imágenes o **capturar desde cámara**;
+      muestra calidad, probabilidades, lo que ve el modelo, aviso de baja confianza y tiempo (~0,4 s en CPU).
+- [ ] Tamaño en la app (pendiente: requiere referencia de escala).
+- [x] Cargar el mejor modelo (`config.FINAL_MODEL`, o el SVM) y el mismo preprocesamiento del entrenamiento
+      (`segment_and_crop`, `src/models/predict.py`; verificado idéntico píxel a píxel a la caché).
+- [x] Guía de uso en `docs/instalacion.md` §6.
 - [ ] *(Opcional)* simulación de línea de empaque con cámara + Raspberry Pi.
 - [ ] **Video de presentación** (≤ 10 min): contexto, técnicas, resultados, logros.
 

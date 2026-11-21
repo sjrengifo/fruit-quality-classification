@@ -184,6 +184,28 @@ def _crop_process(task: tuple[str, str, tuple[int, int]]) -> str | None:
     return None
 
 
+def segment_and_crop(source, size: tuple[int, int] | None = None) -> tuple[np.ndarray, np.ndarray, float]:
+    """Una imagen nueva → (fruta recortada sobre blanco, máscara recortada, área relativa).
+
+    Mismo camino que `segment` + `crop` sobre el índice (incluida la máscara reducida a `size` antes
+    de recortar), para que la app y la evaluación vean exactamente lo que vio el modelo al entrenar.
+    """
+    from PIL import Image
+
+    from src.data.preprocess import prepare_image
+
+    size = size or config.IMAGE_SIZE
+    big = prepare_image(source, SEG_INPUT)
+    mask = fruit_mask(big)
+    area = float(mask.mean())
+    if area < EMPTY_MASK:
+        mask = np.ones_like(mask)
+    small_mask = np.asarray(Image.fromarray(mask.astype(np.uint8) * 255)
+                            .resize((size[1], size[0]), Image.Resampling.NEAREST)) > 127
+    image, crop_mask = crop_fruit(big, small_mask, size)
+    return image, crop_mask, area
+
+
 def crop_index(size: tuple[int, int] | None = None, workers: int | None = None) -> tuple[int, list[str]]:
     """Recorta todas las imágenes ya segmentadas del índice (incremental)."""
     from tqdm import tqdm
