@@ -49,7 +49,8 @@ def resize_and_normalize(image, size: tuple[int, int] | None = None) -> np.ndarr
 
 
 def cache_dir(size: tuple[int, int] | None = None, variant: str = "img") -> Path:
-    """Carpeta de caché: `img` (preprocesada), `seg` (sin fondo) o `mask` (máscara de la fruta)."""
+    """Carpeta de caché: `img` (preprocesada), `seg` (sin fondo), `mask` (máscara), `crop` (fruta
+    recortada y centrada) o `cropmask` (su máscara)."""
     size = size or config.IMAGE_SIZE
     return config.INTERIM_DIR / f"{variant}{size[0]}"
 
@@ -91,10 +92,10 @@ def preprocess_index(index_path: Path | None = None, size: tuple[int, int] | Non
 
 
 def load_split(split: str, index_path: Path | None = None, size: tuple[int, int] | None = None,
-               variant: str = "seg"):
+               variant: str = "crop"):
     """Carga un split desde la caché: (X uint8 [n, alto, ancho, 3], filas del índice).
 
-    Por defecto usa las imágenes segmentadas (`seg`); `img` para las originales preprocesadas.
+    Por defecto usa las frutas recortadas sobre blanco (`crop`); `seg` sin recortar, `img` originales.
     """
     from PIL import Image
 

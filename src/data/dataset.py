@@ -65,6 +65,23 @@ def hdf_rows() -> list[dict]:
     return rows
 
 
+def hdf_duplicate_groups(rows: list[dict]) -> None:
+    """Asigna `grupo` a las filas de HDF: casi-duplicados de una misma carpeta comparten grupo."""
+    from collections import defaultdict
+
+    from src.data.split import near_duplicate_groups
+
+    folders = defaultdict(list)
+    for r in rows:
+        if r["fuente"] == "hdf":
+            folders[Path(r["ruta"]).parent].append(r)
+    for members in folders.values():
+        members.sort(key=lambda r: r["ruta"])
+        first = {}  # etiqueta → ruta del primer miembro (nombre estable del grupo)
+        for r, label in zip(members, near_duplicate_groups([config.DATA_DIR / r["ruta"] for r in members])):
+            r["grupo"] = first.setdefault(label, r["ruta"])
+
+
 def own_rows() -> list[dict]:
     with open(config.OWN_ANNOTATIONS, newline="", encoding="utf-8") as f:
         return [{"ruta": config.OWN_IMAGES_DIR / r["archivo"], "fuente": "propias",
@@ -104,6 +121,8 @@ def build_index() -> tuple[list[dict], list[dict]]:
         row["ruta"] = Path(row["ruta"]).relative_to(config.DATA_DIR).as_posix()
         row["id"] = hashlib.sha1(row["ruta"].encode()).hexdigest()[:16]
         row["grupo"] = group_key(row["ruta"], row["fuente"])
+    hdf_duplicate_groups(rows)
+    for row in rows:
         row["split"] = assign_split(row["grupo"], row["fuente"])
     return rows, excluded
 

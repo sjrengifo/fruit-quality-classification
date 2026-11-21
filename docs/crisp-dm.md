@@ -185,9 +185,12 @@ y variantes numeradas (`IMG…_01.jpg`). Agrupando por carpeta + instante de cap
 
 | Split | Buena | Defectuosa | Podrida |
 |-------|------:|-----------:|--------:|
-| train | 9.913 | 1.944 | 1.703 |
-| val | 3.434 | 666 | 553 |
-| test | 3.330 | 601 | 586 |
+| train | 8.577 | 1.865 | 1.853 |
+| val | 3.109 | 846 | 535 |
+| test | 3.712 | 487 | 454 |
+
+8.647 grupos. Los porcentajes no son exactamente 60/20/20 porque se reparten **grupos**, no imágenes,
+y algunos grupos de HDF son muy grandes (§3.7).
 
 ### 3.4 Atajo por fondo (hallazgo crítico)
 
@@ -238,49 +241,274 @@ Podrida 2.842.
 
 | Prueba | Todas | Kaggle | HDF |
 |--------|------:|-------:|----:|
-| Al azar | 0,32 | 0,34 | 0,33 |
-| Fondo, imagen original | **0,68** | 0,52 | **0,90** |
-| Fondo, imagen segmentada | 0,20 | 0,36 | 0,38 |
-| Silueta (área, caja, centroide, forma; sin color) | 0,44 | 0,33 | **0,64** |
+| Al azar | 0,34 | 0,34 | 0,31 |
+| Fondo, imagen original | **0,65** | 0,52 | **0,76** |
+| Fondo, imagen segmentada | 0,18 | 0,36 | 0,33 |
+| Silueta (área, caja, centroide, forma; sin color) | 0,48 | 0,33 | 0,45 |
+| Silueta, fruta recortada | 0,47 | 0,32 | 0,37 |
+
+(Cifras con los splits corregidos de §3.7; con los splits iniciales el fondo original daba 0,90 en
+HDF y la silueta 0,64. La silueta en "Todas" refleja que la forma delata la fruta y cada fuente
+tiene otra mezcla de frutas y clases.)
 
 - **El atajo de fondo desapareció:** con fondo blanco el anillo exterior ya no predice la clase
   (todas las cifras al nivel del azar).
-- **Queda un atajo de encuadre en HDF:** sin ver color, la silueta predice la clase (0,64). En HDF las
-  `Buena` llenan el cuadro (recortadas) y muchas `Podrida` están lejos y pequeñas; en Kaggle no ocurre
-  (0,33). Mitigación propuesta para la Fase 4: recortar la caja de la máscara y reescalar
-  (normaliza el zoom) antes de extraer características/entrenar, y repetir esta prueba. La máscara
-  original se conserva para estimar el tamaño.
+- **Quedaba un atajo de encuadre en HDF:** sin ver color, la silueta predecía la clase (0,64): las
+  `Buena` llenan el cuadro (recortadas) y muchas `Podrida` están lejos y pequeñas.
+- **Normalización del encuadre** (`crop_fruit`, `python -m src.main crop`): se recorta la caja
+  cuadrada de la máscara (+5 % de margen) y se reescala a 128×128, de modo que todas las frutas
+  quedan centradas y con el mismo zoom (`data/interim/crop128/`; los modelos entrenan con esta
+  variante). La máscara sin recortar se conserva para estimar el tamaño. Con el recorte y los grupos
+  corregidos (§3.7) la silueta en HDF baja a **0,37** (azar 0,31) y en Kaggle a 0,32 (azar 0,34).
 
-### 3.7 Pasos pendientes
+### 3.7 Casi-duplicados en Healthy-Defective-Fruits (hallazgo crítico)
 
-- Normalización del encuadre (recorte a la caja de la máscara) contra el atajo de silueta en HDF.
-- Preprocesamiento: redimensionado, **normalización de píxeles**, augmentation.
-- Extracción de características para ML (color HSV, textura GLCM/LBP, forma).
+Los primeros modelos dieron F1 = 0,99 en HDF y 0,80 en Kaggle: demasiado bueno. Al revisar las
+imágenes en orden, HDF **repite la misma fruta o la misma sesión de fotos decenas o cientos de
+veces** (ráfagas girando la fruta y copias exactas): p. ej. las 2.500 manzanas `fresh` provienen de
+unas 12 sesiones. Como cada imagen era su propio grupo, la misma fruta caía en train y en val.
+
+- **Corrección** (`near_duplicate_groups`, `src/data/split.py`): dentro de cada carpeta de HDF se
+  unen en un grupo las imágenes con histograma de color HSV casi idéntico (distancia L1 < 0,25,
+  enlace simple), y el grupo completo va a un solo split. HDF pasa de 9.896 grupos a 1.298.
+- **Efecto:** F1-macro de validación del SVM en HDF 0,99 → **0,79** (cifra honesta); global 0,96 → 0,84.
+- **Limitación:** los grupos son *sesiones de captura* (pueden incluir varias frutas parecidas), por
+  lo que el reparto por split es irregular (casi no hay manzanas `fresh` de HDF en val). En Kaggle
+  los grupos siguen siendo por instante de captura; fotos distintas de una misma fruta pueden cruzar
+  splits.
+
+### 3.8 Extracción de características (ML tradicional)
+
+`src/features/extract_features.py` (`python -m src.main features`) calcula φ(x) ∈ ℝ⁶⁸ usando **solo
+los píxeles de la fruta** (máscara):
+
+| Grupo | n | Contenido |
+|-------|--:|-----------|
+| Color | 38 | Histogramas H (16), S (8), V (8) + media y desviación por canal |
+| Textura | 18 | Histograma LBP uniforme (P = 8, R = 1; 10) + GLCM (contraste, homogeneidad, energía, correlación a d = 1 y 3; promedio de 4 ángulos) |
+| Forma | 12 | Área relativa, aspecto, circularidad, solidez, extensión, 7 momentos de Hu (log) |
+
+**Desbalanceo:** peso por muestra = 1/tamaño del grupo (30 copias de una foto cuentan como una),
+reescalado para que las tres clases pesen lo mismo (`sample_weights`, `src/training/train.py`). Se
+descartó SMOTE: interpolar vectores de características de frutas distintas no produce frutas
+plausibles y los pesos logran el mismo efecto sin datos sintéticos.
+
+### 3.9 Pasos pendientes
+
 - Estimación de tamaño (diámetro en píxeles normalizados → bins).
-- Manejo de **clases desbalanceadas** (class weights / SMOTE / augmentation).
-
-> _Por completar: decisiones de preprocesamiento y su justificación._
+- `Mixed Quality`: separar frutas múltiples por componentes de la máscara.
 
 ---
 
 ## 4. Modelado
 
-- Línea base (mayoría).
-- ≥ 2 modelos ML tradicional con **tuning de hiperparámetros** (GridSearchCV / CV).
-- 1 CNN pequeña desde cero (2–3 conv + pooling + densas); opcional transfer learning.
-- Registro de experimentos en `experiments/`.
+Protocolo común: se ajusta con `train`, se compara con `val`; `test` y las fotos propias (`externa`)
+no se tocan hasta la Fase 5. Métrica: **F1-macro** (clases desbalanceadas). Todos los modelos usan
+la fruta recortada sobre blanco y los pesos por muestra de §3.8.
+Reproducir: `python -m src.training.train --model classic` / `--model cnn`.
 
-> _Por completar: configuraciones, hiperparámetros óptimos, alternativas descartadas._
+### 4.1 Líneas base y ML tradicional
+
+Ajuste con `GridSearchCV` (F1-macro) y 5 pliegues **estratificados por grupo**
+(`StratifiedGroupKFold`): las copias de una misma foto nunca quedan en ambos lados de un pliegue.
+El escalado (`StandardScaler`) va dentro del pipeline para no filtrar estadísticas de validación.
+
+| Modelo | Rejilla | Mejor configuración | F1 CV | F1 train | F1 val | Exactitud val |
+|--------|---------|---------------------|------:|---------:|-------:|--------------:|
+| Mayoría | — | — | — | — | 0,27 | 0,69 |
+| Azar estratificado | — | — | — | — | 0,34 | — |
+| Regresión logística | C ∈ {0,01…100} | C = 1 | 0,76 ± 0,06 | 0,77 | 0,76 | 0,81 |
+| **SVM (RBF)** | C ∈ {1, 10, 100}; γ ∈ {scale, 0,03, 0,003} | C = 100, γ = scale | **0,89 ± 0,01** | 1,00 | **0,84** | 0,88 |
+| Random Forest (300 árboles) | profundidad ∈ {∞, 12, 20}; hojas ∈ {1, 3}; max_features ∈ {√, 0,3} | ∞, 1, √ | 0,86 ± 0,06 | 0,95 | 0,84 | 0,87 |
+
+Métricas por clase en validación (precisión / recall):
+
+| Modelo | Buena | Defectuosa | Podrida | F1 Kaggle | F1 HDF |
+|--------|-------|------------|---------|----------:|-------:|
+| Regresión logística | 0,97 / 0,80 | 0,57 / 0,79 | 0,63 / 0,88 | 0,62 | 0,70 |
+| SVM | 0,96 / 0,89 | 0,67 / 0,79 | 0,83 / **0,92** | 0,79 | 0,79 |
+| Random Forest | 0,93 / 0,91 | 0,68 / 0,71 | 0,87 / **0,93** | 0,80 | 0,79 |
+
+- Los modelos no lineales superan con claridad a la referencia lineal (0,84 vs. 0,76) y triplican la
+  línea base de mayoría (0,27): la frontera entre clases no es lineal en φ(x).
+- **Recall de Podrida ≥ 0,90** (KPI de §1.4) se cumple en validación con SVM y Random Forest; el
+  F1-macro (0,84) queda justo debajo de la meta de 0,85.
+- La clase difícil es **Defectuosa** (se confunde sobre todo con Buena: 311 Buenas predichas como
+  Defectuosa en el SVM), coherente con que es la categoría intermedia y la más subjetiva al anotar.
+- SVM y Random Forest memorizan el entrenamiento (F1 train 1,00 / 0,95): hay sobreajuste, acotado
+  por la validación cruzada por grupos.
+
+**Ablación** (SVM, F1-macro en validación; `python -m src.evaluation.ablation`):
+
+| Características | F1 val |
+|-----------------|-------:|
+| Solo color | 0,75 |
+| Solo textura | 0,74 |
+| Solo forma | 0,56 |
+| Color + textura | 0,82 |
+| Color + textura + forma | **0,84** |
+
+Color y textura aportan información complementaria; la forma sola es débil pero suma 2 puntos.
+
+**Generalización entre fuentes** (hallazgo crítico; SVM entrenado con una sola fuente):
+
+| Entrena ↓ / valida → | Kaggle | HDF |
+|----------------------|-------:|----:|
+| Kaggle | 0,79 | 0,42 |
+| HDF | **0,06** | 0,79 |
+
+Un modelo entrenado con una fuente **no sirve en la otra**: cada dataset tiene su propio "aspecto"
+(frutas, cámaras, iluminación, criterio de etiquetado) y las características de color/textura lo
+capturan. El modelo conjunto funciona en ambas, pero esto anticipa que el desempeño con las **fotos
+propias** puede ser bastante menor que en validación; por eso la prueba externa es la evaluación que
+más importa en la Fase 5.
+
+### 4.2 CNN desde cero
+
+Arquitectura (`src/models/cnn.py`, 341 mil parámetros, entrenada desde cero):
+
+```
+Entrada uint8 128×128×3 → Rescaling(1/255) → [aumento de datos, solo al entrenar]
+ → 4 × [Conv2D 3×3 (32, 64, 128, 192) → BatchNorm → ReLU → MaxPool 2×2]
+ → GlobalAveragePooling → Dense(128, ReLU) → Dropout(0,4) → Dense(3, softmax)
+```
+
+- **Entrenamiento:** Adam, entropía cruzada con los pesos por muestra de §3.8, lotes de 32, máximo
+  40 épocas; se conserva la época con mejor F1-macro en validación y se detiene tras 8 épocas sin
+  mejorar (`experiments/checkpoints/`, historia en `experiments/logs/`).
+- **Aumento de datos:** volteos, rotación ±90°, zoom, traslación (relleno blanco) y brillo/contraste
+  ±10 % (suave, porque el color es la señal de calidad).
+- GlobalAveragePooling en lugar de Flatten: 341 mil parámetros frente a ~4 millones.
+
+Búsqueda de configuraciones (`--model cnn_search`, una variación a la vez sobre la base):
+
+| Configuración | Épocas | F1 train | F1 val | F1 Kaggle | F1 HDF | Recall Podrida |
+|---------------|-------:|---------:|-------:|----------:|-------:|---------------:|
+| Base (lr 1e-3, dropout 0,4, L2 1e-4, con aumento) | 37 | 0,89 | 0,87 | 0,71 | 0,86 | 0,91 |
+| **Sin aumento de datos** | 40 | 0,93 | **0,89** | 0,77 | 0,88 | 0,88 |
+| Red pequeña (16-32-64-96, densa 64; 86 mil parámetros) | 37 | 0,79 | 0,85 | 0,72 | 0,83 | 0,93 |
+| Más regularización (dropout 0,6, L2 5e-4) | 29 | 0,85 | 0,81 | 0,72 | 0,79 | 0,75 |
+| Tasa de aprendizaje 3e-4 | 32 | 0,87 | 0,86 | 0,68 | 0,87 | 0,87 |
+
+Figuras: `assets/modelado/` (`comparacion_modelos`, `cnn_curvas_validacion`, `matrices_confusion`;
+se regeneran con `python -m src.evaluation.figuras_modelado`).
+
+- La CNN supera a los modelos clásicos en validación (0,85–0,89 vs. 0,84) y a la meta de 0,85. La
+  ventaja viene de HDF; **en Kaggle queda por debajo del SVM** (0,68–0,77 vs. 0,79).
+- **Entrenamiento inestable:** el F1 de validación oscila ±0,1 entre épocas consecutivas en todas
+  las configuraciones (figura `cnn_curvas_validacion`), también con tasa de aprendizaje menor. Como
+  se elige la mejor de ~35 épocas ruidosas usando la propia validación, **el F1 de validación de la
+  CNN es optimista** y las diferencias entre configuraciones (0,85–0,89) no son concluyentes; la
+  cifra fiable saldrá del conjunto de prueba (Fase 5). Causa probable por verificar: pesos por
+  muestra muy desiguales (1/tamaño de grupo) combinados con BatchNorm y lotes de 32.
+- **Error más costoso:** la mejor CNN deja pasar 9 % de las `Podrida` como `Buena` (SVM: 4 %) y su
+  recall de Podrida (0,88) no cumple el KPI de 0,90, que el SVM sí cumple (0,92).
+- No hay evidencia de que el aumento de datos ayude en validación; se mantiene como opción porque su
+  beneficio esperado es fuera de distribución (fotos propias), que la validación no mide.
+
+**Estabilización** (`--model cnn_stable`, entrenada en Google Colab con GPU T4 y precisión mixta,
+`notebooks/colab_entrenar_cnn`; ~5–10 min por configuración frente a ~1,5 h en CPU). Cambios sobre
+la base: lotes de **128** (el gradiente con pesos por muestra muy desiguales es menos ruidoso) y
+tasa de aprendizaje con **decaimiento coseno** hasta 0 en 40 épocas, sin parada temprana. Se reporta
+además la media y desviación del F1 de validación en las **últimas 5 épocas**, que no depende de
+elegir una época con la propia validación:
+
+| Configuración (lote 128 + coseno) | Mejor época | F1 val | IC95 (grupos) | Últimas 5 (media ± desv.) | F1 Kaggle | F1 HDF | Recall Podrida |
+|------------------------------------|------------:|-------:|:-------------:|:-------------------------:|----------:|-------:|---------------:|
+| Con aumento de datos               | 36 | 0,88 | 0,82–0,91 | 0,870 ± 0,004 | 0,74 | 0,87 | 0,85 |
+| **Sin aumento de datos**           | 30 | **0,91** | 0,85–0,95 | **0,890 ± 0,007** | **0,83** | **0,90** | **0,94** |
+| Pesos 1/√grupo                     | 40 | 0,88 | 0,82–0,92 | 0,879 ± 0,002 | 0,72 | 0,88 | 0,88 |
+| Pesos 1/√grupo, lr 2e-3            | 35 | 0,89 | 0,80–0,94 | 0,884 ± 0,002 | 0,74 | 0,88 | 0,91 |
+
+Figura: `assets/modelado/cnn_curvas_estable`.
+
+- **La inestabilidad era del optimizador, no del modelo:** con lote 128 y coseno, la desviación del
+  F1 en las últimas épocas baja de ±0,1 a ±0,002–0,007, y la mejor época queda a ≤ 0,02 de la media
+  final → la cifra de validación ya no depende de una época afortunada.
+- **Sin aumento de datos es mejor por segunda vez** (también en la búsqueda anterior) y es la única
+  configuración que supera al SVM **también en Kaggle** (0,83 vs. 0,79) y cumple el KPI de recall
+  de Podrida (0,94). Frente a las otras tres configuraciones, la diferencia pareada en F1-macro
+  (bootstrap por grupos, mismas imágenes) es positiva con IC95 por encima de 0 en las tres
+  (+0,02 a +0,04). Hipótesis: rotaciones de ±90° y brillo/contraste alteran justo las señales de
+  color y forma que distinguen la calidad, y el recorte (§3.6) ya normaliza encuadre y escala.
+- Riesgo asumido: sin aumento, la red puede ser más frágil ante fotos distintas (cámara, luz). Eso
+  lo mide la evaluación con las fotos propias (Fase 5), no la validación.
+- Los pesos 1/√grupo no aportan; se mantienen los pesos 1/grupo de §3.8.
+
+### 4.3 Selección del modelo final (antes de abrir `test`)
+
+Se decide **solo con validación** y se registra en `src/config.py` (`FINAL_MODEL`, `FINAL_CLASSIC`)
+antes de la evaluación final, para que la elección no pueda depender de `test`:
+
+- **Modelo final: CNN `cnn_estable_1`** (lote 128, coseno, sin aumento de datos). Frente al SVM, en
+  las mismas 4.490 imágenes de validación: **F1-macro +0,07, IC95 [+0,01; +0,12]** (diferencia
+  real); recall de Podrida +0,02, IC95 [−0,01; +0,06] (empate). Además es mejor en ambas fuentes.
+- **Comparación: SVM (RBF)**, el mejor modelo de ML tradicional. Se evalúa en `test` y fotos
+  propias junto a la CNN, porque el enunciado pide comparar ambos enfoques; esa evaluación no cambia
+  la elección.
+
+### 4.4 Alternativas descartadas
+
+- **SMOTE / sobremuestreo sintético:** ver §3.8.
+- **Transfer learning para clasificar:** el enunciado pide una CNN entrenada desde cero; la red
+  preentrenada (U²-Net) solo se usa para quitar el fondo.
+- **GrabCut / umbral de color para segmentar:** falla con los fondos complejos de HDF (§3.6).
+- **Partición aleatoria por imagen:** infla las métricas por copias y casi-duplicados (§3.2, §3.7).
 
 ---
 
 ## 5. Evaluación
 
-- Métricas en test: accuracy, precision/recall/F1 (macro y por clase), matriz de confusión, ROC-AUC.
-- Métricas de tamaño (MAE / accuracy por bin).
-- Análisis de errores, diagnóstico de **sobreajuste**, comparación con línea base y literatura.
+Protocolo: los dos modelos de §4.3 (elegidos con validación, commit `d7b6928`) se evalúan **una
+sola vez** en `test` (4.653 imágenes, 1.747 grupos) y en las 81 fotos propias
+(`python -m src.evaluation.evaluate --split test|externa --final`). IC95 por bootstrap de grupos.
+Detalle y figuras: `notebooks/05_evaluation`, `assets/evaluacion/`.
 
-> _Por completar: tablas, gráficas e insights._
+### 5.1 Resultados frente a los KPIs
+
+| Modelo | Conjunto | F1-macro [IC95] | Exactitud | Recall Podrida [IC95] | F1 ≥ 0,85 | Recall P ≥ 0,90 |
+|--------|----------|-----------------|----------:|-----------------------|:---------:|:---------------:|
+| CNN | val | 0,91 [0,85; 0,95] | 0,94 | 0,94 [0,90; 0,97] | sí | sí |
+| CNN | **test** | **0,80 [0,68; 0,93]** | 0,88 | **0,91 [0,86; 0,96]** | no | **sí** |
+| CNN | **fotos propias** | **0,49 [0,37; 0,59]** | 0,49 | **0,27 [0,11; 0,44]** | no | no |
+| SVM | val | 0,84 [0,73; 0,92] | 0,88 | 0,92 [0,87; 0,96] | no | sí |
+| SVM | test | 0,80 [0,73; 0,87] | 0,90 | 0,81 [0,75; 0,88] | no | no |
+| SVM | fotos propias | 0,46 [0,35; 0,56] | 0,47 | 0,57 [0,40; 0,74] | no | no |
+
+Línea base de mayoría: F1 0,30 (test) y 0,17 (fotos propias). ROC-AUC de la CNN (uno contra el
+resto): 0,96–0,97 en test, 0,59–0,81 en fotos propias.
+
+### 5.2 Análisis
+
+- **`test` (mismas fuentes, frutas nuevas):** 306 de los 369 errores Buena → Podrida de la CNN son
+  **una sola sesión de HDF** (manzanas *Red Delicious* rojo oscuro, 386 fotos): el modelo asocia
+  rojo muy oscuro con pudrición. Dando a cada grupo el mismo peso (cada fruta cuenta una vez; métrica
+  decidida *después* de ver test, se reporta como diagnóstico), la CNN obtiene **F1 0,90** y recall
+  de Podrida 0,92, igual que en validación; el SVM 0,85 y 0,83. El error más costoso
+  (Podrida → Buena) es solo 3 % en la CNN.
+- **Sobreajuste:** CNN train 0,91 ≈ val 0,91 (los pesos 1/grupo evitan memorizar sesiones
+  repetidas); SVM train 1,00 ≫ val 0,84. La caída de la CNN no es sobreajuste sino **cambio de
+  dominio**.
+- **Fotos propias:** ambos modelos empujan casi todo a **Defectuosa**. La CNN clasifica 22 de 30
+  Podrida como Defectuosa (11 de 14 manzanas con zonas marrones hundidas, 6 naranjas con moho, 3
+  guayabas, 2 bananos) y 15 de 28 Buena como dañadas (10 son manzanas de una variedad rayada tipo Gala,
+  rara en el entrenamiento). Los errores llegan con confianza > 90 %.
+- **Causas:** (1) cambio de dominio — variedades, cámara y luz distintas, coherente con la prueba
+  entre fuentes de §4.1 (F1 0,06–0,42); (2) **umbral de pudrición distinto**: las Podrida de los
+  datasets públicos (sobre todo HDF) son más extremas que lo que nuestro criterio
+  (`docs/criterios_anotacion.md`) llama Podrida.
+- **Limitaciones:** 81 fotos, varias de la misma fruta (no anotado) → el IC95 real es más ancho; el
+  tamaño no se evaluó (fotos sin escala).
+
+### 5.3 Conclusión
+
+Dentro de las fuentes conocidas la CNN desde cero cumple el KPI de recall de Podrida y, contando
+cada fruta una vez, el de F1; **con fruta y cámara reales no es apta para uso** sin datos propios.
+Para mejorarlo (requiere fotos nuevas, sin tocar las 81 actuales que son la prueba): fotografiar más
+fruta propia y usar una parte para entrenar, alinear el criterio Defectuosa/Podrida en las
+etiquetas de entrenamiento y añadir una salida "no sé" para fotos fuera de dominio.
+
+> _Pendiente: comparación con la literatura y métricas de tamaño._
 
 ---
 
