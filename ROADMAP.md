@@ -130,9 +130,10 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] **Re-anotar la muestra de `Bad`** (1.200 imágenes): Podrida 842 · Defectuosa 211 · Buena 13 · Descartar 137.
 - [ ] Anotación de las 60 imágenes de acuerdo por los otros integrantes (kappa) — _equipo_.
 
-- [ ] **Recolección propia:** capturar y organizar 30–50 imágenes reales.
-- [ ] **Anotación manual:** etiquetar calidad + tamaño en `data/external/propias/anotaciones.csv`
-      (validar con `python -m src.data.own_images validar`). Se comparte con la clase vía el repo.
+- [x] **Recolección propia:** 81 fotos de 6 frutas (Buena 28 · Defectuosa 23 · Podrida 30).
+- [x] **Anotación manual** de calidad en `data/external/propias/anotaciones.csv` (tamaño sin anotar: fotos recortadas, sin escala).
+- [x] Criterios de clase precisados: Podrida no exige moho; la madurez no es un defecto (`docs/criterios_anotacion.md`).
+- [x] Notebook de trazabilidad `notebooks/02_preprocessing.ipynb`.
 - [x] Diagnóstico de atajo por fondo (`python -m src.evaluation.shortcut`): F1 solo-fondo 0,67 (azar 0,33).
 - [x] Exclusión de imágenes en escala de grises (1.292, solo `Buena` → atajo).
 - [x] **Segmentación** con U²-Net (`python -m src.main segment`): fruta sobre fondo blanco + máscara.
@@ -172,6 +173,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
   - [x] Callbacks (mejor época por F1-macro de validación, parada temprana, checkpoints en `experiments/checkpoints/`).
 - [x] Registrar experimentos (`experiments/results/*.json`, `experiments/logs/`; figuras en `assets/modelado/`).
 - [x] Justificar selección de modelos y **alternativas descartadas** (`docs/crisp-dm.md` §4).
+- [x] Notebooks de trazabilidad `notebooks/03_modeling_ml.ipynb` y `04_modeling_cnn.ipynb`.
 
 **Entregables:** modelos entrenados, notebooks de modelado, logs de experimentos.
 
