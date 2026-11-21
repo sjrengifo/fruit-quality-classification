@@ -100,6 +100,16 @@ def extract_all(image: np.ndarray, mask: np.ndarray | None = None) -> np.ndarray
     ]).astype(np.float32)
 
 
+def feature_names() -> list[str]:
+    """Nombre de cada columna de φ(x), en el orden de extract_all."""
+    names = [f"hist_{c}_{i}" for c in "hsv" for i in range(HIST_BINS[c])]
+    names += [f"media_{c}" for c in "hsv"] + [f"desv_{c}" for c in "hsv"]
+    names += [f"lbp_{i}" for i in range(LBP_POINTS + 2)]
+    names += [f"glcm_{prop}_d{d}" for prop in GLCM_PROPS for d in GLCM_DISTANCES]
+    names += ["area", "aspecto", "circularidad", "solidez", "extension"] + [f"hu_{i}" for i in range(1, 8)]
+    return names
+
+
 def group_columns(groups: list[str]) -> np.ndarray:
     """Índices de columnas de los grupos pedidos (para estudios de ablación)."""
     cols, start = [], 0

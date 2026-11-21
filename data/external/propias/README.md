@@ -1,6 +1,6 @@
 # Recolección propia de imágenes
 
-Imágenes tomadas por el equipo (meta: **30–50**). Se usan como **conjunto de prueba externo**:
+Imágenes tomadas por el equipo (meta: **30–50**; hay 81 de 6 frutas). Se usan como **conjunto de prueba externo**:
 fotos reales, en condiciones propias, que el modelo nunca ve al entrenar. Miden si generaliza.
 A diferencia del resto de `data/`, **esta carpeta sí se versiona en git**.
 
@@ -23,6 +23,8 @@ validar la estimación de tamaño de la Fase 3.
 
 1. Copiar las fotos a `imagenes/` con el nombre `<Fruta>_<Calidad>_<NNN>.jpg`,
    p. ej. `Apple_Defectuosa_001.jpg`.
+   Fotos de iPhone en **HEIC**: convertirlas antes a JPG (el pipeline no lee HEIC). En macOS:
+   `for f in imagenes/*.HEIC; do sips -s format jpeg "$f" --out "${f%.HEIC}.jpg" && rm "$f"; done`
 2. Reducirlas para no inflar el repo (lado mayor ≤ 1024 px, corrige la rotación del celular):
    ```bash
    python -m src.data.own_images redimensionar
@@ -34,10 +36,10 @@ validar la estimación de tamaño de la Fase 3.
    | `archivo` | nombre del archivo en `imagenes/` |
    | `fruta` | `Apple` · `Banana` · `Guava` · `Lime` · `Orange` · `Pomegranate` · `Mango` |
    | `calidad` | `Buena` · `Defectuosa` · `Podrida` |
-   | `tamano` | `Pequeño` · `Mediano` · `Grande` |
+   | `tamano` | `Pequeño` · `Mediano` · `Grande` (opcional: vacío si no se pudo juzgar) |
    | `diametro_cm` | número (opcional) |
-   | `autor` | quién tomó la foto |
-   | `fecha` | `AAAA-MM-DD` |
+   | `autor` | quién tomó la foto (opcional) |
+   | `fecha` | `AAAA-MM-DD` (opcional) |
    | `notas` | opcional (tipo de defecto, condiciones, etc.) |
 
 4. Validar antes de hacer commit:

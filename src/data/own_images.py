@@ -71,7 +71,7 @@ def validate_annotations(
             errors.append(f"L{i}: fruta '{row['fruta']}' no está en {config.FRUITS}")
         if row["calidad"] not in config.QUALITY_CLASSES:
             errors.append(f"L{i}: calidad '{row['calidad']}' no está en {config.QUALITY_CLASSES}")
-        if row["tamano"] not in config.SIZE_CLASSES:
+        if row["tamano"] and row["tamano"] not in config.SIZE_CLASSES:  # opcional: vacío = sin anotar
             errors.append(f"L{i}: tamaño '{row['tamano']}' no está en {config.SIZE_CLASSES}")
         if row["diametro_cm"]:
             try:
