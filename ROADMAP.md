@@ -182,20 +182,21 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 ---
 
-## Fase 5 — Evaluación  ⬜
+## Fase 5 — Evaluación  🟨
 
 > **Rúbrica:** Criterio 6 (análisis e interpretación), Criterio 7 (conclusiones).
 
 **Objetivo:** medir desempeño real y analizar críticamente los resultados.
 
 - [x] Módulo de evaluación con IC95 por bootstrap de grupos y lista de errores (`python -m src.evaluation.evaluate`).
-- [ ] Evaluar **una sola vez** el modelo final en `test` y en las fotos propias (`--split test|externa --final`).
-- [ ] Métricas: accuracy, precision/recall/F1 (macro y por clase), matriz de confusión, ROC-AUC.
+- [x] Evaluar **una sola vez** CNN y SVM en `test` y en las fotos propias (`--split test|externa --final`):
+      CNN test F1 0,80 (0,90 por grupo), recall Podrida 0,91; fotos propias F1 0,49, recall Podrida 0,27.
+- [x] Métricas: accuracy, precision/recall/F1 (macro y por clase), matriz de confusión, ROC-AUC (`notebooks/05_evaluation`).
 - [ ] Métricas de tamaño (MAE / accuracy por bin).
-- [ ] **Análisis de errores** (casos mal clasificados, confusiones frecuentes).
-- [ ] Diagnóstico de **sobreajuste** (train vs. val/test, curvas de aprendizaje).
-- [ ] **Comparación**: modelos entre sí, vs. línea base y vs. literatura (NeurIPS/ICML/ICLR).
-- [ ] Extraer *insights* conectados con el problema.
+- [x] **Análisis de errores** (una sesión de HDF domina los errores de test; Podrida → Defectuosa en fotos propias).
+- [x] Diagnóstico de **sobreajuste** (CNN train ≈ val; SVM train 1,00): la caída es cambio de dominio.
+- [ ] **Comparación**: modelos entre sí y vs. línea base ✔; falta vs. literatura (NeurIPS/ICML/ICLR).
+- [x] Extraer *insights* conectados con el problema (`docs/crisp-dm.md` §5).
 
 **Entregables:** tablas y figuras de resultados, sección de análisis en el informe.
 
