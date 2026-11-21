@@ -53,3 +53,14 @@ def test_remove_background_and_diameter():
     out = remove_background(image, mask)
     assert (out[~mask] == 255).all() and (out[mask] == 0).all()
     assert abs(estimate_diameter_px(mask) - 60) < 3
+
+
+def test_fruq_solo_entrenamiento_y_grupos_por_ventana():
+    from src.data.split import assign_split, group_key
+
+    assert assign_split("cualquiera", "fruq") == "extra"
+    ventana = config.FRUQ_STEP * config.FRUQ_GROUP_FRAMES
+    a = group_key(f"external/fruq/PearQ/Good/Image{ventana + 1}.png", "fruq")
+    b = group_key(f"external/fruq/PearQ/Good/Image{2 * ventana - 1}.png", "fruq")
+    c = group_key(f"external/fruq/PearQ/Good/Image{2 * ventana}.png", "fruq")
+    assert a == b != c

@@ -15,6 +15,7 @@ OWN_DIR = EXTERNAL_DIR / "propias"          # recolección propia (única carpet
 OWN_IMAGES_DIR = OWN_DIR / "imagenes"
 OWN_ANNOTATIONS = OWN_DIR / "anotaciones.csv"
 HDF_DIR = EXTERNAL_DIR / "healthy_defective"  # dataset complementario (solo imágenes reales)
+FRUQ_DIR = EXTERNAL_DIR / "fruq"            # FruQ (solo entrenamiento, ver FRUQ_* abajo)
 ANNOTATIONS_DIR = DATA_DIR / "anotaciones"  # re-anotación de Bad (versionada)
 DATASET_INDEX = PROCESSED_DIR / "index.csv"
 EXPERIMENTS_DIR = ROOT_DIR / "experiments"
@@ -40,6 +41,19 @@ KAGGLE_DATASET = "ryandpark/fruit-quality-classification"
 # Chuquimarca et al. (ESPOL), CC BY 4.0. Se usan solo las imágenes reales, no las sintéticas.
 HDF_REPO = "https://github.com/luischuquim/Healthy-Defective-Fruits.git"
 HDF_REAL_DIRS = {"Apple": "apple_images/apple_real_images", "Mango": "mango_images/mango_real_images"}
+# FruQ-multi (Abayomi-Alli y Damaševičius, Zenodo 10.5281/zenodo.7224690, CC BY 4.0): fotogramas de
+# time-lapse; cada fruta es UN objeto que pasa de fresco a podrido. Se usan solo las frutas enteras y
+# solas (sin partidas, racimos ni verduras), 1 de cada FRUQ_STEP fotogramas, y solo para entrenar.
+FRUQ_URL = "https://zenodo.org/api/records/7224690/files/FruQ-multi.zip/content"
+FRUQ_FRUITS = {"BananaDB": "Banana", "KakiQ": "Kaki", "PapayaQ": "Papaya", "PeachQ": "Peach", "PearQ": "Pear"}
+FRUQ_LABELS = {"good": "Buena", "fresh": "Buena", "mild": "Defectuosa", "rotten": "Podrida"}
+# Excluidos tras revisar los recortes: banano "mild" = pecas de maduración (en nuestro criterio es
+# Buena); durazno "mild" = el video hace zoom y la fruta se sale del cuadro. La fresa se descartó
+# entera: a 128 px "mild" y "rotten" se ven iguales.
+FRUQ_SKIP = {("BananaDB", "mild"), ("PeachQ", "mild")}
+FRUQ_STEP = 3
+FRUQ_GROUP_FRAMES = 10              # fotogramas usados consecutivos = un grupo (mismo objeto, aspecto parecido)
+TRAIN_ONLY_SOURCES = ("fruq",)      # split "extra": nunca en val/test; el entrenamiento la agrega a pedido
 HDF_LABELS = {
     "fresh": "Buena",
     "bruise_defect": "Defectuosa",

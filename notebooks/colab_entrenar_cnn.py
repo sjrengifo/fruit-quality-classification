@@ -1,5 +1,5 @@
 # %% [markdown]
-# # Entrenar la CNN en Google Colab (GPU)
+# # Entrenar la CNN y el transfer learning en Google Colab (GPU)
 #
 # **Fase 4 de CRISP-DM.** Corre en Colab el mismo código de `src/` que en local, pero con GPU.
 #
@@ -16,8 +16,11 @@
 # del repositorio (o pedírselo a Claude).
 
 # %%
-# Configuración: qué búsqueda correr (ver SEARCHES en src/models/cnn.py)
-SEARCH = "cnn_estable"
+# Configuración: qué búsquedas correr, en orden (SEARCHES en src/models/cnn.py y src/models/transfer.py)
+#   cnn_busqueda, cnn_estable      → CNN desde cero (ya entrenadas)
+#   tl_busqueda                    → transfer learning: aumento de datos y aporte de FruQ (5 config.)
+#   tl_entre_fuentes               → generalización: entrena sin una fuente y valida en ella (8 config.)
+SEARCH_LIST = ["tl_busqueda", "tl_entre_fuentes"]
 DRIVE_DIR = "/content/drive/MyDrive/fruit-quality"
 
 # %% [markdown]
@@ -68,21 +71,24 @@ if (drive_dir / "experiments").exists():
     shutil.copytree(drive_dir / "experiments", config.EXPERIMENTS_DIR, dirs_exist_ok=True)
 for d in (config.CHECKPOINTS_DIR, config.RESULTS_DIR, config.LOGS_DIR):
     d.mkdir(parents=True, exist_ok=True)
-print("Ya entrenadas:", sorted(p.stem for p in config.RESULTS_DIR.glob(f"{SEARCH}_*.json")))
+for search in SEARCH_LIST:
+    print(search, "· ya entrenadas:", sorted(p.stem for p in config.RESULTS_DIR.glob(f"{search}_*.json")))
 
 # %% [markdown]
 # ## 4. Entrenar
 #
 # Cada configuración imprime una línea por época (con los segundos acumulados) y al final su F1 en
-# validación. Estimado con T4: ~10–20 s por época → ~10 min por configuración.
+# validación. Con T4: CNN desde cero ~5–10 min por configuración; transfer learning (EfficientNetB0,
+# 18 épocas) ~5–15 min. Las búsquedas de transfer learning descargan los pesos de ImageNet (16 MB).
 
 # %%
-from src.models.cnn import SEARCHES
-from src.training.train import search_cnn
+from src.training.train import all_searches, search_cnn
 
-for i, overrides in enumerate(SEARCHES[SEARCH]):
-    print(f"{SEARCH}_{i}: {overrides}")
-summary = search_cnn(SEARCH, sync_dir=drive_dir / "experiments")
+summaries = {}
+for search in SEARCH_LIST:
+    for i, overrides in enumerate(all_searches()[search]):
+        print(f"{search}_{i}: {overrides}")
+    summaries[search] = search_cnn(search, sync_dir=drive_dir / "experiments")
 
 # %% [markdown]
 # ## 5. Resumen
@@ -93,7 +99,9 @@ summary = search_cnn(SEARCH, sync_dir=drive_dir / "experiments")
 # %%
 import pandas as pd
 
-pd.DataFrame(summary)
+for search, summary in summaries.items():
+    print(search)
+    display(pd.DataFrame(summary))  # noqa: F821
 
 # %% [markdown]
 # Listo: los resultados están en `Mi unidad/fruit-quality/experiments/`. Descargar esa carpeta y
