@@ -29,7 +29,9 @@ python -m src.evaluation.shortcut         # do background / silhouette alone pre
 streamlit run src/app/anotar.py           # tool to re-label Kaggle `Bad` into Defectuosa/Podrida
 python -m src.data.relabel                # re-labeling progress + inter-annotator kappa
 python -m src.training.train --model classic      # baselines + LogReg/SVM/RF with GridSearchCV → experiments/
-python -m src.training.train --model cnn          # CNN with CNN_DEFAULT (~2–4 min/epoch on CPU); cnn_search runs CNN_GRID
+python -m src.training.train --model cnn          # CNN with CNN_DEFAULT (~2–4 min/epoch on CPU); cnn_search / cnn_stable run SEARCHES in models/cnn.py (resumable)
+python -m src.training.colab                      # zip (src/ + index + train/val crops, no test/externa) for GPU training via notebooks/colab_entrenar_cnn
+python -m src.evaluation.evaluate --model svm     # metrics + group-bootstrap 95% CI + error list on val; test/externa need --final (run once, final model)
 python -m src.evaluation.ablation         # feature ablation + cross-source generalization (uses saved SVM)
 python -m src.evaluation.figuras_modelado # Phase 4 figures from experiments/ → assets/modelado/
 streamlit run src/app/app.py              # deployment GUI (app.py prepends repo root to sys.path)

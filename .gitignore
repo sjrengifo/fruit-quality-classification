@@ -33,6 +33,7 @@ data/external/*
 experiments/logs/*
 experiments/checkpoints/*
 experiments/results/*
+experiments/colab/
 !experiments/**/.gitkeep
 *.h5
 *.keras
