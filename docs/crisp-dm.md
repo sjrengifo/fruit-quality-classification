@@ -459,11 +459,56 @@ antes de la evaluación final, para que la elección no pueda depender de `test`
 
 ## 5. Evaluación
 
-- Métricas en test: accuracy, precision/recall/F1 (macro y por clase), matriz de confusión, ROC-AUC.
-- Métricas de tamaño (MAE / accuracy por bin).
-- Análisis de errores, diagnóstico de **sobreajuste**, comparación con línea base y literatura.
+Protocolo: los dos modelos de §4.3 (elegidos con validación, commit `d7b6928`) se evalúan **una
+sola vez** en `test` (4.653 imágenes, 1.747 grupos) y en las 81 fotos propias
+(`python -m src.evaluation.evaluate --split test|externa --final`). IC95 por bootstrap de grupos.
+Detalle y figuras: `notebooks/05_evaluation`, `assets/evaluacion/`.
 
-> _Por completar: tablas, gráficas e insights._
+### 5.1 Resultados frente a los KPIs
+
+| Modelo | Conjunto | F1-macro [IC95] | Exactitud | Recall Podrida [IC95] | F1 ≥ 0,85 | Recall P ≥ 0,90 |
+|--------|----------|-----------------|----------:|-----------------------|:---------:|:---------------:|
+| CNN | val | 0,91 [0,85; 0,95] | 0,94 | 0,94 [0,90; 0,97] | sí | sí |
+| CNN | **test** | **0,80 [0,68; 0,93]** | 0,88 | **0,91 [0,86; 0,96]** | no | **sí** |
+| CNN | **fotos propias** | **0,49 [0,37; 0,59]** | 0,49 | **0,27 [0,11; 0,44]** | no | no |
+| SVM | val | 0,84 [0,73; 0,92] | 0,88 | 0,92 [0,87; 0,96] | no | sí |
+| SVM | test | 0,80 [0,73; 0,87] | 0,90 | 0,81 [0,75; 0,88] | no | no |
+| SVM | fotos propias | 0,46 [0,35; 0,56] | 0,47 | 0,57 [0,40; 0,74] | no | no |
+
+Línea base de mayoría: F1 0,30 (test) y 0,17 (fotos propias). ROC-AUC de la CNN (uno contra el
+resto): 0,96–0,97 en test, 0,59–0,81 en fotos propias.
+
+### 5.2 Análisis
+
+- **`test` (mismas fuentes, frutas nuevas):** 306 de los 369 errores Buena → Podrida de la CNN son
+  **una sola sesión de HDF** (manzanas *Red Delicious* rojo oscuro, 386 fotos): el modelo asocia
+  rojo muy oscuro con pudrición. Dando a cada grupo el mismo peso (cada fruta cuenta una vez; métrica
+  decidida *después* de ver test, se reporta como diagnóstico), la CNN obtiene **F1 0,90** y recall
+  de Podrida 0,92, igual que en validación; el SVM 0,85 y 0,83. El error más costoso
+  (Podrida → Buena) es solo 3 % en la CNN.
+- **Sobreajuste:** CNN train 0,91 ≈ val 0,91 (los pesos 1/grupo evitan memorizar sesiones
+  repetidas); SVM train 1,00 ≫ val 0,84. La caída de la CNN no es sobreajuste sino **cambio de
+  dominio**.
+- **Fotos propias:** ambos modelos empujan casi todo a **Defectuosa**. La CNN clasifica 22 de 30
+  Podrida como Defectuosa (11 de 14 manzanas con zonas marrones hundidas, 6 naranjas con moho, 3
+  guayabas, 2 bananos) y 15 de 28 Buena como dañadas (10 son manzanas de una variedad rayada tipo Gala,
+  rara en el entrenamiento). Los errores llegan con confianza > 90 %.
+- **Causas:** (1) cambio de dominio — variedades, cámara y luz distintas, coherente con la prueba
+  entre fuentes de §4.1 (F1 0,06–0,42); (2) **umbral de pudrición distinto**: las Podrida de los
+  datasets públicos (sobre todo HDF) son más extremas que lo que nuestro criterio
+  (`docs/criterios_anotacion.md`) llama Podrida.
+- **Limitaciones:** 81 fotos, varias de la misma fruta (no anotado) → el IC95 real es más ancho; el
+  tamaño no se evaluó (fotos sin escala).
+
+### 5.3 Conclusión
+
+Dentro de las fuentes conocidas la CNN desde cero cumple el KPI de recall de Podrida y, contando
+cada fruta una vez, el de F1; **con fruta y cámara reales no es apta para uso** sin datos propios.
+Para mejorarlo (requiere fotos nuevas, sin tocar las 81 actuales que son la prueba): fotografiar más
+fruta propia y usar una parte para entrenar, alinear el criterio Defectuosa/Podrida en las
+etiquetas de entrenamiento y añadir una salida "no sé" para fotos fuera de dominio.
+
+> _Pendiente: comparación con la literatura y métricas de tamaño._
 
 ---
 
