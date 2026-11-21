@@ -23,10 +23,17 @@ python -m src.main download               # Kaggle → data/raw/ (needs ~/.kaggl
 python -m src.main index                  # unified index of all sources → data/processed/index.csv
 python -m src.main preprocess             # cache every indexed image at 128×128 → data/interim/img128/ (incremental)
 python -m src.main segment                # U²-Net (rembg) background removal → data/interim/seg128/ + mask128/ (incremental, ~0.7 s/img with 2 workers)
-python -m src.evaluation.shortcut         # does the background alone predict the class? (raw vs. segmented)
+python -m src.main crop                   # crop each fruit to its mask box → data/interim/crop128/ + cropmask128/ (fast)
+python -m src.main features               # φ(x) (68 color/texture/shape features) → data/processed/features.npz
+python -m src.evaluation.shortcut         # do background / silhouette alone predict the class?
 streamlit run src/app/anotar.py           # tool to re-label Kaggle `Bad` into Defectuosa/Podrida
 python -m src.data.relabel                # re-labeling progress + inter-annotator kappa
-python -m src.main train                  # or: python -m src.training.train --model {cnn,classic}
+python -m src.training.train --model classic      # baselines + LogReg/SVM/RF with GridSearchCV → experiments/
+python -m src.training.train --model cnn          # CNN with CNN_DEFAULT (~2–4 min/epoch on CPU); cnn_search / cnn_stable run SEARCHES in models/cnn.py (resumable)
+python -m src.training.colab                      # zip (src/ + index + train/val crops, no test/externa) for GPU training via notebooks/colab_entrenar_cnn
+python -m src.evaluation.evaluate --model svm     # metrics + group-bootstrap 95% CI + error list on val; test/externa need --final (run once, final model)
+python -m src.evaluation.ablation         # feature ablation + cross-source generalization (uses saved SVM)
+python -m src.evaluation.figuras_modelado # Phase 4 figures from experiments/ → assets/modelado/
 streamlit run src/app/app.py              # deployment GUI (app.py prepends repo root to sys.path)
 
 python -m src.data.own_images redimensionar   # shrink team photos to ≤1024 px before committing
@@ -38,7 +45,8 @@ Notebooks are authored as **jupytext percent-format `.py` files** (`notebooks/01
 ## Architecture
 
 - `src/config.py` is the single source of truth for paths (`RAW_DIR`, `PROCESSED_DIR`, `OWN_DIR`/`OWN_IMAGES_DIR`/`OWN_ANNOTATIONS` for team-collected images, `CHECKPOINTS_DIR`, `RESULTS_DIR`), class lists, the Kaggle dataset id, and default hyperparameters (`IMAGE_SIZE=(128,128)`, `RANDOM_SEED=42`, splits). Don't hardcode these elsewhere.
-- Pipeline (see `docs/arquitectura.md`): `data/download` → `data/segment` (OpenCV segmentation of individual fruits, diameter → size class) → `data/preprocess` (resize + [0,1] normalization) → two branches: `features/extract_features` (color HSV / texture GLCM-LBP / shape → vector φ(x)) feeding `models/classic_ml` (`build_models()` returns `{name: (estimator, param_grid)}`, `tune()` runs GridSearchCV with `f1_macro`), and `models/cnn` (Keras Sequential) → `training/train` (artifacts to `experiments/`) → `evaluation/evaluate` → `app/app.py`.
+- Pipeline (see `docs/arquitectura.md`): `data/download` → `data/dataset` (index) → `data/preprocess` → `data/segment` (U²-Net mask, white background, then `crop_fruit`) → two branches: `features/extract_features` (color HSV / texture GLCM-LBP / shape → φ(x), fruit pixels only) feeding `models/classic_ml` (`build_models()` returns `{name: (pipeline, param_grid)}` with the classifier as step `clf`; `tune()` runs GridSearchCV with `f1_macro` on `StratifiedGroupKFold`), and `models/cnn` (Keras Sequential; rescaling + augmentation live inside the model, input is uint8) → `training/train` (models to `experiments/checkpoints/`, metrics JSON to `experiments/results/`, CNN history to `experiments/logs/`) → `evaluation/` → `app/app.py`.
+- Model selection uses `train` + `val` only; `test` and `externa` are reserved for Phase 5. The chosen models are fixed in `config.FINAL_MODEL` (CNN `cnn_estable_1`) and `config.FINAL_CLASSIC` (SVM) — the app and Phase 5 read them from there. `sample_weights()` in `training/train.py` (1/group size, classes balanced) is the single imbalance mechanism.
 - Heavy dependencies (`cv2`, `tensorflow`, `sklearn`, `kaggle`) are **imported lazily inside functions** so `src` modules and the smoke tests import without them. Follow this pattern.
 - Many functions are stubs raising `NotImplementedError("Implementar en Fase N")`; the phase number tells where they belong in `ROADMAP.md`.
 - Notebooks should reuse code from `src/` rather than duplicate logic.
@@ -50,8 +58,9 @@ Notebooks are authored as **jupytext percent-format `.py` files** (`notebooks/01
 - All 3 classes must draw from the same sources, otherwise the model learns the source instead of quality. Known shortcut risk: half of HDF `rot` is PNG and HDF is all 256×256 → preprocessing must normalize format/size.
 - Team photos (`data/external/propias/`) are an **external test set**, never used for training.
 - **Everything downstream reads `data/processed/index.csv`** (id, ruta, fuente, fruta, calidad, grupo, split). Adding data = add a source loader in `src/data/dataset.py`, re-run `index` + `preprocess`; model/eval code must not special-case sources.
-- Splits (`src/data/split.py`) are **hash-based per group**, so existing images never change split when data is added. Kaggle contains augmented copies (`<timestamp>_<n>.jpg`, 79 % of Pomegranate) → groups = folder + capture timestamp; never split by image. Weight samples by 1/group size when training.
-- `prepare_image` (`src/data/preprocess.py`) + `segment_image` (`src/data/segment.py`) are the single preprocessing path — the app must use them too. Models train on the **segmented** cache (`load_split(..., variant="seg")`, white background) because the raw background predicts the class (shortcut).
+- Splits (`src/data/split.py`) are **hash-based per group**, so existing images never change split when data is added. Kaggle contains augmented copies (`<timestamp>_<n>.jpg`, 79 % of Pomegranate) → groups = folder + capture timestamp; HDF repeats the same fruit/session hundreds of times → groups = near-duplicate clusters (`near_duplicate_groups`, color-histogram single linkage per folder). Never split or cross-validate by image (doing so inflated HDF F1 to 0.99). Weight samples by 1/group size when training.
+- `prepare_image` (`src/data/preprocess.py`) + `segment_image` (`src/data/segment.py`) are the single preprocessing path — the app must use them too. Models train on the **cropped** cache (`load_split()` default `variant="crop"`: fruit on white, centered, same zoom) because raw background and framing predict the class (shortcuts). The uncropped mask (`mask128`) is kept for size estimation.
+- Known limitation: a model trained on one source fails on the other (SVM F1 0.06–0.42 cross-source vs. 0.79 in-source) → the team's own photos are the evaluation that matters; don't report val/test numbers as real-world performance.
 - Grayscale images are excluded at index time (`data/processed/excluidas.csv`): they are augmented copies that only exist in `Buena`.
 - Strong class imbalance (~5×) → use F1-macro and class weights / resampling (`imbalanced-learn` available); always compare against a majority-class baseline.
 - Image sizes vary from 256×256 to 8000×6000 → resizing is mandatory.

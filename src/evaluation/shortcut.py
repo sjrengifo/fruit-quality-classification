@@ -6,11 +6,12 @@ F1-macro en validación con un clasificador al azar:
 - **silueta:** área, caja envolvente, centroide y forma de la máscara (encuadre / zoom), sin color.
 Si alguno predice la clase, un modelo puede aprender eso en lugar de la calidad de la fruta.
 
-Uso:  python -m src.evaluation.shortcut
+Uso:  python -m src.evaluation.shortcut   → experiments/results/shortcut.json
 """
 from __future__ import annotations
 
 import csv
+import json
 from functools import partial
 
 import numpy as np
@@ -33,12 +34,12 @@ def border_features(image_id: str, variant: str = "img") -> np.ndarray:
     return np.concatenate([ring.mean(0) / 255, ring.std(0) / 255, *hists])
 
 
-def silhouette_features(image_id: str) -> np.ndarray:
+def silhouette_features(image_id: str, variant: str = "mask") -> np.ndarray:
     """Área, caja envolvente, centroide, n.º de componentes y circularidad de la máscara."""
     import cv2
     from PIL import Image
 
-    mask = (np.asarray(Image.open(cache_path(image_id, variant="mask"))) > 127).astype(np.uint8)
+    mask = (np.asarray(Image.open(cache_path(image_id, variant=variant))) > 127).astype(np.uint8)
     h, w = mask.shape
     ys, xs = np.nonzero(mask)
     if len(xs) == 0:
@@ -79,15 +80,21 @@ def main() -> None:
         "fondo (original)": partial(border_features, variant="img"),
         "fondo (segmentada)": partial(border_features, variant="seg"),
         "silueta": silhouette_features,
+        "silueta (recortada)": partial(silhouette_features, variant="cropmask"),
     }
     subsets = [("todas", rows),
                ("kaggle", [r for r in rows if r["fuente"] == "kaggle"]),
                ("hdf", [r for r in rows if r["fuente"] == "hdf"])]
+    results = []
     print(f"{'prueba':20s} {'subconjunto':12s} {'F1 azar':>8s} {'F1 atajo':>9s}")
     for test_name, features in tests.items():
         for name, subset in subsets:
             chance, f1 = shortcut_f1(subset, features)
+            results.append({"prueba": test_name, "subconjunto": name, "f1_azar": chance, "f1_atajo": f1})
             print(f"{test_name:20s} {name:12s} {chance:8.3f} {f1:9.3f}")
+    config.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    with open(config.RESULTS_DIR / "shortcut.json", "w", encoding="utf-8") as f:
+        json.dump(results, f, ensure_ascii=False, indent=2)
 
 
 if __name__ == "__main__":
