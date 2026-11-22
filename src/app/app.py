@@ -25,6 +25,13 @@ MODEL_LABELS = {config.FINAL_TRANSFER: "EfficientNetB0 (transfer learning)",
 CLASS_STYLE = {"Buena": ("🟢", "green"), "Defectuosa": ("🟠", "orange"), "Podrida": ("🔴", "red")}
 LOW_CONFIDENCE = 0.6        # por debajo se avisa que la predicción es dudosa
 MIN_AREA = 0.02             # = segment.EMPTY_MASK: por debajo no se encontró la fruta
+FRUIT_NAMES = {"Apple": "Manzana", "Orange": "Naranja", "Lime": "Limón", "Guava": "Guayaba",
+               "Pomegranate": "Granada", "Mango": "Mango", "Banana": "Banano", "Otra": "Otra"}
+COIN_NAMES = {"100_nueva": "$100 nueva", "200_nueva": "$200 nueva", "500_nueva": "$500 nueva",
+              "1000_nueva": "$1.000 nueva", "500_vieja": "$500 antigua", "euro_1c": "1 céntimo de euro",
+              "euro_10c": "10 céntimos de euro", "euro_20c": "20 céntimos de euro",
+              "euro_50c": "50 céntimos de euro", "dime": "Dime (EE. UU.)", "nickel": "Nickel (EE. UU.)",
+              "quarter": "Quarter (EE. UU.)"}
 
 
 @st.cache_resource(show_spinner="Cargando el modelo…")
@@ -64,16 +71,52 @@ def sidebar() -> str:
         "**Limitación conocida:** con fotos de fruta y cámaras distintas a las de los datasets de "
         "entrenamiento el desempeño baja mucho (F1 ≈ 0,5 con las fotos del equipo). Úselo como "
         "apoyo, no como decisión final.")
-    st.sidebar.caption("Una fruta por foto, fondo simple y buena luz. El tamaño (Pequeño/Mediano/Grande) "
-                       "aún no se estima: requiere una referencia de escala en la foto.")
+    st.sidebar.caption("Una fruta por foto, fondo simple y buena luz.")
     return model_name
+
+
+def size_options() -> dict | None:
+    """Controles del tamaño: requiere una moneda conocida al lado de la fruta."""
+    st.sidebar.header("Tamaño")
+    if not st.sidebar.toggle("Medir tamaño (foto con moneda)", value=False):
+        return None
+    st.sidebar.caption("Ponga una moneda al lado de la fruta, sin tocarla, y tome la foto desde arriba "
+                       "a unos 30–50 cm.")
+    fruits = list(config.FRUIT_SIZE_CM)
+    fruit = st.sidebar.selectbox("Fruta", fruits, index=fruits.index("Otra"), format_func=FRUIT_NAMES.get)
+    coins = list(config.COIN_DIAMETERS_MM)
+    coin = st.sidebar.selectbox("Moneda", coins, index=coins.index(config.DEFAULT_COIN),
+                                format_func=lambda c: f"{COIN_NAMES[c]} ({config.COIN_DIAMETERS_MM[c]} mm)")
+    return {"measure_size": True, "fruit": fruit, "coin": coin}
+
+
+def measurement_overlay(source, size):
+    """Foto con el contorno de la fruta (verde) y la moneda detectada (azul)."""
+    import cv2
+    import numpy as np
+
+    from src.data.preprocess import prepare_image
+    from src.features.size import WORK_SIDE
+
+    image = prepare_image(source, (WORK_SIDE, WORK_SIDE)).copy()
+    fruit = cv2.resize(size.mascara_fruta.astype(np.uint8), (WORK_SIDE, WORK_SIDE), interpolation=cv2.INTER_NEAREST)
+    contours, _ = cv2.findContours(fruit, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(image, contours, -1, (0, 200, 0), 4)
+    if size.moneda is not None:
+        x, y, r = size.moneda
+        cv2.circle(image, (int(x), int(y)), int(r), (30, 90, 255), 4)
+    return image
 
 
 def show_prediction(name: str, source, pred) -> None:
     icon, color = CLASS_STYLE[pred.calidad]
     st.subheader(name)
     col_in, col_crop, col_out = st.columns([1, 1, 1.3])
-    col_in.image(source, caption="Foto", width="stretch")
+    if pred.tamano is not None and pred.tamano.diametro_cm is not None:
+        col_in.image(measurement_overlay(source, pred.tamano), caption="Foto · fruta (verde) y moneda (azul)",
+                     width="stretch")
+    else:
+        col_in.image(source, caption="Foto", width="stretch")
     col_crop.image(pred.recorte, caption="Lo que ve el modelo", width="stretch")
     with col_out:
         st.markdown(f"### {icon} :{color}[{pred.calidad}]")
@@ -86,6 +129,14 @@ def show_prediction(name: str, source, pred) -> None:
                 st.warning("Predicción dudosa (ninguna clase supera el 60 %). Revise la fruta manualmente.")
         else:
             st.caption("El SVM no entrega probabilidades.")
+        if pred.tamano is not None:
+            t = pred.tamano
+            if t.diametro_cm is None:
+                st.warning(t.aviso)
+            else:
+                st.markdown(f"**Tamaño: {t.clase}** · {t.diametro_cm:.1f} cm".replace(".", ","))
+                if t.aviso:
+                    st.caption(t.aviso)
         total = sum(pred.segundos.values())
         st.caption(f"Tiempo: {total:.2f} s (segmentación {pred.segundos['segmentacion']:.2f} s, "
                    f"modelo {pred.segundos['modelo']:.2f} s)")
@@ -99,6 +150,7 @@ def main() -> None:
                "**Podrida** (moho, tejido blando o hundido, daño oscuro extenso).")
 
     predictor = load_predictor(sidebar())
+    size_opts = size_options() or {}
 
     source = st.radio("Fuente de la imagen", ["Subir archivos", "Cámara"], horizontal=True)
     if source == "Subir archivos":
@@ -114,10 +166,11 @@ def main() -> None:
     results = []
     for f in files:
         with st.spinner(f"Analizando {f.name}…"):
-            pred = predictor.predict(f)
+            pred = predictor.predict(f, **size_opts)
         show_prediction(f.name, f, pred)
         results.append({"imagen": f.name, "calidad": pred.calidad,
-                        "confianza": None if pred.confianza is None else round(pred.confianza, 3)})
+                        "confianza": None if pred.confianza is None else round(pred.confianza, 3),
+                        **({"tamaño": pred.tamano.clase, "diámetro_cm": pred.tamano.diametro_cm} if pred.tamano else {})})
         st.divider()
 
     if len(results) > 1:
