@@ -1,10 +1,11 @@
 # Clasificación de la calidad y estimación del tamaño de frutas por visión por computador: atajos, fuga de datos y cambio de dominio
 
-**Autores:** Juan Manuel Ramírez, Juan Sebastián Poveda, Samuel José Rengifo
+**Autores:** Juan Manuel Ramírez, Juan Sebastian Poveda, Samuel Jose Rengifo
 **Curso:** Algoritmos y Programación III, 2026-2 · Repositorio: _[enlace de GitHub]_
 
-> Borrador de contenido. La versión maquetada va en `docs/conference-template-letter.docx` (IEEE, ≤ 7
-> páginas). Las cifras salen de `docs/crisp-dm.md` y de `experiments/results/`.
+> Borrador de contenido. **La versión oficial es la de LaTeX** (`docs/informe/latex/informe.tex` →
+> `informe.pdf`, clase IEEEtran, 6 páginas); los cambios se hacen allí. Las cifras salen de
+> `docs/crisp-dm.md` y de `experiments/results/`.
 
 ---
 

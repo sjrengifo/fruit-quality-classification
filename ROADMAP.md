@@ -235,7 +235,9 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 - [x] Borrador completo en `docs/informe/informe_final.md` (≈ 4.200 palabras con tablas y referencias):
       Título, Resumen, Introducción, Fundamentos, Metodología, Resultados, Análisis, Ética, Conclusiones, 20 referencias IEEE.
-- [ ] Maquetar en `docs/conference-template-letter.docx` y ajustar a 7 páginas — _equipo_.
+- [x] Maquetado en LaTeX (IEEEtran): `docs/informe/latex/informe.tex` → `informe.pdf`, 6 páginas; figuras con
+      `python -m src.evaluation.figuras_informe`.
+- [ ] Revisión del equipo: leer las referencias, kappa entre anotadores (marcado en rojo), enlace al repositorio.
 - [x] **Tabla de dilemas éticos** y su relación con el código de ética ACM (PI1), en el informe §VI.
 - [x] **Matriz de impactos** social/económico/ambiental/global + mitigaciones (PI2), en el informe §VI.
 - [x] **Justificación matemática** del modelado (PI3), en el informe §III-A (pérdida ponderada, F1, bootstrap, geometría del tamaño).
