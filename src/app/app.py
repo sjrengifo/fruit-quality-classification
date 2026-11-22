@@ -3,7 +3,7 @@
 Permite cargar una o varias imágenes o capturarlas con la cámara y muestra la calidad predicha
 (`Buena` / `Defectuosa` / `Podrida`), las probabilidades, lo que ve el modelo (fruta recortada sobre
 blanco) y el tiempo de inferencia. Usa el mismo preprocesamiento que el entrenamiento
-(`src/models/predict.py`) y el modelo elegido en la Fase 4 (`config.FINAL_MODEL`).
+(`src/models/predict.py`) y por defecto el modelo de transfer learning (`config.FINAL_TRANSFER`).
 
 Uso:  streamlit run src/app/app.py
 """
@@ -20,7 +20,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src import config  # noqa: E402
 
-MODEL_LABELS = {config.FINAL_MODEL: "CNN desde cero (modelo final)", config.FINAL_CLASSIC: "SVM (ML tradicional)"}
+MODEL_LABELS = {config.FINAL_TRANSFER: "EfficientNetB0 (transfer learning)",
+                config.FINAL_MODEL: "CNN desde cero", config.FINAL_CLASSIC: "SVM (ML tradicional)"}
 CLASS_STYLE = {"Buena": ("🟢", "green"), "Defectuosa": ("🟠", "orange"), "Podrida": ("🔴", "red")}
 LOW_CONFIDENCE = 0.6        # por debajo se avisa que la predicción es dudosa
 MIN_AREA = 0.02             # = segment.EMPTY_MASK: por debajo no se encontró la fruta

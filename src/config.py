@@ -79,3 +79,6 @@ EPOCHS = 40                 # máximo; se detiene antes si el F1 de validación 
 # ─── Modelos finales (elegidos solo con validación, antes de abrir test — docs/crisp-dm.md §4.3) ─
 FINAL_MODEL = "cnn_estable_1"     # CNN desde cero: lote 128, coseno, sin aumento de datos
 FINAL_CLASSIC = "svm"             # mejor modelo de ML tradicional, se reporta como comparación
+# Segunda iteración (§4.5), elegido con validación y generalización entre fuentes, antes de la
+# segunda mirada a test y fotos propias: EfficientNetB0 + aumento de color + FruQ. Es el modelo de la app.
+FINAL_TRANSFER = "tl_busqueda_4"
