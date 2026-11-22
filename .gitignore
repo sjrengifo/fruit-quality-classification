@@ -28,6 +28,8 @@ data/external/*
 !data/**/.gitkeep
 # Excepción: la recolección propia sí se versiona
 !data/external/propias/
+# Fotos de tamaño sin moneda: sin escala, no sirven para validar
+data/external/propias/tamano/sin_moneda/
 
 # ─── Experimentos / artefactos de modelos ─────────────────
 experiments/logs/*

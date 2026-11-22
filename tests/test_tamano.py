@@ -31,15 +31,19 @@ def test_moneda_se_encuentra_fuera_de_la_fruta_y_se_mide_sin_sombra():
 
 
 def test_correccion_de_perspectiva():
+    import math
+
     from src.features.size import perspective_correct
 
     # cámara muy lejos: sin cambio
-    assert perspective_correct(70, 70, 1e9) == pytest.approx(70, rel=1e-6)
-    # esfera de 70 mm a 300 mm: el contorno a media altura se ve ampliado H/(H − 35)
-    seen = 70 * 300 / (300 - 35)
-    assert perspective_correct(seen, seen, 300) == pytest.approx(70, rel=1e-6)
+    assert perspective_correct(90, 70, 1e9) == pytest.approx((90, 70), rel=1e-6)
+    # esfera de 70 mm con la cámara a 300 mm: su contorno corta la mesa en a = H·tan(asin(r/(H − r)))
+    seen = 2 * 300 * math.tan(math.asin(35 / 265))
+    assert perspective_correct(seen, seen, 300)[1] == pytest.approx(70, rel=1e-6)
+    # el largo, a la altura del centro (35 mm), se ve ampliado H/(H − 35)
+    assert perspective_correct(100 * 300 / 265, seen, 300)[0] == pytest.approx(100, rel=1e-6)
     # objeto plano (grosor 0): sin cambio
-    assert perspective_correct(50, 0, 300) == pytest.approx(50)
+    assert perspective_correct(50, 0, 300) == pytest.approx((50, 0))
 
 
 def test_clases_de_tamano_por_fruta():

@@ -593,7 +593,33 @@ modelo fijado antes (commit `8818bb0`). Diferencias pareadas frente a la CNN con
   el umbral de pudrición** de las fuentes públicas, no la capacidad del modelo. Lo que sí ayudaría
   (fuera del alcance de tiempo): fotos propias para entrenar y ejemplos de moho en cítricos.
 
-> _Pendiente: comparación con la literatura y métricas de tamaño._
+### 5.5 Tamaño
+
+Validación de `src/features/size.py` (moneda de $1.000 como escala, corrección de perspectiva con la
+focal del EXIF) con **11 frutas medidas con regla** (7 limones, 3 manzanas, 1 naranja; iPhone 15 Pro,
+cámara a 20–29 cm). Resultados en `experiments/results/tamano_validar.csv`.
+
+| Medida | Error medio absoluto | Sesgo | Clase de tamaño correcta |
+|--------|---------------------:|------:|-------------------------:|
+| Ancho máximo (círculo mínimo), 1.ª versión | 1,10 cm | +1,10 cm | 3/11 |
+| **Diámetro ecuatorial** (lado corto del rectángulo mínimo), versión final | **0,57 cm** | +0,38 cm | 5/11 |
+
+- **Escala verificada:** la moneda se encontró en las 11 fotos, y su escala coincide con la de la regla
+  que aparece en cada foto (diferencia de 2–3 %). El error no viene de la moneda.
+- **Cambio de medida tras ver los datos:** la 1.ª versión medía el ancho máximo, que incluye las puntas
+  del limón y el lado del pedúnculo. Se cambió al **diámetro ecuatorial**, que es el calibre de las
+  normas comerciales y lo que se mide con regla, y a un modelo exacto de esfera para la perspectiva.
+  Como el cambio se decidió después de ver estas 11 fotos, el 0,57 cm es optimista.
+- **Etiquetas ruidosas:** con una regla, el diámetro de una fruta redonda es difícil de medir. Hay pares
+  incoherentes:
+  - El limón 4 (3,8 cm) se ve más grande en la foto que el limón 7 (4,5 cm).
+  - Las manzanas 1 y 3 se ven iguales y difieren 0,7 cm.
+- **Clase:** 5/11 no alcanza el KPI (≥ 0,80). Los rangos de limón miden 1 cm de ancho, del mismo orden
+  que el error (0,57 cm), y varias frutas están en el borde de un rango. Los umbrales son aproximados
+  (calibres comerciales), no calibrados.
+- **Limitaciones:** n = 11, solo 3 frutas distintas en tipo.
+
+> _Pendiente: comparación con la literatura._
 
 ---
 

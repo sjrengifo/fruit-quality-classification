@@ -7,11 +7,14 @@ pequeña de lejos), así que se pide una **moneda de diámetro conocido** al lad
    grande; la moneda, si U²-Net la incluye, se descarta.
 2. Moneda: círculo de Hough fuera de la fruta; su borde se afina con rayos desde el centro (borde
    nítido más externo, sin la sombra) → escala px/mm sobre la mesa.
-3. **Corrección de perspectiva:** la moneda está sobre la mesa, pero el ancho máximo de la fruta está
-   a media altura de la fruta, más cerca de la cámara, y se ve más grande (≈ 38 % a 13 cm de
-   distancia con una fruta de 7 cm). La altura de la cámara sale de la distancia focal (EXIF) y la
-   escala de la moneda: H = f_px / (px/mm). Sin EXIF se asume `DEFAULT_CAMERA_HEIGHT_MM`.
-4. Diámetro (cm) → Pequeño / Mediano / Grande con umbrales por fruta (`config.FRUIT_SIZE_CM`).
+3. Medida: el **diámetro ecuatorial** (calibre comercial), que visto desde arriba es el lado corto
+   del rectángulo mínimo del contorno —el largo incluiría las puntas del limón o el pedúnculo—;
+   en banano y mango (`config.SIZE_BY_LENGTH`) se mide el largo.
+4. **Corrección de perspectiva:** la moneda está sobre la mesa, pero el contorno de la fruta se ve
+   desde más cerca y más grande (≈ 13 % con una fruta de 7 cm y la cámara a 27 cm). La altura de la
+   cámara sale de la distancia focal (EXIF) y la escala de la moneda: H = f_px / (px/mm). Sin EXIF
+   se asume `DEFAULT_CAMERA_HEIGHT_MM`.
+5. Diámetro (cm) → Pequeño / Mediano / Grande con umbrales por fruta (`config.FRUIT_SIZE_CM`).
 
 Uso:  python -m src.features.size preparar   (HEIC → JPEG ≤ 1024 px conservando el EXIF)
       python -m src.features.size monedas    (cada moneda junto a una regla: prueba de la medición)
@@ -34,7 +37,7 @@ _DIAG_35MM = 43.27               # diagonal del formato 35 mm (la focal equivale
 
 @dataclass
 class SizeEstimate:
-    diametro_cm: float | None        # ancho máximo de la fruta, corregido por perspectiva
+    diametro_cm: float | None        # diámetro ecuatorial (largo en SIZE_BY_LENGTH), corregido
     clase: str | None                # Pequeño / Mediano / Grande (None si no hay moneda)
     moneda: tuple[float, float, float] | None   # (x, y, radio) en px de la imagen de trabajo
     px_por_mm: float | None
@@ -103,14 +106,17 @@ def coin_diameter_px(image: np.ndarray, x: float, y: float, r: float, n_rays: in
     return 2 * float(np.median(edges)) if edges else 2 * r
 
 
-def perspective_correct(width_mm: float, minor_mm: float, height_mm: float) -> float:
-    """Ancho real de un objeto apoyado en la mesa cuyo contorno se ve a la escala de la mesa.
+def perspective_correct(length_mm: float, width_mm: float, height_mm: float) -> tuple[float, float]:
+    """(largo, ancho) reales de una fruta apoyada en la mesa cuyo contorno se mide a la escala de la mesa.
 
-    Su ancho máximo está a media altura h = (grosor real)/2 y se ve ampliado H/(H − h). El grosor
-    real se despeja del aparente: g = g_ap·H/(H + g_ap/2).
+    Ancho: la sección ecuatorial se modela como esfera de radio r con el centro a altura r; su contorno
+    es el cono tangente desde la cámara, que corta la mesa a a = H·tan(asin(r/(H − r))). Despejando,
+    con s = a/√(H² + a²): r = H·s/(1 + s). Largo: está a la altura del centro y se ve ampliado H/(H − r).
     """
-    minor = minor_mm * height_mm / (height_mm + minor_mm / 2)
-    return width_mm * (height_mm - minor / 2) / height_mm
+    a = width_mm / 2
+    s = a / np.hypot(height_mm, a)
+    r = height_mm * s / (1 + s)
+    return length_mm * (height_mm - r) / height_mm, 2 * r
 
 
 def size_class(diameter_cm: float, fruit: str | None) -> str:
@@ -148,9 +154,9 @@ def estimate_size(source, mask: np.ndarray, fruit: str | None = None,
 
     contours, _ = cv2.findContours(big.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     c = max(contours, key=cv2.contourArea)
-    width = 2 * cv2.minEnclosingCircle(c)[1] / px_mm      # mm a la escala de la mesa
-    minor = min(cv2.minAreaRect(c)[1]) / px_mm
-    diameter = perspective_correct(width, minor, height) / 10
+    width, length = sorted(cv2.minAreaRect(c)[1])          # px a la escala de la mesa
+    length, width = perspective_correct(length / px_mm, width / px_mm, height)
+    diameter = (length if fruit in config.SIZE_BY_LENGTH else width) / 10
     aviso = None if f else (f"La foto no trae la distancia focal (EXIF): se asume la cámara a "
                             f"{DEFAULT_CAMERA_HEIGHT_MM / 10:.0f} cm de la mesa.")
     return SizeEstimate(round(diameter, 2), size_class(diameter, fruit), found, px_mm, height, bool(f),

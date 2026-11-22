@@ -52,12 +52,13 @@ SIZE_COIN_FILES = {                  # foto de data/external/propias/tamano/mone
     "20centavoEuro": "euro_20c", "50centavoEuro": "euro_50c", "oneDimeDollar": "dime",
     "fiveCentsDollar": "nickel", "quarterDollar": "quarter",
 }
-# Umbrales (cm) del ancho máximo: < t1 Pequeño, < t2 Mediano, si no Grande. Aproximados a partir de
-# calibres comerciales típicos; en banano y mango el ancho máximo visto desde arriba es el largo.
+# Umbrales (cm) del diámetro ecuatorial (calibre): < t1 Pequeño, < t2 Mediano, si no Grande.
+# Aproximados a partir de calibres comerciales típicos; en banano y mango se usa el largo.
 FRUIT_SIZE_CM = {
     "Apple": (6.5, 7.5), "Orange": (7.0, 8.5), "Lime": (4.5, 5.5), "Guava": (5.0, 7.0),
     "Pomegranate": (7.5, 9.5), "Mango": (10.0, 13.0), "Banana": (15.0, 20.0), "Otra": (5.0, 8.0),
 }
+SIZE_BY_LENGTH = ("Banana", "Mango")
 
 # ─── Dataset base (Kaggle) ────────────────────────────────
 KAGGLE_DATASET = "ryandpark/fruit-quality-classification"

@@ -146,7 +146,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Data augmentation dentro de la CNN (giros, rotación, zoom, brillo/contraste).
 - [x] **Estimación de tamaño** (`src/features/size.py`): moneda de referencia (Hough + bordes por rayos;
       12 monedas: error medio −1,8 %, desviación 1,2 %), máscara U²-Net, corrección de perspectiva con la
-      focal del EXIF, umbrales por fruta → Pequeño/Mediano/Grande.
+      focal del EXIF, diámetro ecuatorial (largo en banano/mango), umbrales por fruta → Pequeño/Mediano/Grande.
 - [x] **Extracción de características** para ML tradicional (`src/features/`): histogramas de color
       (HSV), textura (GLCM/LBP), momentos de forma, área/perímetro.
 - [x] **Manejo de desbalanceo**: pesos por muestra (1/tamaño del grupo, clases equilibradas); SMOTE descartado.
@@ -194,8 +194,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Evaluar **una sola vez** CNN y SVM en `test` y en las fotos propias (`--split test|externa --final`):
       CNN test F1 0,80 (0,90 por grupo), recall Podrida 0,91; fotos propias F1 0,49, recall Podrida 0,27.
 - [x] Métricas: accuracy, precision/recall/F1 (macro y por clase), matriz de confusión, ROC-AUC (`notebooks/05_evaluation`).
-- [ ] Métricas de tamaño (MAE / accuracy por bin): falta validar con las frutas medidas con regla
-      (`python -m src.features.size validar`).
+- [x] Métricas de tamaño (`python -m src.features.size validar`, 11 frutas medidas con regla):
+      diámetro ecuatorial MAE 0,57 cm, sesgo +0,38 cm, clase correcta 5/11 (no cumple el KPI; §5.5).
 - [x] **Análisis de errores** (una sesión de HDF domina los errores de test; Podrida → Defectuosa en fotos propias).
 - [x] Diagnóstico de **sobreajuste** (CNN train ≈ val; SVM train 1,00): la caída es cambio de dominio.
 - [ ] **Comparación**: modelos entre sí y vs. línea base ✔; falta vs. literatura (NeurIPS/ICML/ICLR).
