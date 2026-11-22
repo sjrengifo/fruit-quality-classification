@@ -60,7 +60,8 @@ La estimación de tamaño (`src/features/size.py`) usa una **moneda de diámetro
 | `tamano/imagenes/` | Fruta + moneda de $1.000 al lado, sin tocarse, foto desde arriba |
 | `tamano/anotaciones_tamano.csv` | `archivo, fruta, moneda, diametro_fruta_cm, notas` |
 
-- `diametro_fruta_cm`: ancho máximo medido con regla (fruta entre dos libros parados, distancia entre ellos).
+- `diametro_fruta_cm`: diámetro ecuatorial (el más ancho, perpendicular al eje pedúnculo–punta) medido con regla:
+  fruta entre dos libros parados, distancia entre ellos.
 - `moneda`: clave de `config.COIN_DIAMETERS_MM` (p. ej. `1000_nueva`).
 - Preparar y validar:
   ```bash
