@@ -45,7 +45,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
                  └─────────────────────────────┘
 ```
 
-> El diagrama definitivo (vectorial, para el informe) se generará y guardará en `assets/`.
+> Diagrama definitivo (vectorial, con las iteraciones reales): `assets/informe/flujo_crisp_dm.svg`.
 
 ---
 
@@ -233,12 +233,13 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 **Objetivo:** consolidar toda la evidencia en el informe (máx. 7 págs., IEEE).
 
-- [ ] Redactar `docs/informe/` siguiendo la estructura: Título, Abstract, Introducción,
-      Fundamentos teóricos, Metodología, Resultados, Análisis, Conclusiones, Referencias (IEEE).
-- [ ] **Tabla de dilemas éticos** y su relación con el código de ética (PI1).
-- [ ] **Matriz de impactos** social/económico/ambiental/global + mitigaciones (PI2).
-- [ ] **Justificación matemática** completa del modelado (PI3).
-- [ ] Diagramas de calidad **vectorial** (CRISP-DM, arquitectura, resultados).
+- [x] Borrador completo en `docs/informe/informe_final.md` (≈ 4.200 palabras con tablas y referencias):
+      Título, Resumen, Introducción, Fundamentos, Metodología, Resultados, Análisis, Ética, Conclusiones, 20 referencias IEEE.
+- [ ] Maquetar en `docs/conference-template-letter.docx` y ajustar a 7 páginas — _equipo_.
+- [x] **Tabla de dilemas éticos** y su relación con el código de ética ACM (PI1), en el informe §VI.
+- [x] **Matriz de impactos** social/económico/ambiental/global + mitigaciones (PI2), en el informe §VI.
+- [x] **Justificación matemática** del modelado (PI3), en el informe §III-A (pérdida ponderada, F1, bootstrap, geometría del tamaño).
+- [x] Diagrama CRISP-DM personalizado vectorial (`assets/informe/flujo_crisp_dm.svg`); resultados en `assets/`.
 - [ ] Verificar referencias en formato **IEEE** y documentación del código.
 - [ ] Revisión final contra la rúbrica (checklist abajo).
 
