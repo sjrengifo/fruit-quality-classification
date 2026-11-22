@@ -281,12 +281,30 @@ def train_config(name: str, overrides: dict) -> dict:
     return train_cnn(name=name, **overrides)
 
 
-def search_cnn(search: str = "cnn_busqueda", sync_dir: Path | None = None) -> list[dict]:
+def _train_in_subprocess(search: str, i: int) -> dict:
+    """Entrena una configuración en un proceso aparte (su memoria se libera completa al terminar) y
+    muestra su salida línea por línea."""
+    import subprocess
+    import sys
+
+    cmd = [sys.executable, "-u", "-m", "src.training.train", "--busqueda", search, "--indice", str(i)]
+    with subprocess.Popen(cmd, cwd=config.ROOT_DIR, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                          text=True) as proc:
+        for line in proc.stdout:
+            print(line, end="", flush=True)
+    if proc.returncode != 0:
+        raise RuntimeError(f"{search}_{i} terminó con código {proc.returncode}")
+    with open(config.RESULTS_DIR / f"{search}_{i}.json", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def search_cnn(search: str = "cnn_busqueda", sync_dir: Path | None = None, isolate: bool = False) -> list[dict]:
     """Entrena cada configuración de una búsqueda (`all_searches()`) y la resume.
 
     Las configuraciones con resultados ya guardados se saltan (permite retomar si se corta la
     sesión). Con `sync_dir`, experiments/ se copia ahí después de cada configuración (Google Drive
-    en Colab).
+    en Colab). Con `isolate`, cada configuración corre en su propio proceso: TensorFlow no libera
+    toda la memoria entre modelos y en Colab (12 GB de RAM) la sesión se caía tras varios.
     """
     import shutil
 
@@ -305,7 +323,7 @@ def search_cnn(search: str = "cnn_busqueda", sync_dir: Path | None = None) -> li
             else:
                 print(f"{name}: ya entrenado, se omite")
         if r is None:
-            r = train_config(name, overrides)
+            r = _train_in_subprocess(search, i) if isolate else train_config(name, overrides)
         summary.append({"configuracion": overrides, "epocas": r["epocas"], "parametros": r["parametros"],
                         "f1_train": r["train"]["f1_macro"], "f1_val": r["val"]["f1_macro"],
                         "f1_val_ultimas_5_media": r.get("f1_val_ultimas_5_media"),
@@ -320,11 +338,15 @@ def main():
     parser = argparse.ArgumentParser(description="Entrenamiento de modelos")
     parser.add_argument("--model", default="cnn",
                         choices=["cnn", "cnn_search", "cnn_stable", "classic", "transfer", "tl_busqueda", "tl_entre_fuentes"])
+    parser.add_argument("--busqueda", help="con --indice: entrena solo esa configuración de la búsqueda")
+    parser.add_argument("--indice", type=int)
     args = parser.parse_args()
 
     config.CHECKPOINTS_DIR.mkdir(parents=True, exist_ok=True)
     config.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    if args.model == "cnn":
+    if args.busqueda is not None:
+        train_config(f"{args.busqueda}_{args.indice}", all_searches()[args.busqueda][args.indice])
+    elif args.model == "cnn":
         train_cnn()
     elif args.model == "cnn_search":
         search_cnn("cnn_busqueda")
