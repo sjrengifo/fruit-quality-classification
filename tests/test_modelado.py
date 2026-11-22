@@ -85,3 +85,27 @@ def test_paired_diff_ci():
     worse[::3] = 1                                                                    # falla en todos los grupos
     diff, lo, hi = paired_diff_ci(y, y, worse, groups, f1_macro, n_boot=300)
     assert 0 < lo <= diff <= hi
+
+
+def test_busquedas_tl_usan_el_modelo_indicado(tmp_path, monkeypatch):
+    """Las configuraciones de transfer learning no pueden caer en la CNN por defecto, y al retomar
+    una búsqueda se reentrena un resultado guardado de otro tipo de modelo."""
+    import json
+
+    from src.models import transfer
+    from src.training import train
+
+    for search in ("tl_busqueda", "tl_entre_fuentes"):
+        for c in transfer.SEARCHES[search]:
+            assert c["modelo"] in ("transfer", "cnn")
+    assert all(c["modelo"] == "transfer" for c in transfer.SEARCHES["tl_busqueda"])
+
+    monkeypatch.setattr(config, "RESULTS_DIR", tmp_path)
+    monkeypatch.setattr(train, "all_searches", lambda: {"s": [{"modelo": "transfer"}, {"modelo": "cnn"}]})
+    fake = {"epocas": 1, "parametros": 1, "train": {"f1_macro": 1.0}, "val": {"f1_macro": 1.0, "por_fuente": {}}}
+    for i in (0, 1):  # ambos guardados como CNN (sin "modelo")
+        (tmp_path / f"s_{i}.json").write_text(json.dumps({**fake, "configuracion": {}}))
+    trained = []
+    monkeypatch.setattr(train, "train_config", lambda name, o: trained.append(name) or {**fake, "configuracion": o})
+    train.search_cnn("s")
+    assert trained == ["s_0"]

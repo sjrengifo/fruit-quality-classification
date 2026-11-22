@@ -294,11 +294,17 @@ def search_cnn(search: str = "cnn_busqueda", sync_dir: Path | None = None) -> li
     for i, overrides in enumerate(all_searches()[search]):
         name = f"{search}_{i}"
         path = config.RESULTS_DIR / f"{name}.json"
+        r = None
         if path.exists():
-            print(f"{name}: ya entrenado, se omite")
             with open(path, encoding="utf-8") as f:
                 r = json.load(f)
-        else:
+            # un resultado guardado de otro tipo de modelo (p. ej. una versión anterior de la búsqueda) se reentrena
+            if r["configuracion"].get("modelo", "cnn") != overrides.get("modelo", "cnn"):
+                print(f"{name}: el resultado guardado es de otro modelo, se reentrena")
+                r = None
+            else:
+                print(f"{name}: ya entrenado, se omite")
+        if r is None:
             r = train_config(name, overrides)
         summary.append({"configuracion": overrides, "epocas": r["epocas"], "parametros": r["parametros"],
                         "f1_train": r["train"]["f1_macro"], "f1_val": r["val"]["f1_macro"],

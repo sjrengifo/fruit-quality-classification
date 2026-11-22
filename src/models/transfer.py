@@ -53,7 +53,9 @@ TL_LSO = [
     {"holdout": "hdf", "extra": True, "augment": "color"},
     {"holdout": "kaggle", "extra": True, "augment": "color"},
 ]
-SEARCHES = {"tl_busqueda": TL_GRID, "tl_entre_fuentes": TL_LSO}
+# Sin "modelo" explícito una configuración es transfer learning (train_config usa la CNN por defecto)
+SEARCHES = {search: [{"modelo": "transfer", **c} for c in grid]
+            for search, grid in {"tl_busqueda": TL_GRID, "tl_entre_fuentes": TL_LSO}.items()}
 
 BACKBONES = {"efficientnetb0": "EfficientNetB0", "mobilenetv3small": "MobileNetV3Small"}
 
