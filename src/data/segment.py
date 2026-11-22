@@ -190,13 +190,18 @@ def segment_and_crop(source, size: tuple[int, int] | None = None) -> tuple[np.nd
     Mismo camino que `segment` + `crop` sobre el índice (incluida la máscara reducida a `size` antes
     de recortar), para que la app y la evaluación vean exactamente lo que vio el modelo al entrenar.
     """
-    from PIL import Image
-
     from src.data.preprocess import prepare_image
 
-    size = size or config.IMAGE_SIZE
     big = prepare_image(source, SEG_INPUT)
-    mask = fruit_mask(big)
+    return crop_with_mask(big, fruit_mask(big), size)
+
+
+def crop_with_mask(big: np.ndarray, mask: np.ndarray, size: tuple[int, int] | None = None):
+    """Segunda mitad de `segment_and_crop` con una máscara ya calculada (a SEG_INPUT), p. ej. la de
+    solo la fruta cuando la foto trae una moneda para el tamaño."""
+    from PIL import Image
+
+    size = size or config.IMAGE_SIZE
     area = float(mask.mean())
     if area < EMPTY_MASK:
         mask = np.ones_like(mask)

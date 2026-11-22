@@ -144,7 +144,9 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] **Preprocesamiento** (`src/data/preprocess.py`): formato/orientación unificados, 128×128 sin
       deformar, normalización [0, 1], caché incremental (`python -m src.main preprocess`).
 - [x] Data augmentation dentro de la CNN (giros, rotación, zoom, brillo/contraste).
-- [ ] **Estimación de tamaño**: diámetro en píxeles → normalización → bins (Peq/Med/Grande).
+- [x] **Estimación de tamaño** (`src/features/size.py`): moneda de referencia (Hough + bordes por rayos;
+      12 monedas: error medio −1,8 %, desviación 1,2 %), máscara U²-Net, corrección de perspectiva con la
+      focal del EXIF, umbrales por fruta → Pequeño/Mediano/Grande.
 - [x] **Extracción de características** para ML tradicional (`src/features/`): histogramas de color
       (HSV), textura (GLCM/LBP), momentos de forma, área/perímetro.
 - [x] **Manejo de desbalanceo**: pesos por muestra (1/tamaño del grupo, clases equilibradas); SMOTE descartado.
@@ -172,7 +174,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
         (`notebooks/colab_entrenar_cnn`); la oscilación del F1 de validación baja de ±0,1 a ±0,007.
 - [x] **Selección del modelo final solo con validación** (`config.FINAL_MODEL`, `docs/crisp-dm.md` §4.3):
       CNN sin aumento de datos (F1 0,91, recall Podrida 0,94), +0,07 [0,01; 0,12] sobre el SVM.
-  - [ ] Opcional: transfer learning con capas congeladas (no previsto: el enunciado pide CNN desde cero).
+  - [x] Transfer learning (EfficientNetB0) como segunda iteración, autorizado por el profesor (§4.5).
   - [x] Callbacks (mejor época por F1-macro de validación, parada temprana, checkpoints en `experiments/checkpoints/`).
 - [x] Registrar experimentos (`experiments/results/*.json`, `experiments/logs/`; figuras en `assets/modelado/`).
 - [x] Justificar selección de modelos y **alternativas descartadas** (`docs/crisp-dm.md` §4).
@@ -192,7 +194,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Evaluar **una sola vez** CNN y SVM en `test` y en las fotos propias (`--split test|externa --final`):
       CNN test F1 0,80 (0,90 por grupo), recall Podrida 0,91; fotos propias F1 0,49, recall Podrida 0,27.
 - [x] Métricas: accuracy, precision/recall/F1 (macro y por clase), matriz de confusión, ROC-AUC (`notebooks/05_evaluation`).
-- [ ] Métricas de tamaño (MAE / accuracy por bin).
+- [ ] Métricas de tamaño (MAE / accuracy por bin): falta validar con las frutas medidas con regla
+      (`python -m src.features.size validar`).
 - [x] **Análisis de errores** (una sesión de HDF domina los errores de test; Podrida → Defectuosa en fotos propias).
 - [x] Diagnóstico de **sobreajuste** (CNN train ≈ val; SVM train 1,00): la caída es cambio de dominio.
 - [ ] **Comparación**: modelos entre sí y vs. línea base ✔; falta vs. literatura (NeurIPS/ICML/ICLR).
@@ -213,7 +216,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 - [x] **Interfaz Streamlit** (`src/app/app.py`): subir una o varias imágenes o **capturar desde cámara**;
       muestra calidad, probabilidades, lo que ve el modelo, aviso de baja confianza y tiempo (~0,4 s en CPU).
-- [ ] Tamaño en la app (pendiente: requiere referencia de escala).
+- [x] Tamaño en la app: opción "Medir tamaño (foto con moneda)", con fruta y moneda; muestra el contorno medido.
 - [x] Cargar el mejor modelo (`config.FINAL_TRANSFER` por defecto; también la CNN y el SVM) y el mismo preprocesamiento del entrenamiento
       (`segment_and_crop`, `src/models/predict.py`; verificado idéntico píxel a píxel a la caché).
 - [x] Guía de uso en `docs/instalacion.md` §6.

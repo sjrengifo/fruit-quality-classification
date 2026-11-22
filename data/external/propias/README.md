@@ -49,3 +49,21 @@ validar la estimación de tamaño de la Fase 3.
 5. Commit en una rama `feature/*` y PR hacia `dev`.
 
 Para compartir con el resto de la clase basta con enlazar esta carpeta del repositorio.
+
+## Fotos para validar el tamaño (`tamano/`)
+
+La estimación de tamaño (`src/features/size.py`) usa una **moneda de diámetro conocido** como escala.
+
+| Carpeta / archivo | Contenido |
+|-------------------|-----------|
+| `tamano/monedas/` | Cada moneda junto a una regla (prueba de la medición de la moneda) |
+| `tamano/imagenes/` | Fruta + moneda de $1.000 al lado, sin tocarse, foto desde arriba |
+| `tamano/anotaciones_tamano.csv` | `archivo, fruta, moneda, diametro_fruta_cm, notas` |
+
+- `diametro_fruta_cm`: ancho máximo medido con regla (fruta entre dos libros parados, distancia entre ellos).
+- `moneda`: clave de `config.COIN_DIAMETERS_MM` (p. ej. `1000_nueva`).
+- Preparar y validar:
+  ```bash
+  python -m src.features.size preparar   # HEIC → JPEG ≤ 1024 px conservando el EXIF (la focal corrige la perspectiva)
+  python -m src.features.size validar    # error en cm y % de clase de tamaño correcta
+  ```

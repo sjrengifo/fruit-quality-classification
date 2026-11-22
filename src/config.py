@@ -34,6 +34,31 @@ OWN_IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 OWN_MAX_SIDE = 1024         # lado mayor (px) antes de subir al repo, para no inflarlo
 OWN_ANNOTATION_COLUMNS = ["archivo", "fruta", "calidad", "tamano", "diametro_cm", "autor", "fecha", "notas"]
 
+# ─── Estimación de tamaño (src/features/size.py) ─────────
+SIZE_DIR = OWN_DIR / "tamano"
+SIZE_IMAGES_DIR = SIZE_DIR / "imagenes"             # fruta + moneda, medida con regla
+SIZE_ANNOTATIONS = SIZE_DIR / "anotaciones_tamano.csv"
+SIZE_COINS_DIR = SIZE_DIR / "monedas"               # cada moneda junto a una regla (prueba de la medición)
+# Diámetros oficiales (mm): Banco de la República, Banco Central Europeo, U.S. Mint
+COIN_DIAMETERS_MM = {
+    "100_nueva": 20.3, "200_nueva": 22.4, "500_nueva": 23.7, "1000_nueva": 26.7, "500_vieja": 23.5,
+    "euro_1c": 16.25, "euro_10c": 19.75, "euro_20c": 22.25, "euro_50c": 24.25,
+    "dime": 17.91, "nickel": 21.21, "quarter": 24.26,
+}
+DEFAULT_COIN = "1000_nueva"          # la más grande: la más fácil de detectar
+SIZE_COIN_FILES = {                  # foto de data/external/propias/tamano/monedas/ → moneda
+    "100pesos": "100_nueva", "200pesos": "200_nueva", "500pesos": "500_nueva", "1000pesos": "1000_nueva",
+    "500centavoEuro": "500_vieja", "1centavoEuro": "euro_1c", "10centavoEuro": "euro_10c",
+    "20centavoEuro": "euro_20c", "50centavoEuro": "euro_50c", "oneDimeDollar": "dime",
+    "fiveCentsDollar": "nickel", "quarterDollar": "quarter",
+}
+# Umbrales (cm) del ancho máximo: < t1 Pequeño, < t2 Mediano, si no Grande. Aproximados a partir de
+# calibres comerciales típicos; en banano y mango el ancho máximo visto desde arriba es el largo.
+FRUIT_SIZE_CM = {
+    "Apple": (6.5, 7.5), "Orange": (7.0, 8.5), "Lime": (4.5, 5.5), "Guava": (5.0, 7.0),
+    "Pomegranate": (7.5, 9.5), "Mango": (10.0, 13.0), "Banana": (15.0, 20.0), "Otra": (5.0, 8.0),
+}
+
 # ─── Dataset base (Kaggle) ────────────────────────────────
 KAGGLE_DATASET = "ryandpark/fruit-quality-classification"
 
