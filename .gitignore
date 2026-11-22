@@ -34,6 +34,7 @@ experiments/logs/*
 experiments/checkpoints/*
 experiments/results/*
 experiments/colab/
+experiments/archivo/
 !experiments/**/.gitkeep
 *.h5
 *.keras
