@@ -14,6 +14,7 @@ EXTERNAL_DIR = DATA_DIR / "external"  # imágenes propias del equipo
 EXPERIMENTS_DIR = ROOT_DIR / "experiments"
 CHECKPOINTS_DIR = EXPERIMENTS_DIR / "checkpoints"
 RESULTS_DIR = EXPERIMENTS_DIR / "results"
+LOGS_DIR = EXPERIMENTS_DIR / "logs"
 
 # ─── Definición del problema ──────────────────────────────
 QUALITY_CLASSES = ["Buena", "Defectuosa", "Podrida"]      # 3 clases de calidad
