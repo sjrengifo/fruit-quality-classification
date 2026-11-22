@@ -88,7 +88,8 @@ summaries = {}
 for search in SEARCH_LIST:
     for i, overrides in enumerate(all_searches()[search]):
         print(f"{search}_{i}: {overrides}")
-    summaries[search] = search_cnn(search, sync_dir=drive_dir / "experiments")
+    # isolate=True: cada configuración en su propio proceso (si no, la RAM de Colab se agota tras varias)
+    summaries[search] = search_cnn(search, sync_dir=drive_dir / "experiments", isolate=True)
 
 # %% [markdown]
 # ## 5. Resumen
