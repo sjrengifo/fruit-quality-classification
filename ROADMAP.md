@@ -197,6 +197,9 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Diagnóstico de **sobreajuste** (CNN train ≈ val; SVM train 1,00): la caída es cambio de dominio.
 - [ ] **Comparación**: modelos entre sí y vs. línea base ✔; falta vs. literatura (NeurIPS/ICML/ICLR).
 - [x] Extraer *insights* conectados con el problema (`docs/crisp-dm.md` §5).
+- [x] **Segunda iteración** (§4.5, §5.4): FruQ como fuente solo de entrenamiento + transfer learning
+      (EfficientNetB0), elegido con validación y generalización entre fuentes. Test F1 0,85; fotos
+      propias 0,47 (segunda mirada, sin mejora: el límite son los datos, no el modelo).
 
 **Entregables:** tablas y figuras de resultados, sección de análisis en el informe.
 
@@ -211,7 +214,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] **Interfaz Streamlit** (`src/app/app.py`): subir una o varias imágenes o **capturar desde cámara**;
       muestra calidad, probabilidades, lo que ve el modelo, aviso de baja confianza y tiempo (~0,4 s en CPU).
 - [ ] Tamaño en la app (pendiente: requiere referencia de escala).
-- [x] Cargar el mejor modelo (`config.FINAL_MODEL`, o el SVM) y el mismo preprocesamiento del entrenamiento
+- [x] Cargar el mejor modelo (`config.FINAL_TRANSFER` por defecto; también la CNN y el SVM) y el mismo preprocesamiento del entrenamiento
       (`segment_and_crop`, `src/models/predict.py`; verificado idéntico píxel a píxel a la caché).
 - [x] Guía de uso en `docs/instalacion.md` §6.
 - [ ] *(Opcional)* simulación de línea de empaque con cámara + Raspberry Pi.

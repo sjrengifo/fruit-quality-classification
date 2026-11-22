@@ -35,7 +35,7 @@ python -m src.training.colab                      # zip (src/ + index + train/va
 python -m src.evaluation.evaluate --model svm     # metrics + group-bootstrap 95% CI + error list on val; test/externa need --final (run once, final model)
 python -m src.evaluation.ablation         # feature ablation + cross-source generalization (uses saved SVM)
 python -m src.evaluation.figuras_modelado # Phase 4 figures from experiments/ → assets/modelado/
-streamlit run src/app/app.py              # deployment GUI: src/models/predict.Predictor (segment_and_crop + config.FINAL_MODEL); app.py prepends repo root to sys.path
+streamlit run src/app/app.py              # deployment GUI: src/models/predict.Predictor (segment_and_crop + config.FINAL_TRANSFER by default); app.py prepends repo root to sys.path
 python -m src.models.predict foto.jpg      # predict one image from the terminal (--model svm)
 
 python -m src.data.own_images redimensionar   # shrink team photos to ≤1024 px before committing
@@ -48,7 +48,7 @@ Notebooks are authored as **jupytext percent-format `.py` files** (`notebooks/01
 
 - `src/config.py` is the single source of truth for paths (`RAW_DIR`, `PROCESSED_DIR`, `OWN_DIR`/`OWN_IMAGES_DIR`/`OWN_ANNOTATIONS` for team-collected images, `CHECKPOINTS_DIR`, `RESULTS_DIR`), class lists, the Kaggle dataset id, and default hyperparameters (`IMAGE_SIZE=(128,128)`, `RANDOM_SEED=42`, splits). Don't hardcode these elsewhere.
 - Pipeline (see `docs/arquitectura.md`): `data/download` → `data/dataset` (index) → `data/preprocess` → `data/segment` (U²-Net mask, white background, then `crop_fruit`) → two branches: `features/extract_features` (color HSV / texture GLCM-LBP / shape → φ(x), fruit pixels only) feeding `models/classic_ml` (`build_models()` returns `{name: (pipeline, param_grid)}` with the classifier as step `clf`; `tune()` runs GridSearchCV with `f1_macro` on `StratifiedGroupKFold`), and `models/cnn` (Keras Sequential; rescaling + augmentation live inside the model, input is uint8) → `training/train` (models to `experiments/checkpoints/`, metrics JSON to `experiments/results/`, CNN history to `experiments/logs/`) → `evaluation/` → `app/app.py`.
-- Model selection uses `train` + `val` only; `test` and `externa` are reserved for Phase 5. The chosen models are fixed in `config.FINAL_MODEL` (CNN `cnn_estable_1`) and `config.FINAL_CLASSIC` (SVM) — the app and Phase 5 read them from there. `sample_weights()` in `training/train.py` (1/group size, classes balanced) is the single imbalance mechanism.
+- Model selection uses `train` + `val` only; `test` and `externa` are reserved for Phase 5. The chosen models are fixed in `config.FINAL_MODEL` (CNN `cnn_estable_1`), `config.FINAL_CLASSIC` (SVM) and `config.FINAL_TRANSFER` (`tl_busqueda_4`, EfficientNetB0 + color augmentation + FruQ; second iteration, app default) — the app and Phase 5 read them from there. All three have been evaluated on test/externa: no further model selection may use those sets. `sample_weights()` in `training/train.py` (1/group size, classes balanced) is the single imbalance mechanism.
 - Heavy dependencies (`cv2`, `tensorflow`, `sklearn`, `kaggle`) are **imported lazily inside functions** so `src` modules and the smoke tests import without them. Follow this pattern.
 - Many functions are stubs raising `NotImplementedError("Implementar en Fase N")`; the phase number tells where they belong in `ROADMAP.md`.
 - Notebooks should reuse code from `src/` rather than duplicate logic.

@@ -293,7 +293,25 @@ reescalado para que las tres clases pesen lo mismo (`sample_weights`, `src/train
 descartó SMOTE: interpolar vectores de características de frutas distintas no produce frutas
 plausibles y los pesos logran el mismo efecto sin datos sintéticos.
 
-### 3.9 Pasos pendientes
+### 3.9 FruQ: fuente solo de entrenamiento (segunda iteración)
+
+Tras la Fase 5 (F1 0,49 con las fotos propias por cambio de dominio, §5) se añadió variedad de
+fruta y cámara sin tocar las 81 fotos de prueba. **FruQ** (Zenodo 7224690, CC BY 4.0) son
+*time-lapses*: cada video es **una sola fruta** que pasa de fresca a podrida.
+
+- Se usan solo las carpetas de fruta entera y sola (`config.FRUQ_FRUITS`: banano, kaki, papaya,
+  durazno, pera), 1 de cada 3 cuadros. `download_fruq` descarga solo esos cuadros del zip de 4,6 GB
+  con lecturas por rangos HTTP (con límite de velocidad: Zenodo responde 429).
+- Mapeo `Fresh → Buena`, `Mild → Defectuosa`, `Rotten → Podrida`, revisado sobre los recortes.
+  Descartados: **fresa** (Mild y Rotten iguales a 128 px), **durazno Mild** (el video hace zoom y la
+  fruta sale del cuadro) y **banano Mild** (solo pecas de maduración: para nuestro criterio es Buena).
+- Grupos = ventanas de 10 cuadros muestreados de un mismo video (cuadros vecinos son casi
+  idénticos). Quedan **1.515 imágenes en 309 grupos**.
+- Es **solo de entrenamiento** (split `extra`, `config.TRAIN_ONLY_SOURCES`): todos los cuadros son la
+  misma fruta, así que en val/test medirían memoria del objeto, no generalización. El entrenamiento
+  solo la usa con `extra=True`. Las 21.519 imágenes previas no cambiaron de split (verificado).
+
+### 3.10 Pasos pendientes
 
 - Estimación de tamaño (diámetro en píxeles normalizados → bins).
 - `Mixed Quality`: separar frutas múltiples por componentes de la máscara.
@@ -450,10 +468,52 @@ antes de la evaluación final, para que la elección no pueda depender de `test`
 ### 4.4 Alternativas descartadas
 
 - **SMOTE / sobremuestreo sintético:** ver §3.8.
-- **Transfer learning para clasificar:** el enunciado pide una CNN entrenada desde cero; la red
-  preentrenada (U²-Net) solo se usa para quitar el fondo.
+- **Transfer learning en la primera iteración:** el enunciado pide una CNN desde cero; se agregó
+  después, como segunda iteración (§4.5), con autorización del profesor.
 - **GrabCut / umbral de color para segmentar:** falla con los fondos complejos de HDF (§3.6).
 - **Partición aleatoria por imagen:** infla las métricas por copias y casi-duplicados (§3.2, §3.7).
+
+### 4.5 Segunda iteración: transfer learning
+
+Objetivo: reducir la caída con fruta y cámara reales (§5.2). **EfficientNetB0** preentrenada en
+ImageNet (`src/models/transfer.py`, 4,05 M parámetros) sobre el mismo recorte 128×128: 3 épocas
+solo de cabeza con la base congelada (tasa 1e-3) y 15 de ajuste fino de toda la red (coseno desde
+1e-4; BatchNorm en modo inferencia). Entrenado en Colab (T4), ~10–15 min por configuración.
+
+**Criterio de selección fijado antes de entrenar:** validación + **generalización entre fuentes**
+(`tl_entre_fuentes`: entrenar sin una fuente y validar solo en sus imágenes de val). Así se mide el
+cambio de dominio sin gastar test ni las fotos propias. Diferencias pareadas con IC95 por grupos.
+
+| Modelo (`tl_busqueda_i`) | F1 val [IC95] | vs. CNN | Recall P |
+|---|---|---|---:|
+| CNN desde cero (`cnn_estable_1`) | 0,913 [0,85; 0,95] | — | 0,94 |
+| TL sin aumento (0) | 0,904 [0,81; 0,96] | −0,01 [−0,07; +0,03] | 0,96 |
+| TL + aumento geométrico (1) | 0,902 [0,82; 0,95] | −0,01 [−0,07; +0,03] | 0,93 |
+| TL + aumento de color (2) | 0,909 [0,84; 0,96] | −0,00 [−0,06; +0,04] | 0,94 |
+| TL + FruQ (3) | 0,915 [0,83; 0,97] | +0,00 [−0,03; +0,03] | 0,96 |
+| **TL + color + FruQ (4)** | **0,912 [0,85; 0,96]** | −0,00 [−0,04; +0,03] | 0,95 |
+
+| Entre fuentes (F1 en la fuente no vista) | valida en HDF | valida en Kaggle |
+|---|---|---|
+| CNN desde cero | 0,49 [0,32; 0,62] | 0,36 [0,34; 0,39] |
+| TL | 0,58 (+0,09 [−0,12; +0,30]) | 0,42 (+0,05 [+0,02; +0,09]) |
+| TL + color | 0,58 (+0,10 [−0,12; +0,29]) | 0,50 (**+0,13 [+0,09; +0,17]**) |
+| TL + color + FruQ | 0,61 (+0,12 [−0,11; +0,30]) | 0,47 (**+0,11 [+0,08; +0,14]**) |
+
+- **En las fuentes conocidas, empate:** todas las variantes quedan a ±0,01 de la CNN. El transfer
+  learning reconoce mejor Defectuosa (recall 0,91–0,93 vs. 0,88).
+- **Entre fuentes, mejora real pero insuficiente:** +0,11 a +0,13 al validar en Kaggle (IC sin
+  cero); en HDF el IC es ancho (pocos grupos). Aun así el F1 en una fuente no vista sigue en
+  0,5–0,6, y la media de las últimas épocas es mucho menor (0,16–0,18 en Kaggle): elegir la época con
+  la propia fuente no vista es optimista para todos los modelos por igual.
+- El **aumento de color** es lo que más aporta; **FruQ** no cambia el F1 pero sube el recall de
+  Podrida en la fuente no vista (0,43 vs. 0,28 en HDF; 0,67 vs. 0,61 en Kaggle), justo la debilidad
+  vista en las fotos propias.
+- **Elegido: `tl_busqueda_4`** (color + FruQ) → `config.FINAL_TRANSFER`, fijado en el commit
+  `8818bb0` antes de mirar test o las fotos propias. Pasa a ser el modelo de la app; la CNN desde
+  cero sigue siendo el modelo exigido por el enunciado y se reporta igual.
+- Nota de proceso: una primera corrida en Colab entrenó por error la CNN en lugar de EfficientNet
+  (faltaba `"modelo": "transfer"` en la búsqueda); se corrigió y se descartó.
 
 ---
 
@@ -507,6 +567,31 @@ cada fruta una vez, el de F1; **con fruta y cámara reales no es apta para uso**
 Para mejorarlo (requiere fotos nuevas, sin tocar las 81 actuales que son la prueba): fotografiar más
 fruta propia y usar una parte para entrenar, alinear el criterio Defectuosa/Podrida en las
 etiquetas de entrenamiento y añadir una salida "no sé" para fotos fuera de dominio.
+
+### 5.4 Segunda mirada: transfer learning (§4.5)
+
+Las fotos propias **ya se habían usado una vez** (§5.1); esta es una **segunda mirada**, con el
+modelo fijado antes (commit `8818bb0`). Diferencias pareadas frente a la CNN con IC95 por grupos.
+
+| Modelo | Conjunto | F1-macro [IC95] | Exactitud | Recall Podrida [IC95] | vs. CNN (F1) |
+|--------|----------|-----------------|----------:|-----------------------|--------------|
+| TL (`tl_busqueda_4`) | test | **0,85 [0,76; 0,94]** | 0,91 | 0,91 [0,88; 0,94] | +0,04 [−0,05; +0,11] |
+| TL (`tl_busqueda_4`) | fotos propias | 0,47 [0,36; 0,57] | 0,47 | 0,30 [0,13; 0,47] | −0,02 [−0,16; +0,11] |
+
+- **`test`:** los errores Buena → Podrida bajan de 369 a 72, casi todos de la carpeta de manzanas
+  frescas de HDF (358 → 66): con el preentrenamiento el rojo oscuro se confunde mucho menos con
+  pudrición. Ahora el error típico es Buena → Defectuosa (279). La mejora en F1 no alcanza a ser
+  significativa.
+- **Fotos propias: sin mejora.** Mismo patrón que la CNN: 20 de 30 Podrida → Defectuosa. La CNN y el
+  TL coinciden en el 62 % de las fotos y **fallan juntos en el 35 %**: el problema no es la
+  arquitectura sino los datos. Revisando las 21 Podrida mal clasificadas: 12 son **manzanas con
+  manchas marrones moderadas** (fotos repetidas de pocas frutas), en la frontera entre Defectuosa y
+  Podrida según nuestro criterio; 5 **naranjas con moho verde/blanco o tejido oscuro evidente** (4 →
+  Defectuosa, 1 → Buena) sí son fallas claras; el resto son 2 bananos y 2 guayabas.
+- **Conclusión:** el transfer learning mejora la generalización entre los datasets públicos y en
+  test, pero no cierra la brecha con la fruta real. Con estos datos, la limitación es el **dominio y
+  el umbral de pudrición** de las fuentes públicas, no la capacidad del modelo. Lo que sí ayudaría
+  (fuera del alcance de tiempo): fotos propias para entrenar y ejemplos de moho en cítricos.
 
 > _Pendiente: comparación con la literatura y métricas de tamaño._
 
