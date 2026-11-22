@@ -38,6 +38,8 @@ python -m src.evaluation.figuras_modelado # Phase 4 figures from experiments/ �
 streamlit run src/app/app.py              # deployment GUI: src/models/predict.Predictor (segment_and_crop + config.FINAL_TRANSFER by default); app.py prepends repo root to sys.path
 python -m src.models.predict foto.jpg      # predict one image from the terminal (--model svm)
 python -m src.features.size preparar|monedas|validar   # size estimation with a reference coin (photos in data/external/propias/tamano/)
+python -m src.evaluation.figuras_informe  # report figures (SVG → PDF via rsvg-convert) → docs/informe/latex/figuras/
+cd docs/informe/latex && tectonic informe.tex   # compile the IEEE report (IEEEtran); the .tex is the source of truth, not informe_final.md
 
 python -m src.data.own_images redimensionar   # shrink team photos to ≤1024 px before committing
 python -m src.data.own_images validar         # check anotaciones.csv vs images (also run by pytest)
