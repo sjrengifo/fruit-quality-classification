@@ -102,20 +102,27 @@ def train_classic() -> dict:
     return results
 
 
-def load_training_data(extra: bool = False, holdout: str | None = None):
+def index_path(indice: str | None = None) -> Path:
+    """Índice con el que se entrena: el original o, con "v3", el de etiquetas revisadas (src/data/revision.py)."""
+    return config.DATASET_INDEX_V3 if indice == "v3" else config.DATASET_INDEX
+
+
+def load_training_data(extra: bool = False, holdout: str | None = None, indice: str | None = None):
     """(X_tr, rows_tr, X_va, rows_va) de las imágenes recortadas.
 
     - `extra`: agrega las fuentes solo-entrenamiento (split "extra", p. ej. FruQ).
     - `holdout`: deja esa fuente fuera del entrenamiento y valida **solo** con sus imágenes de val
       (generalización a una fuente no vista; test y externa no se tocan).
+    - `indice`: "v3" usa las etiquetas revisadas (train y val); por defecto, el índice original.
     """
     from src.data.preprocess import load_split
 
-    X_tr, rows_tr = load_split("train")
+    path = index_path(indice)
+    X_tr, rows_tr = load_split("train", path)
     if extra:
-        X_ex, rows_ex = load_split("extra")
+        X_ex, rows_ex = load_split("extra", path)
         X_tr, rows_tr = np.concatenate([X_tr, X_ex]), rows_tr + rows_ex
-    X_va, rows_va = load_split("val")
+    X_va, rows_va = load_split("val", path)
     if holdout:
         keep_tr = np.array([r["fuente"] != holdout for r in rows_tr])
         keep_va = np.array([r["fuente"] == holdout for r in rows_va])
@@ -198,7 +205,7 @@ def _dataset(X, y, w, batch_size: int):
 
 
 def train_cnn(name: str = "cnn", epochs: int | None = None, extra: bool = False, holdout: str | None = None,
-              **overrides) -> dict:
+              indice: str | None = None, **overrides) -> dict:
     """Entrena la CNN desde cero con pesos por muestra; conserva la época con mejor F1-macro en validación."""
     import math
     import time
@@ -209,10 +216,10 @@ def train_cnn(name: str = "cnn", epochs: int | None = None, extra: bool = False,
     from src.models.cnn import CNN_DEFAULT, build_cnn
 
     overrides.pop("modelo", None)
-    cfg = {**CNN_DEFAULT, **overrides, "extra": extra, "holdout": holdout}
+    cfg = {**CNN_DEFAULT, **overrides, "extra": extra, "holdout": holdout, "indice": indice}
     epochs = epochs or config.EPOCHS
     gpu = _setup_tf()
-    data = X_tr, rows_tr, X_va, rows_va = load_training_data(extra, holdout)
+    data = X_tr, rows_tr, X_va, rows_va = load_training_data(extra, holdout, indice)
     w_tr = sample_weights(rows_tr, cfg["weight_power"]).astype("float32")
     checkpoint = config.CHECKPOINTS_DIR / f"{name}.keras"
 
@@ -241,7 +248,7 @@ def train_transfer(name: str = "tl", **overrides) -> dict:
 
     cfg = {**TRANSFER_DEFAULT, **overrides}
     gpu = _setup_tf()
-    data = X_tr, rows_tr, X_va, rows_va = load_training_data(cfg["extra"], cfg["holdout"])
+    data = X_tr, rows_tr, X_va, rows_va = load_training_data(cfg["extra"], cfg["holdout"], cfg["indice"])
     y_tr, w_tr = labels(rows_tr), sample_weights(rows_tr, cfg["weight_power"]).astype("float32")
     checkpoint = config.CHECKPOINTS_DIR / f"{name}.keras"
     train_data = _dataset(X_tr, y_tr, w_tr, cfg["batch_size"])
@@ -337,7 +344,8 @@ def search_cnn(search: str = "cnn_busqueda", sync_dir: Path | None = None, isola
 def main():
     parser = argparse.ArgumentParser(description="Entrenamiento de modelos")
     parser.add_argument("--model", default="cnn",
-                        choices=["cnn", "cnn_search", "cnn_stable", "classic", "transfer", "tl_busqueda", "tl_entre_fuentes"])
+                        choices=["cnn", "cnn_search", "cnn_stable", "classic", "transfer", "tl_busqueda", "tl_entre_fuentes",
+                                 "v3"])
     parser.add_argument("--busqueda", help="con --indice: entrena solo esa configuración de la búsqueda")
     parser.add_argument("--indice", type=int)
     args = parser.parse_args()
@@ -354,7 +362,7 @@ def main():
         search_cnn("cnn_estable")
     elif args.model == "transfer":
         train_transfer()
-    elif args.model.startswith("tl_"):
+    elif args.model.startswith("tl_") or args.model == "v3":
         search_cnn(args.model)
     else:
         train_classic()

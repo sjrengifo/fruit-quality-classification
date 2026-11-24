@@ -28,6 +28,7 @@ TRANSFER_DEFAULT = {
     "weight_power": 1.0,
     "extra": False,           # agregar fuentes solo-entrenamiento (split "extra": FruQ)
     "holdout": None,          # fuente que se deja fuera del entrenamiento y se usa para validar
+    "indice": None,           # "v3": etiquetas revisadas (src/data/revision.py)
 }
 
 # Búsqueda principal: ¿qué aumento de datos? ¿aporta FruQ? → tl_busqueda_<i>
@@ -53,9 +54,16 @@ TL_LSO = [
     {"holdout": "hdf", "extra": True, "augment": "color"},
     {"holdout": "kaggle", "extra": True, "augment": "color"},
 ]
+# Tercera iteración: los dos modelos finales (CNN `cnn_estable_1` y transfer `tl_busqueda_4`) con la
+# misma configuración, entrenados desde cero con las etiquetas revisadas y sin imágenes de varias
+# frutas (data/processed/index_v3.csv) → v3_<i>
+V3 = [
+    {**_CNN_FINAL, "indice": "v3"},
+    {"augment": "color", "extra": True, "indice": "v3"},
+]
 # Sin "modelo" explícito una configuración es transfer learning (train_config usa la CNN por defecto)
 SEARCHES = {search: [{"modelo": "transfer", **c} for c in grid]
-            for search, grid in {"tl_busqueda": TL_GRID, "tl_entre_fuentes": TL_LSO}.items()}
+            for search, grid in {"tl_busqueda": TL_GRID, "tl_entre_fuentes": TL_LSO, "v3": V3}.items()}
 
 BACKBONES = {"efficientnetb0": "EfficientNetB0", "mobilenetv3small": "MobileNetV3Small"}
 

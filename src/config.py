@@ -18,6 +18,7 @@ HDF_DIR = EXTERNAL_DIR / "healthy_defective"  # dataset complementario (solo im�
 FRUQ_DIR = EXTERNAL_DIR / "fruq"            # FruQ (solo entrenamiento, ver FRUQ_* abajo)
 ANNOTATIONS_DIR = DATA_DIR / "anotaciones"  # re-anotación de Bad (versionada)
 DATASET_INDEX = PROCESSED_DIR / "index.csv"
+DATASET_INDEX_V3 = PROCESSED_DIR / "index_v3.csv"   # 3.ª iteración: etiquetas revisadas (src/data/revision.py)
 EXPERIMENTS_DIR = ROOT_DIR / "experiments"
 CHECKPOINTS_DIR = EXPERIMENTS_DIR / "checkpoints"
 RESULTS_DIR = EXPERIMENTS_DIR / "results"
