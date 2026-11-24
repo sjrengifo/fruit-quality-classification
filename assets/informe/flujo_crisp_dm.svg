@@ -1,119 +1,69 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 470" font-family="Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 55 1200 360" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <!-- CRISP-DM como recorrido real: fases en una línea, retrocesos como arcos con el hallazgo que los motivó -->
   <defs>
-    <marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="#333"/>
-    </marker>
-    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0 0 L10 5 L0 10 z" fill="#b5462b"/>
+    <marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M1 1 L9 5 L1 9" fill="none" stroke="#c8553d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
   </defs>
-  <rect width="1400" height="470" fill="#fff"/>
   <style>
-    .box { fill: #f4f4f2; stroke: #333; stroke-width: 1.5; }
-    .head { fill: #333; }
-    .ht { fill: #fff; font-size: 17px; font-weight: bold; }
-    .t { fill: #222; font-size: 14px; }
-    .k { fill: #222; font-size: 14px; font-weight: bold; }
-    .fb { fill: none; stroke: #b5462b; stroke-width: 1.8; stroke-dasharray: 6 4; }
-    .ft { fill: #b5462b; font-size: 13.5px; }
+    .eje { stroke: #1b241c; stroke-width: 2; }
+    .arco { fill: none; stroke: #c8553d; stroke-width: 1.6; }
+    .num { fill: #8a877c; font-family: Menlo, monospace; font-size: 13px; letter-spacing: 1px; }
+    .fase { fill: #1b241c; font-size: 18px; font-weight: bold; }
+    .dato { fill: #5c5a52; font-size: 15px; }
+    .hall { fill: #c8553d; font-size: 15px; }
+    .hall b, .k { font-weight: bold; }
   </style>
+  <rect y="55" width="1200" height="360" fill="#fff"/>
 
-  <!-- Fase 1 -->
-  <rect class="box" x="10" y="20" width="215" height="250" rx="6"/>
-  <rect class="head" x="10" y="20" width="215" height="34" rx="6"/>
-  <text class="ht" x="22" y="43">1 · Negocio</text>
-  <text class="t" x="22" y="78">Clasificación manual</text>
-  <text class="t" x="22" y="96">lenta y subjetiva</text>
-  <text class="k" x="22" y="124">3 clases de calidad</text>
-  <text class="t" x="22" y="142">Buena / Defectuosa /</text>
-  <text class="t" x="22" y="160">Podrida + tamaño</text>
-  <text class="k" x="22" y="188">KPIs</text>
-  <text class="t" x="22" y="206">F1-macro ≥ 0,85</text>
-  <text class="t" x="22" y="224">Recall Podrida ≥ 0,90</text>
-  <text class="t" x="22" y="242">Tamaño ≥ 0,80</text>
-  <text class="t" x="22" y="260">Latencia &lt; 1 s</text>
+  <!-- retrocesos (anidados: el más largo por fuera) -->
+  <path class="arco" d="M908 300 V117 Q908 95 886 95 H122 Q100 95 100 117 V293" marker-end="url(#p)"/>
+  <path class="arco" d="M892 300 V182 Q892 160 870 160 H322 Q300 160 300 182 V293" marker-end="url(#p)"/>
+  <path class="arco" d="M700 300 V247 Q700 225 678 225 H522 Q500 225 500 247 V293" marker-end="url(#p)"/>
+  <circle cx="908" cy="300" r="3" fill="#c8553d"/>
+  <circle cx="892" cy="300" r="3" fill="#c8553d"/>
+  <circle cx="700" cy="300" r="3" fill="#c8553d"/>
 
-  <!-- Fase 2 -->
-  <rect class="box" x="243" y="20" width="215" height="250" rx="6"/>
-  <rect class="head" x="243" y="20" width="215" height="34" rx="6"/>
-  <text class="ht" x="255" y="43">2 · Datos</text>
-  <text class="t" x="255" y="78">Kaggle: solo Good/Bad</text>
-  <text class="t" x="255" y="96">+ Healthy-Defective (HDF)</text>
-  <text class="t" x="255" y="114">+ 81 fotos propias</text>
-  <text class="k" x="255" y="142">Hallazgos</text>
-  <text class="t" x="255" y="160">79 % de granadas son</text>
-  <text class="t" x="255" y="178">copias aumentadas</text>
-  <text class="t" x="255" y="196">HDF repite sesiones</text>
-  <text class="t" x="255" y="214">Fondo predice la clase</text>
-  <text class="t" x="255" y="232">(F1 0,65 solo con fondo)</text>
+  <text class="hall" x="504" y="83" text-anchor="middle">KPIs revisados: se cumplen en fuentes públicas, no con fruta real</text>
+  <text class="hall" x="596" y="148" text-anchor="middle"><tspan class="k">2.ª iteración</tspan> · F1 0,49 con fotos propias → FruQ + transfer learning</text>
+  <text class="hall" x="600" y="213" text-anchor="middle">F1 0,99 era la misma fruta en train y val → grupos</text>
 
-  <!-- Fase 3 -->
-  <rect class="box" x="476" y="20" width="215" height="250" rx="6"/>
-  <rect class="head" x="476" y="20" width="215" height="34" rx="6"/>
-  <text class="ht" x="488" y="43">3 · Preparación</text>
-  <text class="t" x="488" y="78">Re-anotar 1.200 Bad</text>
-  <text class="t" x="488" y="96">→ Defectuosa / Podrida</text>
-  <text class="t" x="488" y="124">U²-Net: fondo blanco</text>
-  <text class="t" x="488" y="142">+ recorte centrado</text>
-  <text class="t" x="488" y="170">Splits por grupo (hash)</text>
-  <text class="t" x="488" y="188">peso 1 / tamaño del grupo</text>
-  <text class="t" x="488" y="216">φ(x): 68 rasgos de</text>
-  <text class="t" x="488" y="234">color, textura, forma</text>
+  <!-- eje de fases -->
+  <line class="eje" x1="100" y1="300" x2="1100" y2="300"/>
+  <g fill="#1b241c">
+    <circle cx="100" cy="300" r="6"/><circle cx="300" cy="300" r="6"/><circle cx="500" cy="300" r="6"/>
+    <circle cx="700" cy="300" r="6"/><circle cx="900" cy="300" r="6"/><circle cx="1100" cy="300" r="6"/>
+  </g>
 
-  <!-- Fase 4 -->
-  <rect class="box" x="709" y="20" width="215" height="250" rx="6"/>
-  <rect class="head" x="709" y="20" width="215" height="34" rx="6"/>
-  <text class="ht" x="721" y="43">4 · Modelado</text>
-  <text class="t" x="721" y="78">RegLog, SVM, RF</text>
-  <text class="t" x="721" y="96">(rejilla, CV por grupos)</text>
-  <text class="t" x="721" y="124">CNN desde cero</text>
-  <text class="t" x="721" y="142">(lote 128, coseno)</text>
-  <text class="t" x="721" y="170">Selección solo con val,</text>
-  <text class="t" x="721" y="188">fijada en un commit</text>
-  <text class="t" x="721" y="216">Prueba entre fuentes:</text>
-  <text class="t" x="721" y="234">F1 0,06–0,42</text>
+  <g text-anchor="middle">
+    <text class="num" x="100" y="330">01</text>
+    <text class="fase" x="100" y="352">Negocio</text>
+    <text class="dato" x="100" y="374">3 clases + tamaño</text>
+    <text class="dato" x="100" y="393">4 KPIs</text>
 
-  <!-- Fase 5 -->
-  <rect class="box" x="942" y="20" width="215" height="250" rx="6"/>
-  <rect class="head" x="942" y="20" width="215" height="34" rx="6"/>
-  <text class="ht" x="954" y="43">5 · Evaluación</text>
-  <text class="t" x="954" y="78">Test (una vez):</text>
-  <text class="t" x="954" y="96">F1 0,80–0,85</text>
-  <text class="t" x="954" y="124">Fotos propias:</text>
-  <text class="t" x="954" y="142">F1 0,46–0,49</text>
-  <text class="t" x="954" y="170">IC95 por bootstrap</text>
-  <text class="t" x="954" y="188">de grupos</text>
-  <text class="t" x="954" y="216">Tamaño: moneda,</text>
-  <text class="t" x="954" y="234">MAE 0,57 cm</text>
+    <text class="num" x="300" y="330">02</text>
+    <text class="fase" x="300" y="352">Datos</text>
+    <text class="dato" x="300" y="374">4 fuentes</text>
+    <text class="dato" x="300" y="393">Kaggle solo Good/Bad</text>
 
-  <!-- Fase 6 -->
-  <rect class="box" x="1175" y="20" width="215" height="250" rx="6"/>
-  <rect class="head" x="1175" y="20" width="215" height="34" rx="6"/>
-  <text class="ht" x="1187" y="43">6 · Despliegue</text>
-  <text class="t" x="1187" y="78">App Streamlit:</text>
-  <text class="t" x="1187" y="96">foto o cámara</text>
-  <text class="t" x="1187" y="124">Mismo preprocesamiento</text>
-  <text class="t" x="1187" y="142">que el entrenamiento</text>
-  <text class="t" x="1187" y="170">Calidad + confianza</text>
-  <text class="t" x="1187" y="188">+ tamaño con moneda</text>
-  <text class="t" x="1187" y="216">0,34 s / imagen (CPU)</text>
+    <text class="num" x="500" y="330">03</text>
+    <text class="fase" x="500" y="352">Preparación</text>
+    <text class="dato" x="500" y="374">re-anotar 1.200 Bad</text>
+    <text class="dato" x="500" y="393">U²-Net: el fondo daba F1 0,65</text>
 
-  <!-- flujo principal -->
-  <line x1="225" y1="145" x2="241" y2="145" stroke="#333" stroke-width="2" marker-end="url(#f)"/>
-  <line x1="458" y1="145" x2="474" y2="145" stroke="#333" stroke-width="2" marker-end="url(#f)"/>
-  <line x1="691" y1="145" x2="707" y2="145" stroke="#333" stroke-width="2" marker-end="url(#f)"/>
-  <line x1="924" y1="145" x2="940" y2="145" stroke="#333" stroke-width="2" marker-end="url(#f)"/>
-  <line x1="1157" y1="145" x2="1173" y2="145" stroke="#333" stroke-width="2" marker-end="url(#f)"/>
+    <text class="num" x="700" y="330">04</text>
+    <text class="fase" x="700" y="352">Modelado</text>
+    <text class="dato" x="700" y="374">RegLog · SVM · RF</text>
+    <text class="dato" x="700" y="393">CNN · EfficientNetB0</text>
 
-  <!-- retroalimentaciones reales (rutas ortogonales en carriles) -->
-  <path class="fb" d="M370 270 V292 H540 V272" marker-end="url(#r)"/>
-  <text class="ft" x="160" y="314">fondo y encuadre predicen la clase → segmentar y recortar</text>
-  <path class="fb" d="M820 270 V292 H660 V272" marker-end="url(#r)"/>
-  <text class="ft" x="655" y="314">casi-duplicados: F1 0,99 → 0,79</text>
-  <path class="fb" d="M1040 270 V350 H600 V272" marker-end="url(#r)"/>
-  <path class="fb" d="M900 350 V272" marker-end="url(#r)"/>
-  <text class="ft" x="610" y="372">2.ª iteración: fotos propias F1 0,49 → FruQ (Fase 3)</text>
-  <text class="ft" x="610" y="390">+ transfer learning EfficientNetB0 (Fase 4)</text>
-  <path class="fb" d="M1090 270 V430 H117 V272" marker-end="url(#r)"/>
-  <text class="ft" x="300" y="452">KPIs revisados con la evidencia: se cumplen en las fuentes públicas, no con fruta real</text>
+    <text class="num" x="900" y="330">05</text>
+    <text class="fase" x="900" y="352">Evaluación</text>
+    <text class="dato" x="900" y="374">test 0,85</text>
+    <text class="dato" x="900" y="393">fotos propias 0,47</text>
+
+    <text class="num" x="1100" y="330">06</text>
+    <text class="fase" x="1100" y="352">Despliegue</text>
+    <text class="dato" x="1100" y="374">app Streamlit</text>
+    <text class="dato" x="1100" y="393">0,34 s por imagen</text>
+  </g>
 </svg>
