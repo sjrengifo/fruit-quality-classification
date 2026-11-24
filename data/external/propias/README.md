@@ -68,3 +68,12 @@ La estimación de tamaño (`src/features/size.py`) usa una **moneda de diámetro
   python -m src.features.size preparar   # HEIC → JPEG ≤ 1024 px conservando el EXIF (la focal corrige la perspectiva)
   python -m src.features.size validar    # error en cm y % de clase de tamaño correcta
   ```
+
+## Segundo lote: `nov24/` (24 nov. 2026)
+
+35 fotos nuevas (fondo de bolsa blanca, luz natural; originales HEIC del iPhone convertidos a JPEG
+≤ 1024 px) con su propio `anotaciones.csv`: 29 Buena (11 manzanas, 9 naranjas, 6 bananos, 3
+limones) y 6 Podrida (3 manzanas, 3 naranjas). Es una **prueba limpia** de la cuarta iteración
+(`python -m src.evaluation.iteracion4`): no está en `index.csv`, no se usa para entrenar y se
+predice con el mismo camino que la app. `manzana_podrida_v3` posiblemente es la misma manzana que
+`v1` (anotado en `notas`).

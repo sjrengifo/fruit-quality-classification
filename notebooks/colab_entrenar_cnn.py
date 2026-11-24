@@ -22,6 +22,7 @@
 # | 1 | `cnn_busqueda`, `cnn_estable` | CNN desde cero: tamaño, regularización, lote 128 + coseno | elegido `cnn_estable_1` (val F1 0,91) | `docs/crisp-dm.md` §4.2 |
 # | 2 | `tl_busqueda`, `tl_entre_fuentes` | EfficientNetB0: aumento de datos, FruQ, generalización entre fuentes | elegido `tl_busqueda_4` (test F1 0,85; fotos propias 0,47) | §4.5, §5.4 |
 # | 3 | `v3` | los dos modelos finales, misma configuración, **desde cero con etiquetas revisadas** y sin imágenes de varias frutas (`index_v3.csv`) | **sin mejora** con fotos propias (CNN 0,38, transfer 0,52); no se adoptan | §3.11, §4.6, §5.6 |
+# | 4 | `v4` | transfer final **solo con manzana, banano y naranja**: con etiquetas originales (`v4_0`) y con etiquetas v4 (`v4_1`) | _pendiente_ | §3.12 |
 #
 # Una primera versión de la corrida 2 entrenó por error la CNN en lugar de EfficientNet (faltaba
 # `"modelo": "transfer"`); se corrigió y se descartó. El zip lleva los dos índices (`index.csv` e
@@ -33,8 +34,9 @@
 #   tl_busqueda                    → transfer learning: aumento de datos y aporte de FruQ (5 config.)
 #   tl_entre_fuentes               → generalización: entrena sin una fuente y valida en ella (ya entrenadas)
 #   v3                             → 3.ª iteración: CNN final y transfer final desde cero con las
-#                                    etiquetas revisadas (index_v3.csv, src/data/revision.py) (2 config.)
-SEARCH_LIST = ["v3"]
+#                                    etiquetas revisadas (index_v3.csv, src/data/revision.py) (ya entrenadas)
+#   v4                             → 4.ª iteración: transfer final solo con manzana, banano y naranja (2 config.)
+SEARCH_LIST = ["v4"]
 DRIVE_DIR = "/content/drive/MyDrive/fruit-quality"
 
 # %% [markdown]
@@ -119,7 +121,8 @@ for search, summary in summaries.items():
     display(pd.DataFrame(summary))  # noqa: F821
 
 # %% [markdown]
-# Para la corrida 3: comparación con los modelos originales de la misma configuración. **Ojo:** el F1
+# Para las corridas 3 y 4: comparación con los modelos originales de la misma configuración (en v4 la
+# validación además solo tiene 3 frutas). **Ojo:** el F1
 # de validación de `v3_*` se mide con las etiquetas revisadas y el de los originales con las
 # originales, así que no son directamente comparables; la comparación justa (mismas imágenes y fotos
 # propias) se hace en local en `notebooks/05_evaluation` §6.
@@ -127,8 +130,8 @@ for search, summary in summaries.items():
 # %%
 import json
 
-pairs = {"cnn_estable_1": "v3_0", "tl_busqueda_4": "v3_1"}
-for original, nuevo in pairs.items():
+pairs = [("cnn_estable_1", "v3_0"), ("tl_busqueda_4", "v3_1"), ("tl_busqueda_4", "v4_0"), ("tl_busqueda_4", "v4_1")]
+for original, nuevo in pairs:
     for name in (original, nuevo):
         path = config.RESULTS_DIR / f"{name}.json"
         if path.exists():

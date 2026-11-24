@@ -5,8 +5,8 @@ Definición operativa de las 3 clases de calidad del proyecto. Se aplica igual a
 
 | Clase | Definición | Señales visuales |
 |-------|------------|------------------|
-| **Buena** | Sin daño visible; apta para venta al precio normal. | Piel íntegra, color propio de la fruta. **El grado de madurez no es un defecto**: un banano verde (biche) sin daño es Buena. |
-| **Defectuosa** | Daño **superficial y localizado**: se quita la parte afectada y el resto se come sin problema. Menor valor comercial. | Piel firme; mancha pequeña o clara, raspón, cicatriz, sarna, golpe leve, sobremaduración leve (p. ej. pecas en el banano). |
+| **Buena** | Sin daño visible; apta para venta al precio normal. | Piel íntegra, color propio de la fruta. **El grado de madurez no es un defecto**: un banano verde (biche) sin daño es Buena, y un banano amarillo **con pecas** de maduración también (regla de nov. 2026, ver abajo). |
+| **Defectuosa** | Daño **superficial y localizado**: se quita la parte afectada y el resto se come sin problema. Menor valor comercial. | Piel firme; mancha pequeña o clara, raspón, cicatriz, sarna, golpe leve; banano con la cáscara **muy** manchada o con golpes. |
 | **Podrida** | Descomposición del tejido; no apta para consumo. **No exige moho**: basta **cualquiera** de las señales. | Moho; zona **blanda o hundida** al tacto; mancha muy oscura que llega a la pulpa o cubre una parte grande (≈ ¼ de la fruta o más); piel rota con pudrición o líquido; banano mayormente negro. |
 
 **Regla de decisión:** ante la duda entre Defectuosa y Podrida, preguntarse *¿alguien la comería
@@ -80,3 +80,14 @@ python -m src.data.revision hojas     # hojas de contacto (data/interim/revision
 python -m src.data.revision indice    # → data/processed/index_v3.csv
 python -m src.data.revision resumen   # acuerdo por fuente
 ```
+
+## Regla del banano y alcance de 3 frutas (cuarta iteración, 24 nov. 2026)
+
+- **Banano:** las pecas de maduración **no son defecto** (antes eran Defectuosa). Defectuosa solo si
+  la cáscara está muy manchada o con golpes; Podrida si hay zonas negras grandes o blandas, o si está
+  mayormente negro. Al aplicarla a las hojas de banano de la revisión v3 solo cambian 3 grupos de
+  FruQ (`data/anotaciones/revision_v4.txt`); los bananos de Kaggle `Bad` están muy manchados o
+  negros y no cambian.
+- **Alcance:** la cuarta iteración entrena y evalúa solo **manzana, banano y naranja**
+  (`config.V4_FRUITS`), frutas en que el daño contrasta con el color de la piel. Es una decisión de
+  alcance del producto, no una mejora del modelo: se reporta así.

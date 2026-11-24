@@ -17,7 +17,11 @@ nuevos desde cero y comparar.
 4. `indice`: aplica la revisión por grupo y escribe el índice nuevo. Los splits no cambian (son
    por grupo y se calculan con hash).
 
-Uso:  python -m src.data.revision objetos|hojas|indice|resumen
+5. `indice4` (4.ª iteración): v3 + correcciones puntuales de `revision_v4.txt` (regla nueva del
+   banano: las pecas no son defecto) → `config.DATASET_INDEX_V4`. El filtro por frutas
+   (`config.V4_FRUITS`) se aplica al entrenar, no aquí.
+
+Uso:  python -m src.data.revision objetos|hojas|indice|indice4|resumen
 """
 from __future__ import annotations
 
@@ -32,6 +36,7 @@ REVISION_DIR = config.INTERIM_DIR / "revision"
 OBJECTS_CSV = REVISION_DIR / "objetos.csv"
 SHEETS_CSV = REVISION_DIR / "hojas.csv"          # hoja, celda, grupo
 LABELS_TXT = config.ROOT_DIR / "data" / "anotaciones" / "revision_v3.txt"
+OVERRIDES_V4_TXT = config.ROOT_DIR / "data" / "anotaciones" / "revision_v4.txt"   # <hoja> <celda> <letra>
 LETTERS = {"B": "Buena", "D": "Defectuosa", "P": "Podrida", "X": "Descartar"}
 MIN_OBJECT = 0.15        # un objeto cuenta como fruta si mide ≥ 15 % del más grande
 CELLS, COLS, CELL_PX = 30, 6, 192
@@ -156,10 +161,26 @@ def read_labels() -> dict[str, str]:
     return labels
 
 
-def build_index_v3() -> Counter:
-    """Índice nuevo: sin imágenes de varias frutas y con las etiquetas revisadas por grupo."""
+def read_overrides_v4() -> dict[str, str]:
+    """grupo → calidad de las correcciones de la 4.ª iteración (una celda por línea)."""
+    with open(SHEETS_CSV, newline="", encoding="utf-8") as f:
+        cells = {(r["hoja"], int(r["celda"])): r["grupo"] for r in csv.DictReader(f)}
+    out = {}
+    for line in OVERRIDES_V4_TXT.read_text(encoding="utf-8").splitlines():
+        line = line.split("#")[0].strip()
+        if line:
+            sheet, cell, letter = line.split()
+            out[cells[(sheet, int(cell))]] = LETTERS[letter]
+    return out
+
+
+def build_index_v3(overrides: dict[str, str] | None = None, path=None) -> Counter:
+    """Índice nuevo: sin imágenes de varias frutas y con las etiquetas revisadas por grupo.
+
+    Con `overrides` (grupo → calidad) se aplican correcciones encima de la revisión (4.ª iteración).
+    """
     objects = _objects()
-    labels = read_labels()
+    labels = {**read_labels(), **(overrides or {})}
     with open(config.DATASET_INDEX, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         fields, rows = reader.fieldnames, list(reader)
@@ -175,7 +196,7 @@ def build_index_v3() -> Counter:
                 continue
             r = {**r, "calidad": new}
         out.append(r)
-    with open(config.DATASET_INDEX_V3, "w", newline="", encoding="utf-8") as f:
+    with open(path or config.DATASET_INDEX_V3, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         w.writerows(out)
@@ -210,6 +231,9 @@ def main() -> None:
         for k, n in sorted(build_index_v3().items(), key=str):
             print(k, n)
         print(f"→ {config.DATASET_INDEX_V3}")
+    elif cmd == "indice4":
+        changes = build_index_v3(read_overrides_v4(), config.DATASET_INDEX_V4)
+        print({k: n for k, n in changes.items() if k[0] != k[1]}, f"→ {config.DATASET_INDEX_V4}")
     else:
         summary()
 

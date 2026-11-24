@@ -48,7 +48,7 @@ def build_bundle() -> tuple[int, int]:
     with zipfile.ZipFile(BUNDLE, "w") as z:
         for path in sorted(config.ROOT_DIR.glob("src/**/*.py")):
             z.write(path, path.relative_to(config.ROOT_DIR).as_posix(), zipfile.ZIP_DEFLATED)
-        for index in (config.DATASET_INDEX, config.DATASET_INDEX_V3):  # v3 ⊂ original: mismas imágenes
+        for index in (config.DATASET_INDEX, config.DATASET_INDEX_V3, config.DATASET_INDEX_V4):  # ⊂ original
             if index.exists():
                 z.write(index, index.relative_to(config.ROOT_DIR).as_posix(), zipfile.ZIP_DEFLATED)
         for r in rows:  # PNG ya está comprimido: se guarda sin volver a comprimir (más rápido)
