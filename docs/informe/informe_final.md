@@ -108,7 +108,7 @@ El proyecto siguió CRISP-DM con dos iteraciones. La Fig. 1 muestra las fases y 
 retroalimentaciones reales: cada flecha roja corresponde a un hallazgo que obligó a volver atrás.
 
 ![Fig. 1](../../assets/informe/flujo_crisp_dm.svg)
-*Fig. 1. CRISP-DM aplicado al proyecto. Las flechas discontinuas son iteraciones motivadas por
+*Fig. 1. CRISP-DM aplicado al proyecto. Cada arco es un retroceso real motivado por
 hallazgos concretos.*
 
 ### A. Formulación matemática
