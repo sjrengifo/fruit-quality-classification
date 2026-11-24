@@ -19,8 +19,10 @@
 # Configuración: qué búsquedas correr, en orden (SEARCHES en src/models/cnn.py y src/models/transfer.py)
 #   cnn_busqueda, cnn_estable      → CNN desde cero (ya entrenadas)
 #   tl_busqueda                    → transfer learning: aumento de datos y aporte de FruQ (5 config.)
-#   tl_entre_fuentes               → generalización: entrena sin una fuente y valida en ella (8 config.)
-SEARCH_LIST = ["tl_busqueda", "tl_entre_fuentes"]
+#   tl_entre_fuentes               → generalización: entrena sin una fuente y valida en ella (ya entrenadas)
+#   v3                             → 3.ª iteración: CNN final y transfer final desde cero con las
+#                                    etiquetas revisadas (index_v3.csv, src/data/revision.py) (2 config.)
+SEARCH_LIST = ["v3"]
 DRIVE_DIR = "/content/drive/MyDrive/fruit-quality"
 
 # %% [markdown]
