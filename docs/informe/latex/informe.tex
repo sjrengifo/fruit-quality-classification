@@ -108,7 +108,7 @@ funcionar en una fuente nueva.
 % ─────────────────────────────────────────────────────────────
 \section{Metodología}
 
-Se siguió CRISP-DM con dos iteraciones más una tercera de diagnóstico (§\ref{sec:analisis}; Fig.~\ref{fig:crisp}); cada arco de retroceso corresponde a
+Se siguió CRISP-DM con dos iteraciones más dos más de diagnóstico y alcance (§\ref{sec:analisis}; Fig.~\ref{fig:crisp}); cada arco de retroceso corresponde a
 un hallazgo concreto que obligó a volver a una fase anterior.
 
 \begin{figure*}[t]
@@ -335,6 +335,13 @@ modelos no mejoraron con las fotos propias (tercera mirada a ese conjunto): CNN 
 (diferencia pareada $+0{,}11$ [0,003; 0,22]) y EfficientNetB0 0,47$\rightarrow$0,52 ($-0{,}05$
 [$-0{,}15$; 0,06]), con 21 de 30 Podrida aún como Defectuosa. El resultado negativo apunta a la
 \emph{definición operativa} de Podrida, no a la cantidad de datos ni a la arquitectura.
+
+\textbf{Cuarta iteración: menos frutas.} Restringido a manzana, banano y naranja, donde el daño
+contrasta con la piel, EfficientNetB0 se evaluó con 35 fotos nuevas, no vistas, y con las 62 fotos
+anteriores de esas frutas. En las nuevas, todos los modelos detectan como dañadas 5--6 de 6 podridas y
+reconocen 20--21 de 26 buenas. En las anteriores, recortar el alcance sube el recall de Podrida de
+0,30 a 0,48 ($+0{,}19$ [0,04; 0,34]); con etiquetas revisadas, el F1 pasa de 0,42 a 0,51, sin
+significancia. Es una mejora de \emph{alcance}, no un modelo mejor para las seis frutas.
 
 \textbf{Comparación con la literatura.} Con FruitNet, Morshed \emph{et~al.} \cite{morshed2022}
 reportan 99,67\,\% de exactitud en 3 niveles de calidad con una partición 60:20:20 cuyo método no se

@@ -354,3 +354,52 @@ pd.DataFrame(cross).T
 #   Defectuosa/Podrida no está bien definida ni con el criterio escrito: el cuello de botella es la
 #   **definición de la clase**, no la cantidad de datos ni la arquitectura.
 # - **Decisión:** los modelos finales no cambian (`config.FINAL_MODEL`, `config.FINAL_TRANSFER`).
+
+# %% [markdown]
+# ## 7. Cuarta iteración: solo manzana, banano y naranja, y fotos nuevas
+#
+# Plan fijado antes de entrenar (commit `7de73d9`, `docs/crisp-dm.md` §3.12): transfer final con 3
+# frutas, con etiquetas originales (`v4_0`) o v4 (`v4_1`), frente al modelo actual de la app. Se evalúa
+# en las **35 fotos nuevas** del 24 nov. (primera mirada, camino de la app) y en las 81 anteriores
+# **restringidas a las 3 frutas** (cuarta mirada). Resultados de `python -m src.evaluation.iteracion4`.
+
+# %%
+it4 = json.load(open(config.RESULTS_DIR / "iteracion4.json", encoding="utf-8"))
+pd.DataFrame({m: {"Buena → Buena": r["buena_como_buena"], "IC95": "[{:.2f}; {:.2f}]".format(*r["recall_buena_ic95"]),
+                  "Podrida detectada como dañada": r["podrida_detectada_como_danada"],
+                  "Podrida → Podrida": r["podrida_como_podrida"], "limones (fuera de alcance)": it4["nov24_limon"][m]}
+              for m, r in it4["nov24"].items()}).T
+
+# %%
+fmt = "{:+.3f} [{:+.3f}; {:+.3f}]".format
+base = it4["modelos"][0]
+pd.DataFrame({m: {"F1-macro": r["f1_macro"], "recall Podrida": r["recall_podrida"],
+                  "Δ F1 vs actual": fmt(*r[f"dif_f1_vs_{base}"]) if m != base else "—",
+                  "Δ recall Podrida vs actual": fmt(*r[f"dif_recall_podrida_vs_{base}"]) if m != base else "—"}
+              for m, r in it4["externa_3_frutas"].items()}).T
+
+# %%
+fig, axes = plt.subplots(1, 3, figsize=(11, 3.2))
+for ax, (m, r) in zip(axes, it4["externa_3_frutas"].items()):
+    cm = np.array(r["matriz_confusion"])
+    ax.imshow(cm, cmap="Greens")
+    for i in range(3):
+        for j in range(3):
+            ax.text(j, i, cm[i, j], ha="center", va="center", fontsize=10)
+    ax.set_xticks(range(3), C, fontsize=8)
+    ax.set_yticks(range(3), C, fontsize=8)
+    ax.set_title(f"{m} · fotos anteriores, 3 frutas", fontsize=9)
+    ax.set_xlabel("predicha", fontsize=8)
+axes[0].set_ylabel("real", fontsize=8)
+plt.tight_layout()
+save(fig, "iteracion4_matrices")
+
+# %% [markdown]
+# - **Fotos nuevas:** los tres modelos detectan como dañadas casi todas las podridas y reconocen ~80 %
+#   de las buenas; con 6 podridas no hay diferencias demostrables. Los 6 bananos se aciertan siempre.
+#   Errores comunes: manzanas buenas rayadas y naranjas verdes con cicatrices → Defectuosa.
+# - **Fotos anteriores (3 frutas):** recortar el alcance sube el recall de Podrida (`v4_0`: +0,19,
+#   IC sin cero); `v4_1` tiene el mejor F1 (+0,10, IC toca el cero) y ninguna falsa alarma
+#   Buena → Podrida.
+# - **Conclusión:** tendencia favorable pero modesta; es un cambio de **alcance** (3 frutas), no un
+#   modelo mejor para las 6 frutas. Los modelos finales de `config` no cambian sin decisión del equipo.
