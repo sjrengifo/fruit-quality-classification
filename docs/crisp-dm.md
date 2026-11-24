@@ -714,6 +714,50 @@ Para una cuarta iteración (fuera del tiempo disponible): consensuar la frontera
 visuales anotados por todo el equipo, medir el κ antes de reetiquetar, y fotografiar fruta nueva
 (otras frutas, no las 81 actuales) para entrenar y para una prueba limpia.
 
+### 5.7 Cuarta iteración: 3 frutas y fotos nuevas (§3.12)
+
+Modelos de la búsqueda `v4` (Colab, T4, ~7 min cada uno; validación solo con las 3 frutas):
+`v4_0` (etiquetas originales) F1 val 0,935, media últimas 5 0,925; `v4_1` (etiquetas v4) 0,906 y
+0,903. Evaluación fijada en el commit `7de73d9`: `python -m src.evaluation.iteracion4`.
+
+**Fotos nuevas** (32 de manzana, banano y naranja; **primera mirada**; camino de la app):
+
+| Modelo | Buena → Buena [IC95] | Podrida detectada como dañada | Podrida → Podrida |
+|---|---|---:|---:|
+| Actual (`tl_busqueda_4`, 6 frutas) | 21/26 [0,65; 0,92] | 6/6 | 2/6 |
+| `v4_0` (3 frutas, etiquetas originales) | 20/26 [0,62; 0,92] | 5/6 | 4/6 |
+| `v4_1` (3 frutas, etiquetas v4) | 21/26 [0,65; 0,92] | 6/6 | 3/6 |
+
+- Los tres modelos **detectan como dañadas casi todas las podridas** y reconocen ~80 % de las Buena.
+  Con 6 podridas y 26 buenas las diferencias entre modelos no son demostrables.
+- Los **6 bananos** se aciertan con los tres modelos (con la regla nueva, las pecas no confunden).
+- Errores repetidos: manzanas buenas rayadas (tipo Gala) → Defectuosa (2 en los tres modelos, 4 en
+  los v4) y naranjas buenas verdes con cicatrices → Defectuosa. `v4_0` deja pasar una naranja podrida
+  como Buena (el error más costoso); `v4_1` no comete ninguno de ese tipo.
+- Los 3 limones (fuera de alcance) salen Buena con los tres modelos, correctamente.
+
+**Fotos anteriores restringidas a las 3 frutas** (62; **cuarta mirada**):
+
+| Modelo | F1-macro | Recall Podrida | vs. actual: Δ F1 [IC95] | Δ recall Podrida [IC95] |
+|---|---:|---:|---|---|
+| Actual (`tl_busqueda_4`) | 0,42 | 0,30 | — | — |
+| `v4_0` | 0,47 | 0,48 | +0,05 [−0,06; +0,15] | **+0,19 [+0,04; +0,34]** |
+| `v4_1` | 0,51 | 0,37 | +0,10 [−0,01; +0,21] | +0,07 [−0,10; +0,25] |
+
+- **Recortar a 3 frutas sí ayuda con la Podrida:** `v4_0` (mismas etiquetas, solo cambia el alcance)
+  sube el recall de Podrida de forma significativa; 13 de 27 podridas siguen yendo a Defectuosa
+  (antes 18).
+- `v4_1` tiene el mejor F1 y **elimina las falsas alarmas Buena → Podrida** (0 frente a 7 del modelo
+  actual), pero su mejora no alcanza significancia (el IC toca el cero).
+
+**Conclusión.** Primera iteración con una tendencia favorable consistente en los dos conjuntos:
+reducir el alcance a frutas donde el daño contrasta mejora la detección de pudrición, y ningún
+modelo v4 empeora frente al actual. Las mejoras son modestas y, salvo el recall de Podrida de
+`v4_0`, no demostrables con estos tamaños de muestra. Es un cambio de **alcance del producto** (3
+frutas), no un modelo mejor para las 6 frutas originales. Los modelos finales de `config` no se
+cambiaron; la adopción de `v4_1` para la app es una decisión del equipo (no fijada antes de ver los
+resultados).
+
 ### 5.5 Tamaño
 
 Validación de `src/features/size.py` (moneda de $1.000 como escala, corrección de perspectiva con la

@@ -340,6 +340,15 @@ primer filtro con revisión humana, no como clasificador autónomo de tres clase
   (−0,05 [−0,15; 0,06]); 21 de 30 Podrida siguen como Defectuosa.
 - Resultado negativo: el límite es la **definición operativa de Podrida**, no los datos ni el modelo.
 
+**Cuarta iteración: menos frutas.**
+- Solo manzana, banano y naranja (el daño contrasta con la piel), evaluado con 35 fotos nuevas (no
+  vistas) y con las 62 anteriores de esas frutas.
+- Fotos nuevas: los tres modelos detectan 5–6 de 6 podridas como dañadas y reconocen 20–21 de 26
+  buenas; sin diferencias demostrables.
+- Fotos anteriores: recall de Podrida 0,30 → 0,48 (+0,19 [0,04; 0,34]) al recortar el alcance; con
+  etiquetas revisadas, F1 0,42 → 0,51 (IC toca el cero).
+- Es una mejora de **alcance**, no un modelo mejor para las seis frutas.
+
 **Comparación con la literatura:**
 - Con FruitNet, Morshed et al. [13] reportan 99,67 % de exactitud en 3 niveles de calidad. Usan una
   partición 60:20:20 cuyo método no se detalla y no mencionan las copias aumentadas.
@@ -397,7 +406,7 @@ Las decisiones se relacionan con el Código de Ética de la ACM [20]; el detalle
 ## VII. Conclusiones y trabajo futuro
 
 **Qué se hizo.** Se construyó un sistema completo, de los datos a la aplicación, para clasificar la
-calidad de fruta en tres clases y estimar su tamaño, siguiendo CRISP-DM con dos iteraciones y una tercera de diagnóstico (revisión de etiquetas, resultado negativo).
+calidad de fruta en tres clases y estimar su tamaño, siguiendo CRISP-DM con dos iteraciones, una tercera de diagnóstico (revisión de etiquetas, resultado negativo) y una cuarta de alcance (3 frutas, mejora modesta en la detección de pudrición).
 
 **Calidad: el desempeño depende del conjunto evaluado.**
 - **Dentro de las fuentes públicas:** la CNN desde cero y EfficientNet alcanzan F1 0,91 en validación
