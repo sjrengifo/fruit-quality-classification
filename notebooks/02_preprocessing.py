@@ -329,3 +329,40 @@ pd.crosstab([rev["fuente"], rev["original"]], rev["revisada"])
 index_v3 = pd.read_csv(config.DATASET_INDEX_V3)
 both = pd.concat({"original": index[index["fuente"] != "propias"], "v3": index_v3[index_v3["fuente"] != "propias"]})
 pd.crosstab([both.index.get_level_values(0), both["split"]], both["calidad"])
+
+# %% [markdown]
+# ## 9. Cuarta iteración: 3 frutas, regla del banano y fotos nuevas
+#
+# - **Alcance:** solo manzana, banano y naranja (`config.V4_FRUITS`), donde el daño contrasta con la
+#   piel. Se aplica al entrenar (clave `"frutas"`), sobre el índice original (`v4_0`) o el v4 (`v4_1`).
+# - **Regla del banano** (`docs/criterios_anotacion.md`): las pecas de maduración no son defecto. Sobre
+#   la revisión v3 solo cambian 3 grupos de FruQ (`data/anotaciones/revision_v4.txt`;
+#   `python -m src.data.revision indice4` → `index_v4.csv`).
+
+# %%
+from src.training.train import index_path  # noqa: E402
+
+v4_counts = {}
+for name, ind in [("original, 3 frutas", None), ("v4, 3 frutas", "v4")]:
+    d = pd.read_csv(index_path(ind))
+    d = d[d["fruta"].isin(config.V4_FRUITS) & d["split"].isin(["train", "val", "extra"])]
+    v4_counts[name] = d.groupby(["split", "calidad"]).size()
+pd.DataFrame(v4_counts).unstack(1)
+
+# %% [markdown]
+# **Fotos nuevas** (`data/external/propias/nov24/`, 24 nov. 2026): 35 fotos, prueba limpia de la cuarta
+# iteración. No están en el índice: se predicen con el mismo camino que la app. Aquí, lo que ve el
+# modelo (fruta segmentada y recortada):
+
+# %%
+from src.data.segment import segment_and_crop  # noqa: E402
+
+nov24 = pd.read_csv(config.NOV24_DIR / "anotaciones.csv")
+print(pd.crosstab(nov24["fruta"], nov24["calidad"], margins=True, margins_name="Total"))
+tiles = [segment_and_crop(config.NOV24_DIR / "imagenes" / f)[0] for f in nov24["archivo"]]
+tiles += [np.full_like(tiles[0], 255)] * (-len(tiles) % 9)
+fig, ax = plt.subplots(figsize=(12, 5.5))
+ax.imshow(np.vstack([np.hstack(tiles[i:i + 9]) for i in range(0, len(tiles), 9)]))
+ax.set_axis_off()
+ax.set_title("Fotos nuevas segmentadas y recortadas (en orden de anotaciones.csv)", loc="left", fontsize=9)
+fig.savefig(ASSETS / "fotos_nuevas_nov24.png", dpi=130, bbox_inches="tight")

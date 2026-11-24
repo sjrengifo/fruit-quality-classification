@@ -402,4 +402,5 @@ save(fig, "iteracion4_matrices")
 #   IC sin cero); `v4_1` tiene el mejor F1 (+0,10, IC toca el cero) y ninguna falsa alarma
 #   Buena → Podrida.
 # - **Conclusión:** tendencia favorable pero modesta; es un cambio de **alcance** (3 frutas), no un
-#   modelo mejor para las 6 frutas. Los modelos finales de `config` no cambian sin decisión del equipo.
+#   modelo mejor para las 6 frutas. **Decisión del equipo:** se mantiene `tl_busqueda_4` como modelo de
+#   la app; `v4` queda como experimento documentado.

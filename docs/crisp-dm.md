@@ -754,9 +754,10 @@ Modelos de la búsqueda `v4` (Colab, T4, ~7 min cada uno; validación solo con l
 reducir el alcance a frutas donde el daño contrasta mejora la detección de pudrición, y ningún
 modelo v4 empeora frente al actual. Las mejoras son modestas y, salvo el recall de Podrida de
 `v4_0`, no demostrables con estos tamaños de muestra. Es un cambio de **alcance del producto** (3
-frutas), no un modelo mejor para las 6 frutas originales. Los modelos finales de `config` no se
-cambiaron; la adopción de `v4_1` para la app es una decisión del equipo (no fijada antes de ver los
-resultados).
+frutas), no un modelo mejor para las 6 frutas originales. **Decisión del equipo:** se mantiene
+`tl_busqueda_4` como modelo de la app (6 frutas) y `cnn_estable_1` como CNN final; `v4` queda como
+experimento documentado. Adoptar `v4_1` implicaría que la app solo acepte 3 frutas y no se fijó como
+regla antes de ver los resultados.
 
 ### 5.5 Tamaño
 
