@@ -313,8 +313,48 @@ fruta y cámara sin tocar las 81 fotos de prueba. **FruQ** (Zenodo 7224690, CC B
 
 ### 3.10 Pasos pendientes
 
-- Estimación de tamaño (diámetro en píxeles normalizados → bins).
-- `Mixed Quality`: separar frutas múltiples por componentes de la máscara.
+- Estimación de tamaño (diámetro en píxeles normalizados → bins). _Hecho: §5.5._
+- `Mixed Quality`: separar frutas múltiples por componentes de la máscara. _No se usa; el mismo
+  conteo de componentes sirvió para excluir imágenes con varias frutas (§3.11)._
+
+### 3.11 Tercera iteración: varias frutas y revisión de etiquetas
+
+**Motivación.** En la segunda mirada a las fotos propias (§5.4) el transfer learning seguía
+mandando 20 de 30 Podrida a Defectuosa. Hipótesis del equipo: parte del error viene de los
+**datos**, no del modelo: (1) imágenes con varias frutas, que no son el caso de uso; (2) una
+frontera Defectuosa/Podrida mal definida en las etiquetas, de modo que el modelo aprende como
+Defectuosa fruta que nuestro criterio llama Podrida.
+
+**Qué se hizo** (`src/data/revision.py`, `notebooks/02_preprocessing` §8). Nada de lo anterior se
+modificó: el resultado es un índice aparte, `data/processed/index_v3.csv`.
+
+1. **Varias frutas:** componentes conexas de la máscara de U²-Net que miden ≥ 15 % de la mayor.
+   **1.816 imágenes** con 2 o más, casi todas de Kaggle `Buena` (1.712; Defectuosa/Podrida: 104). Era
+   un atajo posible: "varias frutas → Buena". Muestra de 30: 30/30 correctas. No separa frutas que
+   se tocan; esas se marcaron a mano en el paso 2.
+2. **Revisión visual a ciegas** (sin etiqueta ni fuente) de **2.522 grupos**: todos los de
+   Defectuosa y Podrida (Kaggle, HDF, FruQ) y los de `Buena` de HDF y FruQ. Una celda por grupo
+   (representante, o mosaico 2×2 si tiene más de 5 imágenes); los 23 grupos de 40 o más imágenes
+   se verificaron después con 24 imágenes cada uno (6 decisiones del mosaico se corrigieron).
+   Criterio: `docs/criterios_anotacion.md`. Las etiquetas las asignó **un modelo de IA (Claude)** a
+   pedido del equipo, por falta de tiempo para revisarlas a mano; se declara en el informe.
+3. **Índice v3:** etiqueta revisada por grupo, sin varias frutas ni `Descartar`. Los splits no
+   cambian (hash por grupo). Kaggle `Buena` (6.353 grupos) solo se filtró por varias frutas.
+
+| Fuente | Grupos revisados | Descartados | κ original ↔ revisada | Cambio principal |
+|---|---:|---:|---:|---|
+| Kaggle (re-anotación de Samuel) | 917 | 207 | **0,29** | Podrida → Defectuosa (248 grupos) |
+| HDF (carpetas del dataset) | 1.296 | 25 | 0,40 | Podrida → Defectuosa (323), sobre todo mango `rot_defect` con manchas pequeñas |
+| FruQ (etapa del video) | 309 | 1 | 0,86 | Defectuosa → Buena (18) |
+
+En imágenes: 945 Podrida → Defectuosa, 137 Defectuosa → Podrida, 287 → Buena, 311 → Descartar y
+1.816 excluidas por varias frutas. El índice v3 tiene 20.826 imágenes (antes 22.953); Podrida en
+`val` baja de 535 a 337 y en `test` de 454 a 204.
+
+**Hallazgo.** La revisión hizo Podrida **más exigente**, lo contrario de lo que pedían los errores
+con fotos propias. Y κ = 0,29 con la re-anotación de Kaggle (el documento de criterios pide ≥ 0,6)
+muestra que **la frontera Defectuosa/Podrida es ambigua aun con el mismo criterio escrito**.
+Resultado del reentrenamiento: §4.6 y §5.6.
 
 ---
 
@@ -515,6 +555,33 @@ cambio de dominio sin gastar test ni las fotos propias. Diferencias pareadas con
 - Nota de proceso: una primera corrida en Colab entrenó por error la CNN en lugar de EfficientNet
   (faltaba `"modelo": "transfer"` en la búsqueda); se corrigió y se descartó.
 
+### 4.6 Tercera iteración: reentrenar desde cero con las etiquetas revisadas
+
+Los dos modelos finales, con **la misma configuración** y entrenados desde cero con `index_v3.csv`
+(§3.11) en Colab (T4): búsqueda `v3` de `src/models/transfer.py` (clave `"indice": "v3"`).
+`v3_0` = CNN `cnn_estable_1`; `v3_1` = transfer `tl_busqueda_4`. No hubo selección: solo estas dos
+configuraciones, fijadas antes de entrenar (commit `4bac7a8`).
+
+| Modelo | Épocas (mejor) | F1 train | F1 val (etiquetas v3) | Media últimas 5 | Minutos |
+|---|---|---:|---:|---:|---:|
+| `v3_0` (CNN) | 40 (36) | 0,856 | 0,761 | 0,757 ± 0,003 | 3,7 |
+| `v3_1` (transfer) | 18 (15) | 0,875 | 0,826 | 0,824 ± 0,002 | 13,5 |
+
+El F1 de validación no es comparable con el de §4.2/§4.5 porque cambiaron las etiquetas. Comparación
+justa sobre **las mismas 4.013 imágenes de val**, calificadas con cada juego de etiquetas
+(`notebooks/05_evaluation` §6):
+
+| Modelo | F1 con etiquetas originales | F1 con etiquetas v3 |
+|---|---:|---:|
+| CNN original (`cnn_estable_1`) | 0,910 | 0,800 |
+| CNN v3 (`v3_0`) | 0,733 | 0,761 |
+| Transfer original (`tl_busqueda_4`) | 0,912 | 0,802 |
+| Transfer v3 (`v3_1`) | 0,753 | 0,825 |
+
+Incluso calificada con sus propias etiquetas, la CNN v3 queda por debajo de la original: las
+etiquetas revisadas no son más fáciles de aprender (coherente con κ = 0,29). El transfer v3 gana
++0,02 con las etiquetas v3 y pierde 0,16 con las originales.
+
 ---
 
 ## 5. Evaluación
@@ -592,6 +659,33 @@ modelo fijado antes (commit `8818bb0`). Diferencias pareadas frente a la CNN con
   test, pero no cierra la brecha con la fruta real. Con estos datos, la limitación es el **dominio y
   el umbral de pudrición** de las fuentes públicas, no la capacidad del modelo. Lo que sí ayudaría
   (fuera del alcance de tiempo): fotos propias para entrenar y ejemplos de moho en cítricos.
+
+### 5.6 Tercera mirada: etiquetas revisadas (§3.11, §4.6)
+
+Las fotos propias se usan por **tercera vez**, con los modelos fijados antes (commit `4bac7a8`). Solo
+se evalúa en `externa`: `test` cambió de etiquetas en v3 y su cifra no sería comparable.
+
+| Modelo | F1-macro [IC95] | Recall Podrida [IC95] | Podrida → Defectuosa |
+|---|---|---|---:|
+| CNN original (`cnn_estable_1`) | 0,49 [0,37; 0,59] | 0,27 [0,11; 0,44] | 22/30 |
+| **CNN v3** (`v3_0`) | **0,38 [0,27; 0,49]** | 0,13 [0,03; 0,26] | 26/30 |
+| Transfer original (`tl_busqueda_4`) | 0,47 [0,36; 0,57] | 0,30 [0,13; 0,47] | 20/30 |
+| **Transfer v3** (`v3_1`) | **0,52 [0,40; 0,62]** | 0,27 [0,12; 0,43] | 21/30 |
+
+Diferencias pareadas (original − v3, mismas 81 fotos, bootstrap por grupos): CNN **+0,11
+[+0,003; +0,22]** en F1 (la v3 es peor, IC sin cero), +0,13 [−0,04; +0,32] en recall de Podrida;
+transfer −0,045 [−0,15; +0,06] en F1 y +0,03 [−0,14; +0,21] en recall (sin diferencia demostrable).
+
+**Conclusión: resultado negativo.** Revisar las etiquetas y quitar las imágenes con varias frutas
+no mejoró la generalización a fruta real; la CNN empeoró y el recall de Podrida no subió. La causa
+es la misma que se vio en §3.11: con el criterio escrito, la revisión hizo Podrida más exigente, y
+el modelo aprendió con más fuerza que "podrido" es "muy podrido". Lo que deja la iteración es un
+diagnóstico: **el cuello de botella es la definición operativa de Podrida** (κ = 0,29 entre
+anotadores), no la arquitectura ni la cantidad de datos. Los modelos finales no cambian.
+
+Para una cuarta iteración (fuera del tiempo disponible): consensuar la frontera con ejemplos
+visuales anotados por todo el equipo, medir el κ antes de reetiquetar, y fotografiar fruta nueva
+(otras frutas, no las 81 actuales) para entrenar y para una prueba limpia.
 
 ### 5.5 Tamaño
 

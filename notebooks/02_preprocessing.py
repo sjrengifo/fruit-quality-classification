@@ -232,3 +232,100 @@ for ax, q in zip(axes, config.QUALITY_CLASSES):
     ax.set_axis_off()
     ax.set_title(q, loc="left", fontsize=9)
 plt.tight_layout()
+
+# %% [markdown]
+# ## 8. Tercera iteración: imágenes con varias frutas y revisión de etiquetas
+#
+# Tras la segunda mirada a las fotos propias (`docs/crisp-dm.md` §5.4: 20 de 30 Podrida →
+# Defectuosa) se planteó la hipótesis de que **el ruido en las etiquetas** explicaba los errores:
+# fotos con varias frutas y una frontera Defectuosa/Podrida mal definida. Se revisaron los datos
+# **sin tocar `index.csv`**: el resultado es un índice aparte, `data/processed/index_v3.csv`, con el
+# que se entrenaron modelos nuevos desde cero (§4.6 y §5.6 de `docs/crisp-dm.md`).
+#
+# ```bash
+# python -m src.data.revision objetos   # objetos grandes por máscara de U²-Net
+# python -m src.data.revision hojas     # hojas de contacto a ciegas, una celda por grupo
+# python -m src.data.revision indice    # aplica data/anotaciones/revision_v3.txt → index_v3.csv
+# python -m src.data.revision resumen   # acuerdo etiqueta original ↔ revisada
+# ```
+#
+# ### 8.1 Imágenes con varias frutas
+#
+# Se cuentan las componentes conexas de la máscara de segmentación que miden al menos el 15 % de la
+# más grande (`count_objects`). Con 2 o más, la imagen no es "una fruta sola" y se excluye.
+
+# %%
+from src.data.revision import OBJECTS_CSV, read_labels  # noqa: E402
+
+objects = pd.read_csv(OBJECTS_CSV).merge(index[["id", "fuente", "calidad", "grupo", "split"]])
+objects["varias"] = objects["objetos"] >= 2
+pd.crosstab([objects["fuente"], objects["calidad"]], objects["varias"].map({False: "una", True: "varias"}))
+
+# %% [markdown]
+# Casi todas están en **Kaggle `Buena`** (1.712 de 1.816): el modelo podía aprender "varias frutas →
+# Buena", algo que nunca ocurre en las fotos propias (una fruta por foto). Muestra al azar:
+
+# %%
+multi = objects[objects["varias"]].sample(12, random_state=config.RANDOM_SEED)
+fig, ax = plt.subplots(figsize=(12, 1.4))
+contact_sheet(multi, variant="img", n=12, ax=ax)
+ax.set_axis_off()
+ax.set_title("Imágenes excluidas por tener varias frutas (muestra)", loc="left", fontsize=9)
+fig.savefig(ASSETS / "varias_frutas.png", dpi=150, bbox_inches="tight")
+
+# %% [markdown]
+# El detector acertó en una muestra de 30 de Kaggle `Buena` (30/30 con varias frutas). No detecta
+# frutas que **se tocan** (la máscara queda unida): esas se marcaron a mano como `Descartar` en la
+# revisión visual (sobre todo racimos de banano y grupos de guayabas y limas de Kaggle).
+#
+# ### 8.2 Revisión visual de etiquetas
+#
+# - **Qué se revisó:** todos los grupos de Defectuosa y Podrida (Kaggle, HDF, FruQ) y los de `Buena` de
+#   HDF y FruQ (los 6.353 grupos de Kaggle `Buena` no: solo se filtraron por varias frutas). Una celda
+#   por **grupo** (misma fruta): un representante o, si el grupo tiene más de 5 imágenes, un mosaico
+#   2×2. Los grupos de 40 o más imágenes se verificaron después con 24 imágenes cada uno.
+# - **A ciegas:** las hojas no muestran la etiqueta original ni la fuente.
+# - **Criterio:** el mismo de `docs/criterios_anotacion.md`.
+# - **Quién:** las etiquetas las asignó **un modelo de IA (Claude)** a pedido del equipo, por falta de
+#   tiempo para revisarlas a mano. Se declara en el informe.
+# - **Formato:** `data/anotaciones/revision_v3.txt`, una línea por hoja con una letra por celda
+#   (B/D/P/X = Buena/Defectuosa/Podrida/Descartar).
+
+# %%
+Image.open(config.INTERIM_DIR / "revision" / "hojas" / "h000.jpg")
+
+# %%
+from sklearn.metrics import cohen_kappa_score  # noqa: E402
+
+revised = read_labels()
+first = index.drop_duplicates("grupo").set_index("grupo")
+rev = pd.DataFrame({"grupo": list(revised), "revisada": list(revised.values())})
+rev["original"] = rev["grupo"].map(first["calidad"])
+rev["fuente"] = rev["grupo"].map(first["fuente"])
+summary = []
+for source, g in rev.groupby("fuente"):
+    kept = g[g["revisada"] != "Descartar"]
+    summary.append({"fuente": source, "grupos revisados": len(g), "descartados": len(g) - len(kept),
+                    "cambian de clase": int((kept["original"] != kept["revisada"]).sum()),
+                    "kappa original↔revisada": cohen_kappa_score(kept["original"], kept["revisada"])})
+pd.DataFrame(summary).set_index("fuente")
+
+# %%
+pd.crosstab([rev["fuente"], rev["original"]], rev["revisada"])
+
+# %% [markdown]
+# - **Kaggle (κ = 0,29):** la etiqueta original es la re-anotación de Samuel (§1); κ < 0,6 es el umbral
+#   que el propio documento de criterios fija para "discutir y afinar". La mayoría de los desacuerdos
+#   son **Podrida → Defectuosa** (248 grupos): la frontera entre las dos clases es ambigua incluso
+#   con el mismo criterio escrito.
+# - **HDF (κ = 0,40):** la carpeta `rot_defect` (antracnosis del mango) incluye muchas frutas con
+#   manchas pequeñas que nuestro criterio llama Defectuosa.
+# - **FruQ (κ = 0,86):** las etiquetas por etapa del video coinciden casi siempre.
+# - En conjunto, la revisión hizo **Podrida más exigente** (945 imágenes Podrida → Defectuosa contra
+#   137 en sentido contrario). Es lo opuesto a lo que pedían los errores con fotos propias (el modelo
+#   ya llamaba Defectuosa a fruta podrida): el resultado del reentrenamiento está en `05_evaluation` §6.
+
+# %%
+index_v3 = pd.read_csv(config.DATASET_INDEX_V3)
+both = pd.concat({"original": index[index["fuente"] != "propias"], "v3": index_v3[index_v3["fuente"] != "propias"]})
+pd.crosstab([both.index.get_level_values(0), both["split"]], both["calidad"])

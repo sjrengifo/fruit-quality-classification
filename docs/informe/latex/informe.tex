@@ -108,7 +108,7 @@ funcionar en una fuente nueva.
 % ─────────────────────────────────────────────────────────────
 \section{Metodología}
 
-Se siguió CRISP-DM con dos iteraciones (Fig.~\ref{fig:crisp}); cada arco de retroceso corresponde a
+Se siguió CRISP-DM con dos iteraciones más una tercera de diagnóstico (§\ref{sec:analisis}; Fig.~\ref{fig:crisp}); cada arco de retroceso corresponde a
 un hallazgo concreto que obligó a volver a una fase anterior.
 
 \begin{figure*}[t]
@@ -325,6 +325,17 @@ públicas y nuestro criterio; ninguna se corrige con más capacidad del modelo. 
 dañada frente a buena, EfficientNetB0 detecta 49 de las 53 dañadas, pero acierta solo 13 de las 28
 Buena: serviría como primer filtro con revisión humana, no como clasificador autónomo.
 
+\textbf{Tercera iteración: ¿son las etiquetas?} Para probar el umbral de pudrición como causa, se
+excluyeron 1.816 imágenes con varias frutas (componentes de la máscara; casi todas Kaggle Buena, un
+atajo posible) y se revisaron a ciegas 2.522 grupos con nuestro criterio. Esa revisión la hizo un
+modelo de IA (Claude) a pedido del equipo, por falta de tiempo para hacerla a mano. El acuerdo con la
+re-anotación previa de Kaggle fue $\kappa=0{,}29$, y la revisión hizo Podrida \emph{más} exigente
+(945 imágenes Podrida$\rightarrow$Defectuosa). Reentrenados desde cero con la misma configuración, los
+modelos no mejoraron con las fotos propias (tercera mirada a ese conjunto): CNN 0,49$\rightarrow$0,38
+(diferencia pareada $+0{,}11$ [0,003; 0,22]) y EfficientNetB0 0,47$\rightarrow$0,52 ($-0{,}05$
+[$-0{,}15$; 0,06]), con 21 de 30 Podrida aún como Defectuosa. El resultado negativo apunta a la
+\emph{definición operativa} de Podrida, no a la cantidad de datos ni a la arquitectura.
+
 \textbf{Comparación con la literatura.} Con FruitNet, Morshed \emph{et~al.} \cite{morshed2022}
 reportan 99,67\,\% de exactitud en 3 niveles de calidad con una partición 60:20:20 cuyo método no se
 detalla, sin mencionar las copias aumentadas. Pacheco \emph{et~al.} \cite{pacheco2023} reportan
@@ -384,7 +395,7 @@ Métricas infladas (copias, atajos) & Reportar la cifra que favorece al proyecto
 Error Podrida $\rightarrow$ Buena & Riesgo para el consumidor & 1.2 Evitar daño & KPI de recall de Podrida; la app muestra la confianza; uso como filtro con revisión humana \\
 Sesgo por variedad y fuente & Peor desempeño con fruta local & 1.4 Equidad & Análisis por fuente y por fruta; limitación declarada \\
 Automatizar la clasificación & Desplazamiento laboral & 1.1 Bienestar social & Herramienta asistiva: el operario decide \\
-Etiquetas subjetivas & Criterio de un solo anotador & 2.5 Evaluación completa & Criterios escritos; kappa de Cohen \cite{cohen1960} entre anotadores \textcolor{red}{[pendiente]} \\
+Etiquetas subjetivas & Criterio de un solo anotador & 2.5 Evaluación completa & Criterios escritos; kappa de Cohen \cite{cohen1960}: 0,29 entre la re-anotación y la revisión de la 3.ª iteración \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -424,8 +435,9 @@ el KPI (5/11) por umbrales sin calibrar y medidas de referencia ruidosas.
 Trabajo futuro, por impacto esperado: (1)~fotografiar más fruta local y usar parte para ajustar el
 modelo; (2)~alinear el umbral Defectuosa/Podrida de las fuentes públicas con el criterio propio;
 (3)~añadir ejemplos de moho en cítricos; (4)~una salida de rechazo para imágenes fuera de dominio;
-(5)~calibrar los umbrales de tamaño con frutas medidas con calibrador, y (6)~medir el acuerdo entre
-anotadores.
+(5)~calibrar los umbrales de tamaño con frutas medidas con calibrador, y (6)~consensuar la frontera
+Defectuosa/Podrida con ejemplos anotados por todo el equipo y medir el acuerdo antes de reetiquetar
+(la revisión de la tercera iteración dio $\kappa=0{,}29$).
 
 % ─────────────────────────────────────────────────────────────
 \begin{thebibliography}{20}

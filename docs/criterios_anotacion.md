@@ -52,3 +52,31 @@ Dataset complementario (Chuquimarca et al., ESPOL; CC BY 4.0). Solo imágenes **
 | `fresh` | Buena |
 | `bruise_defect`, `scab_defect`, `black_spot_defect` | Defectuosa |
 | `rot_defect` | Podrida |
+
+## Revisión de etiquetas (tercera iteración, nov. 2026)
+
+Revisión completa de Defectuosa/Podrida con estos mismos criterios, para reentrenar modelos desde
+cero (`docs/crisp-dm.md` §3.11). No reemplaza la re-anotación anterior: produce un índice aparte
+(`data/processed/index_v3.csv`).
+
+- **Quién:** las etiquetas las asignó **un modelo de IA (Claude)** a pedido del equipo, por falta de
+  tiempo para revisarlas a mano. Debe declararse así en el informe.
+- **Unidad:** el grupo (misma fruta), a ciegas: hojas de contacto numeradas sin etiqueta ni fuente
+  (`python -m src.data.revision hojas`). Los grupos de 40 o más imágenes se verificaron con 24
+  imágenes cada uno.
+- **Archivo:** `data/anotaciones/revision_v3.txt`, una línea por hoja: `<hoja> <letras>`, una letra
+  por celda (B = Buena, D = Defectuosa, P = Podrida, X = Descartar). Se marcó Descartar además
+  cuando había varias frutas que se tocan (el detector automático no las separa), foto en blanco y
+  negro, borrosa o fruta tapada.
+- **Acuerdo con la etiqueta anterior:** κ = 0,29 en Kaggle (con la re-anotación de Samuel), 0,40 en
+  HDF, 0,86 en FruQ. En Kaggle está por debajo del 0,6 que este documento fija como umbral: **la
+  frontera Defectuosa/Podrida necesita consenso del equipo con ejemplos** antes de volver a anotar.
+- **Resultado:** reentrenar con estas etiquetas no mejoró el desempeño con las fotos propias
+  (`docs/crisp-dm.md` §5.6).
+
+```bash
+python -m src.data.revision objetos   # varias frutas por máscara
+python -m src.data.revision hojas     # hojas de contacto (data/interim/revision/hojas/)
+python -m src.data.revision indice    # → data/processed/index_v3.csv
+python -m src.data.revision resumen   # acuerdo por fuente
+```
