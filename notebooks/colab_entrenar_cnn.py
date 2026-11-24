@@ -14,6 +14,18 @@
 #
 # Al final: descargar `Mi unidad/fruit-quality/experiments/` y copiar su contenido en `experiments/`
 # del repositorio (o pedírselo a Claude).
+#
+# ### Historial de corridas en Colab (T4)
+#
+# | Corrida | Búsqueda (`SEARCH_LIST`) | Qué se probó | Resultado | Detalle |
+# |---|---|---|---|---|
+# | 1 | `cnn_busqueda`, `cnn_estable` | CNN desde cero: tamaño, regularización, lote 128 + coseno | elegido `cnn_estable_1` (val F1 0,91) | `docs/crisp-dm.md` §4.2 |
+# | 2 | `tl_busqueda`, `tl_entre_fuentes` | EfficientNetB0: aumento de datos, FruQ, generalización entre fuentes | elegido `tl_busqueda_4` (test F1 0,85; fotos propias 0,47) | §4.5, §5.4 |
+# | 3 | `v3` | los dos modelos finales, misma configuración, **desde cero con etiquetas revisadas** y sin imágenes de varias frutas (`index_v3.csv`) | **sin mejora** con fotos propias (CNN 0,38, transfer 0,52); no se adoptan | §3.11, §4.6, §5.6 |
+#
+# Una primera versión de la corrida 2 entrenó por error la CNN en lugar de EfficientNet (faltaba
+# `"modelo": "transfer"`); se corrigió y se descartó. El zip lleva los dos índices (`index.csv` e
+# `index_v3.csv`); cada configuración elige el suyo con la clave `"indice"`.
 
 # %%
 # Configuración: qué búsquedas correr, en orden (SEARCHES en src/models/cnn.py y src/models/transfer.py)
@@ -105,6 +117,25 @@ import pandas as pd
 for search, summary in summaries.items():
     print(search)
     display(pd.DataFrame(summary))  # noqa: F821
+
+# %% [markdown]
+# Para la corrida 3: comparación con los modelos originales de la misma configuración. **Ojo:** el F1
+# de validación de `v3_*` se mide con las etiquetas revisadas y el de los originales con las
+# originales, así que no son directamente comparables; la comparación justa (mismas imágenes y fotos
+# propias) se hace en local en `notebooks/05_evaluation` §6.
+
+# %%
+import json
+
+pairs = {"cnn_estable_1": "v3_0", "tl_busqueda_4": "v3_1"}
+for original, nuevo in pairs.items():
+    for name in (original, nuevo):
+        path = config.RESULTS_DIR / f"{name}.json"
+        if path.exists():
+            r = json.load(open(path, encoding="utf-8"))
+            print(f"{name:14s} índice={r['configuracion'].get('indice') or 'original':9s} "
+                  f"F1 val={r['val']['f1_macro']:.3f} · media últimas 5={r['f1_val_ultimas_5_media']:.3f} · "
+                  f"{r['minutos']} min")
 
 # %% [markdown]
 # Listo: los resultados están en `Mi unidad/fruit-quality/experiments/`. Descargar esa carpeta y

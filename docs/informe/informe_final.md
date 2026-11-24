@@ -329,6 +329,17 @@ asocia con pudrición.
 de las 53 frutas dañadas propias. Clasificó bien solo 13 de las 28 Buena, de modo que serviría como
 primer filtro con revisión humana, no como clasificador autónomo de tres clases.
 
+**Tercera iteración: ¿son las etiquetas?**
+- Para probar el umbral de pudrición como causa se excluyeron 1.816 imágenes con varias frutas (casi
+  todas Kaggle `Buena`, un atajo posible) y se revisaron a ciegas 2.522 grupos con nuestro criterio.
+  La revisión la hizo **un modelo de IA (Claude)** a pedido del equipo, por falta de tiempo.
+- Acuerdo con la re-anotación previa de Kaggle: κ = 0,29. La revisión hizo Podrida *más* exigente
+  (945 imágenes Podrida → Defectuosa).
+- Reentrenados desde cero con la misma configuración, no mejoraron con las fotos propias (tercera
+  mirada): CNN 0,49 → 0,38 (diferencia pareada +0,11 [0,003; 0,22]); EfficientNetB0 0,47 → 0,52
+  (−0,05 [−0,15; 0,06]); 21 de 30 Podrida siguen como Defectuosa.
+- Resultado negativo: el límite es la **definición operativa de Podrida**, no los datos ni el modelo.
+
 **Comparación con la literatura:**
 - Con FruitNet, Morshed et al. [13] reportan 99,67 % de exactitud en 3 niveles de calidad. Usan una
   partición 60:20:20 cuyo método no se detalla y no mencionan las copias aumentadas.
@@ -386,7 +397,7 @@ Las decisiones se relacionan con el Código de Ética de la ACM [20]; el detalle
 ## VII. Conclusiones y trabajo futuro
 
 **Qué se hizo.** Se construyó un sistema completo, de los datos a la aplicación, para clasificar la
-calidad de fruta en tres clases y estimar su tamaño, siguiendo CRISP-DM con dos iteraciones.
+calidad de fruta en tres clases y estimar su tamaño, siguiendo CRISP-DM con dos iteraciones y una tercera de diagnóstico (revisión de etiquetas, resultado negativo).
 
 **Calidad: el desempeño depende del conjunto evaluado.**
 - **Dentro de las fuentes públicas:** la CNN desde cero y EfficientNet alcanzan F1 0,91 en validación

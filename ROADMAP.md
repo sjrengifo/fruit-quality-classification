@@ -140,7 +140,10 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Verificado con `python -m src.evaluation.shortcut`: F1 solo-fondo 0,68 → 0,20 (azar 0,32). Queda un atajo de encuadre en HDF (silueta 0,64).
 - [x] Normalizar el encuadre (`python -m src.main crop`): silueta en HDF 0,64 → 0,37 (azar 0,31).
 - [x] Agrupar casi-duplicados de HDF (la misma fruta repetida cientos de veces): F1 en HDF 0,99 → 0,79.
-- [ ] `Mixed Quality`: separar frutas múltiples por componentes de la máscara.
+- [ ] `Mixed Quality`: separar frutas múltiples por componentes de la máscara (no se usa).
+- [x] **Tercera iteración** (§3.11): excluir 1.816 imágenes con varias frutas (componentes de la máscara)
+      y revisión visual a ciegas de 2.522 grupos (etiquetas asignadas por IA, declarado) →
+      `data/processed/index_v3.csv` (`python -m src.data.revision`). κ con la re-anotación de Kaggle: 0,29.
 - [x] **Preprocesamiento** (`src/data/preprocess.py`): formato/orientación unificados, 128×128 sin
       deformar, normalización [0, 1], caché incremental (`python -m src.main preprocess`).
 - [x] Data augmentation dentro de la CNN (giros, rotación, zoom, brillo/contraste).
@@ -175,6 +178,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] **Selección del modelo final solo con validación** (`config.FINAL_MODEL`, `docs/crisp-dm.md` §4.3):
       CNN sin aumento de datos (F1 0,91, recall Podrida 0,94), +0,07 [0,01; 0,12] sobre el SVM.
   - [x] Transfer learning (EfficientNetB0) como segunda iteración, autorizado por el profesor (§4.5).
+  - [x] Tercera iteración (§4.6): CNN y transfer finales reentrenados desde cero con `index_v3.csv`
+        (búsqueda `v3` en Colab).
   - [x] Callbacks (mejor época por F1-macro de validación, parada temprana, checkpoints en `experiments/checkpoints/`).
 - [x] Registrar experimentos (`experiments/results/*.json`, `experiments/logs/`; figuras en `assets/modelado/`).
 - [x] Justificar selección de modelos y **alternativas descartadas** (`docs/crisp-dm.md` §4).
@@ -203,6 +208,9 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] **Segunda iteración** (§4.5, §5.4): FruQ como fuente solo de entrenamiento + transfer learning
       (EfficientNetB0), elegido con validación y generalización entre fuentes. Test F1 0,85; fotos
       propias 0,47 (segunda mirada, sin mejora: el límite son los datos, no el modelo).
+- [x] **Tercera iteración** (§5.6): etiquetas revisadas y sin varias frutas. Fotos propias (tercera
+      mirada): CNN 0,49 → 0,38 (peor, IC sin cero), transfer 0,47 → 0,52 (IC con cero). Resultado
+      negativo: el cuello de botella es la definición de Podrida; los modelos finales no cambian.
 
 **Entregables:** tablas y figuras de resultados, sección de análisis en el informe.
 
