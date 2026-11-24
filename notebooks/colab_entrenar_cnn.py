@@ -22,7 +22,7 @@
 # | 1 | `cnn_busqueda`, `cnn_estable` | CNN desde cero: tamaño, regularización, lote 128 + coseno | elegido `cnn_estable_1` (val F1 0,91) | `docs/crisp-dm.md` §4.2 |
 # | 2 | `tl_busqueda`, `tl_entre_fuentes` | EfficientNetB0: aumento de datos, FruQ, generalización entre fuentes | elegido `tl_busqueda_4` (test F1 0,85; fotos propias 0,47) | §4.5, §5.4 |
 # | 3 | `v3` | los dos modelos finales, misma configuración, **desde cero con etiquetas revisadas** y sin imágenes de varias frutas (`index_v3.csv`) | **sin mejora** con fotos propias (CNN 0,38, transfer 0,52); no se adoptan | §3.11, §4.6, §5.6 |
-# | 4 | `v4` | transfer final **solo con manzana, banano y naranja**: con etiquetas originales (`v4_0`) y con etiquetas v4 (`v4_1`) | val (3 frutas) 0,935 y 0,906; fotos nuevas: 6/6 y 5/6 podridas detectadas; fotos anteriores (3 frutas): recall Podrida 0,30 → 0,48 (`v4_0`), F1 0,42 → 0,51 (`v4_1`) | §3.12, §5.7 |
+# | 4 | `v4` | transfer final **solo con manzana, banano y naranja**: con etiquetas originales (`v4_0`) y con etiquetas v4 (`v4_1`) | val (3 frutas) 0,935 y 0,906; fotos nuevas: 6/6 y 5/6 podridas detectadas; fotos anteriores (3 frutas): recall Podrida 0,30 → 0,48 (`v4_0`), F1 0,42 → 0,51 (`v4_1`); se mantiene el modelo actual en la app | §3.12, §5.7 |
 #
 # Una primera versión de la corrida 2 entrenó por error la CNN en lugar de EfficientNet (faltaba
 # `"modelo": "transfer"`); se corrigió y se descartó. El zip lleva los dos índices (`index.csv` e

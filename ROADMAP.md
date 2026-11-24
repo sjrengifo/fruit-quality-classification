@@ -214,7 +214,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] **Cuarta iteración** (§3.12, §5.7): solo manzana, banano y naranja + 35 fotos nuevas como prueba limpia
       (`python -m src.evaluation.iteracion4`). Fotos nuevas: 6/6 podridas detectadas, ~80 % de buenas
       reconocidas (igual que el modelo actual). Fotos anteriores (3 frutas): recall Podrida 0,30 → 0,48
-      (`v4_0`, IC sin cero); F1 0,42 → 0,51 (`v4_1`, IC toca el cero).
+      (`v4_0`, IC sin cero); F1 0,42 → 0,51 (`v4_1`, IC toca el cero). Decisión: la app sigue con
+      `tl_busqueda_4` (6 frutas); v4 queda como experimento.
 
 **Entregables:** tablas y figuras de resultados, sección de análisis en el informe.
 

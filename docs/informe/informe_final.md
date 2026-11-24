@@ -347,7 +347,8 @@ primer filtro con revisión humana, no como clasificador autónomo de tres clase
   buenas; sin diferencias demostrables.
 - Fotos anteriores: recall de Podrida 0,30 → 0,48 (+0,19 [0,04; 0,34]) al recortar el alcance; con
   etiquetas revisadas, F1 0,42 → 0,51 (IC toca el cero).
-- Es una mejora de **alcance**, no un modelo mejor para las seis frutas.
+- Es una mejora de **alcance**, no un modelo mejor para las seis frutas; la aplicación conserva el
+  modelo de seis frutas.
 
 **Comparación con la literatura:**
 - Con FruitNet, Morshed et al. [13] reportan 99,67 % de exactitud en 3 niveles de calidad. Usan una
