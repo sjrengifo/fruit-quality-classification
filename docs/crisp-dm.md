@@ -356,6 +356,33 @@ con fotos propias. Y κ = 0,29 con la re-anotación de Kaggle (el documento de c
 muestra que **la frontera Defectuosa/Podrida es ambigua aun con el mismo criterio escrito**.
 Resultado del reentrenamiento: §4.6 y §5.6.
 
+### 3.12 Cuarta iteración: alcance de 3 frutas y fotos nuevas (plan fijado antes de entrenar)
+
+Ideas del equipo tras §5.6 y decisión tomada sobre cada una:
+
+| Idea | Decisión | Por qué |
+|---|---|---|
+| Quedarse con frutas donde el daño contrasta (manzana, banano, naranja) | **Sí** | Por fruta, el F1 con fotos propias ya era mayor en naranja (0,65) y banano (0,56) que en guayaba (0,22) o mango (0,29). Se reporta como decisión de **alcance**, no como mejora del modelo. |
+| Criterio Defectuosa/Podrida "evidente" | **Sí, como regla; no quitando los casos dudosos** | Entrenar solo con ejemplos obvios deja al modelo sin ver la frontera, y en la práctica los casos dudosos siguen existiendo. Se ajustó la regla del banano (`docs/criterios_anotacion.md`). |
+| Fotos nuevas del equipo (35, 24 nov.) | **Sí, como prueba limpia** | Frente a ~5.000 imágenes de entrenamiento no pesan; como prueba son lo único que ningún modelo ha visto (las 81 anteriores ya se miraron tres veces). |
+| Buscar más fotos en internet | No | Las fotos de banco de imágenes (ya presentes en Kaggle `Bad`, con marcas de Alamy) muestran pudrición extrema: refuerzan el sesgo "podrido = muy podrido"; además requieren etiquetado, derechos y control de duplicados. |
+| Generar imágenes con IA | No (trabajo futuro) | Texturas sintéticas = posible atajo; no sirven para evaluar; habría que revisar cada etiqueta. |
+
+**Plan** (commit de este cambio, antes de entrenar; nada se elige después de ver las pruebas):
+- Búsqueda `v4` (`src/models/transfer.py`), transfer final (`tl_busqueda_4`: color + FruQ) solo con
+  las 3 frutas en train y val: **`v4_0`** con etiquetas originales (efecto del alcance) y **`v4_1`**
+  con etiquetas v4 = revisión v3 + regla del banano, sin imágenes de varias frutas
+  (`python -m src.data.revision indice4` → `index_v4.csv`).
+- Evaluación (`python -m src.evaluation.iteracion4`) frente al modelo actual de la app:
+  1. **Fotos nuevas** (`data/external/propias/nov24/`, 32 de las 3 frutas; primera mirada; con el
+     camino de la app): Buena reconocidas como Buena y Podrida detectadas. Sin Defectuosas y con 6
+     Podridas no se calcula F1 de 3 clases. Los 3 limones se muestran aparte.
+  2. **Las 81 fotos anteriores restringidas a las 3 frutas** (62; cuarta mirada): F1-macro y
+     diferencias pareadas frente al modelo actual.
+- Antes de entrenar se revisó que la segmentación funcione con el fondo de las fotos nuevas (solo los
+  recortes, sin predicciones). Las fotos nuevas sí se vieron con sus etiquetas al planear esta
+  iteración; no se usaron para decidir ninguna etiqueta de entrenamiento.
+
 ---
 
 ## 4. Modelado

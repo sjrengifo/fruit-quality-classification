@@ -28,7 +28,8 @@ TRANSFER_DEFAULT = {
     "weight_power": 1.0,
     "extra": False,           # agregar fuentes solo-entrenamiento (split "extra": FruQ)
     "holdout": None,          # fuente que se deja fuera del entrenamiento y se usa para validar
-    "indice": None,           # "v3": etiquetas revisadas (src/data/revision.py)
+    "indice": None,           # "v3"/"v4": etiquetas revisadas (src/data/revision.py)
+    "frutas": None,           # lista de frutas (train y val); None = todas
 }
 
 # Búsqueda principal: ¿qué aumento de datos? ¿aporta FruQ? → tl_busqueda_<i>
@@ -61,9 +62,18 @@ V3 = [
     {**_CNN_FINAL, "indice": "v3"},
     {"augment": "color", "extra": True, "indice": "v3"},
 ]
+# Cuarta iteración: solo manzana, banano y naranja (config.V4_FRUITS), transfer final. Dos
+# configuraciones para separar efectos, fijadas antes de entrenar → v4_<i>:
+#   0: etiquetas originales (solo cambia el alcance de frutas)
+#   1: etiquetas v4 (revisión v3 + regla nueva del banano, sin imágenes de varias frutas)
+_TL_FINAL = {"augment": "color", "extra": True}
+V4 = [
+    {**_TL_FINAL, "frutas": list(config.V4_FRUITS)},
+    {**_TL_FINAL, "frutas": list(config.V4_FRUITS), "indice": "v4"},
+]
 # Sin "modelo" explícito una configuración es transfer learning (train_config usa la CNN por defecto)
 SEARCHES = {search: [{"modelo": "transfer", **c} for c in grid]
-            for search, grid in {"tl_busqueda": TL_GRID, "tl_entre_fuentes": TL_LSO, "v3": V3}.items()}
+            for search, grid in {"tl_busqueda": TL_GRID, "tl_entre_fuentes": TL_LSO, "v3": V3, "v4": V4}.items()}
 
 BACKBONES = {"efficientnetb0": "EfficientNetB0", "mobilenetv3small": "MobileNetV3Small"}
 

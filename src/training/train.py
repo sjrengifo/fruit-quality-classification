@@ -103,17 +103,19 @@ def train_classic() -> dict:
 
 
 def index_path(indice: str | None = None) -> Path:
-    """Índice con el que se entrena: el original o, con "v3", el de etiquetas revisadas (src/data/revision.py)."""
-    return config.DATASET_INDEX_V3 if indice == "v3" else config.DATASET_INDEX
+    """Índice con el que se entrena: el original o uno de etiquetas revisadas ("v3", "v4"; src/data/revision.py)."""
+    return {"v3": config.DATASET_INDEX_V3, "v4": config.DATASET_INDEX_V4}.get(indice, config.DATASET_INDEX)
 
 
-def load_training_data(extra: bool = False, holdout: str | None = None, indice: str | None = None):
+def load_training_data(extra: bool = False, holdout: str | None = None, indice: str | None = None,
+                       frutas: list[str] | None = None):
     """(X_tr, rows_tr, X_va, rows_va) de las imágenes recortadas.
 
     - `extra`: agrega las fuentes solo-entrenamiento (split "extra", p. ej. FruQ).
     - `holdout`: deja esa fuente fuera del entrenamiento y valida **solo** con sus imágenes de val
       (generalización a una fuente no vista; test y externa no se tocan).
-    - `indice`: "v3" usa las etiquetas revisadas (train y val); por defecto, el índice original.
+    - `indice`: "v3"/"v4" usan las etiquetas revisadas (train y val); por defecto, el índice original.
+    - `frutas`: solo esas frutas, en train y en val (4.ª iteración).
     """
     from src.data.preprocess import load_split
 
@@ -126,6 +128,11 @@ def load_training_data(extra: bool = False, holdout: str | None = None, indice: 
     if holdout:
         keep_tr = np.array([r["fuente"] != holdout for r in rows_tr])
         keep_va = np.array([r["fuente"] == holdout for r in rows_va])
+        X_tr, rows_tr = X_tr[keep_tr], [r for r, k in zip(rows_tr, keep_tr) if k]
+        X_va, rows_va = X_va[keep_va], [r for r, k in zip(rows_va, keep_va) if k]
+    if frutas:
+        keep_tr = np.array([r["fruta"] in frutas for r in rows_tr])
+        keep_va = np.array([r["fruta"] in frutas for r in rows_va])
         X_tr, rows_tr = X_tr[keep_tr], [r for r, k in zip(rows_tr, keep_tr) if k]
         X_va, rows_va = X_va[keep_va], [r for r, k in zip(rows_va, keep_va) if k]
     return X_tr, rows_tr, X_va, rows_va
@@ -205,7 +212,7 @@ def _dataset(X, y, w, batch_size: int):
 
 
 def train_cnn(name: str = "cnn", epochs: int | None = None, extra: bool = False, holdout: str | None = None,
-              indice: str | None = None, **overrides) -> dict:
+              indice: str | None = None, frutas: list[str] | None = None, **overrides) -> dict:
     """Entrena la CNN desde cero con pesos por muestra; conserva la época con mejor F1-macro en validación."""
     import math
     import time
@@ -216,10 +223,11 @@ def train_cnn(name: str = "cnn", epochs: int | None = None, extra: bool = False,
     from src.models.cnn import CNN_DEFAULT, build_cnn
 
     overrides.pop("modelo", None)
-    cfg = {**CNN_DEFAULT, **overrides, "extra": extra, "holdout": holdout, "indice": indice}
+    cfg = {**CNN_DEFAULT, **overrides, "extra": extra, "holdout": holdout, "indice": indice,
+           "frutas": frutas}
     epochs = epochs or config.EPOCHS
     gpu = _setup_tf()
-    data = X_tr, rows_tr, X_va, rows_va = load_training_data(extra, holdout, indice)
+    data = X_tr, rows_tr, X_va, rows_va = load_training_data(extra, holdout, indice, frutas)
     w_tr = sample_weights(rows_tr, cfg["weight_power"]).astype("float32")
     checkpoint = config.CHECKPOINTS_DIR / f"{name}.keras"
 
@@ -248,7 +256,7 @@ def train_transfer(name: str = "tl", **overrides) -> dict:
 
     cfg = {**TRANSFER_DEFAULT, **overrides}
     gpu = _setup_tf()
-    data = X_tr, rows_tr, X_va, rows_va = load_training_data(cfg["extra"], cfg["holdout"], cfg["indice"])
+    data = X_tr, rows_tr, X_va, rows_va = load_training_data(cfg["extra"], cfg["holdout"], cfg["indice"], cfg["frutas"])
     y_tr, w_tr = labels(rows_tr), sample_weights(rows_tr, cfg["weight_power"]).astype("float32")
     checkpoint = config.CHECKPOINTS_DIR / f"{name}.keras"
     train_data = _dataset(X_tr, y_tr, w_tr, cfg["batch_size"])
@@ -345,7 +353,7 @@ def main():
     parser = argparse.ArgumentParser(description="Entrenamiento de modelos")
     parser.add_argument("--model", default="cnn",
                         choices=["cnn", "cnn_search", "cnn_stable", "classic", "transfer", "tl_busqueda", "tl_entre_fuentes",
-                                 "v3"])
+                                 "v3", "v4"])
     parser.add_argument("--busqueda", help="con --indice: entrena solo esa configuración de la búsqueda")
     parser.add_argument("--indice", type=int)
     args = parser.parse_args()
@@ -362,7 +370,7 @@ def main():
         search_cnn("cnn_estable")
     elif args.model == "transfer":
         train_transfer()
-    elif args.model.startswith("tl_") or args.model == "v3":
+    elif args.model.startswith("tl_") or args.model in ("v3", "v4"):
         search_cnn(args.model)
     else:
         train_classic()
