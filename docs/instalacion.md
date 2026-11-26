@@ -65,3 +65,25 @@ sola foto desde la terminal: `python -m src.models.predict ruta/foto.jpg [--mode
 ```bash
 pytest
 ```
+
+## Despliegue en Streamlit Community Cloud
+
+La app (`src/app/app.py`) se despliega gratis en <https://share.streamlit.io>. Los modelos no están en
+git: se publican como archivos de la release `modelos-v1` de GitHub y la app los descarga al arrancar
+(`src/app/modelos.py`). La nube usa `src/app/requirements.txt`, no el de la raíz.
+
+1. **Publicar los modelos** (solo si cambian; ya está hecho): `python -m src.app.modelos publicar`.
+2. **Token** (el repositorio es privado): en GitHub → *Settings → Developer settings → Fine-grained
+   tokens*, crear un token con acceso **solo a este repositorio** y permiso **Contents: Read-only**.
+3. En share.streamlit.io → *Create app*: repositorio `sjrengifo/fruit-quality-classification`, la rama a
+   desplegar (`main` después del merge) y archivo `src/app/app.py`. En *Advanced settings*: Python
+   **3.12** y en *Secrets*:
+
+   ```toml
+   GITHUB_TOKEN = "github_pat_..."
+   ```
+
+4. *Deploy*. La primera vez tarda varios minutos (instala TensorFlow, descarga los modelos y U²-Net).
+   La app se duerme si nadie la usa por unos días; al abrirla se despierta sola.
+
+La cámara funciona en el despliegue (es HTTPS), también desde el celular.

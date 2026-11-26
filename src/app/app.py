@@ -34,6 +34,23 @@ COIN_NAMES = {"100_nueva": "$100 nueva", "200_nueva": "$200 nueva", "500_nueva":
               "quarter": "Quarter (EE. UU.)"}
 
 
+@st.cache_resource(show_spinner="Descargando los modelos (solo la primera vez)…")
+def ensure_models() -> list[str]:
+    """En la app desplegada los modelos no vienen en el repositorio: se bajan de la release de GitHub
+    (src/app/modelos.py). En local, si ya están en experiments/, no hace nada."""
+    from src.app.modelos import download_missing
+
+    try:
+        token = st.secrets.get("GITHUB_TOKEN")
+    except Exception:  # noqa: BLE001 — sin secrets.toml (uso local)
+        token = None
+    try:
+        return download_missing(token)
+    except Exception as e:  # noqa: BLE001 — sin red o sin permiso: la app avisa en la barra lateral
+        st.sidebar.warning(f"No se pudieron descargar los modelos: {e}")
+        return []
+
+
 @st.cache_resource(show_spinner="Cargando el modelo…")
 def load_predictor(model_name: str):
     from src.models.predict import Predictor
@@ -149,6 +166,7 @@ def main() -> None:
                "recorta la fruta y la clasifica como **Buena**, **Defectuosa** (daño superficial) o "
                "**Podrida** (moho, tejido blando o hundido, daño oscuro extenso).")
 
+    ensure_models()
     predictor = load_predictor(sidebar())
     size_opts = size_options() or {}
 

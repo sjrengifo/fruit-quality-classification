@@ -112,3 +112,6 @@ FINAL_CLASSIC = "svm"             # mejor modelo de ML tradicional, se reporta c
 # Segunda iteración (§4.5), elegido con validación y generalización entre fuentes, antes de la
 # segunda mirada a test y fotos propias: EfficientNetB0 + aumento de color + FruQ. Es el modelo de la app.
 FINAL_TRANSFER = "tl_busqueda_4"
+# App desplegada: los modelos finales y sus métricas se descargan de esta release (src/app/modelos.py)
+MODELS_RELEASE_REPO = "sjrengifo/fruit-quality-classification"
+MODELS_RELEASE_TAG = "modelos-v1"
