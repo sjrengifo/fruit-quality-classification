@@ -3,7 +3,9 @@
 Proyecto Final — **Algoritmos y Programación III**, Semestre 2026-2
 Facultad de Ingeniería, Diseño y Ciencias Aplicadas · Departamento de Computación y Sistemas Inteligentes · Ingeniería de Sistemas.
 
-#### -- Estado del proyecto: `Activo` 🟢
+#### -- Estado del proyecto: `Entregado` ✅
+
+**App desplegada:** <https://fruit-quality-classification-2026.streamlit.app> · **Informe:** [`docs/informe/latex/informe.pdf`](docs/informe/latex/informe.pdf)
 
 ---
 
