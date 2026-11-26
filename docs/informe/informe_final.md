@@ -1,7 +1,7 @@
 # Clasificación de la calidad y estimación del tamaño de frutas por visión por computador: atajos, fuga de datos y cambio de dominio
 
 **Autores:** Juan Manuel Ramírez, Juan Sebastian Poveda, Samuel Jose Rengifo
-**Curso:** Algoritmos y Programación III, 2026-2 · Repositorio: <https://github.com/sjrengifo/fruit-quality-classification>
+**Curso:** Algoritmos y Programación III, 2026-2 · Repositorio: <https://github.com/sjrengifo/fruit-quality-classification> · App: <https://fruit-quality-classification-2026.streamlit.app>
 
 > Borrador de contenido. **La versión oficial es la de LaTeX** (`docs/informe/latex/informe.tex` →
 > `informe.pdf`, clase IEEEtran, 6 páginas); los cambios se hacen allí. Las cifras salen de
@@ -298,6 +298,8 @@ vez por modelo.*
 - La primera versión medía el ancho máximo, que incluye las puntas del limón y el pedúnculo, y daba
   1,10 cm de error. Se cambió al **diámetro ecuatorial**, que es el calibre de las normas comerciales
   [19].
+
+**Despliegue.** La app Streamlit está publicada en <https://fruit-quality-classification-2026.streamlit.app> (subir fotos o capturarlas con la cámara, también desde el celular).
 
 **Latencia.** 0,34 s por imagen en CPU (Apple M4) con EfficientNet, incluyendo la segmentación; 0,37 s
 con la medición de tamaño.
