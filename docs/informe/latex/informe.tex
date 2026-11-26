@@ -42,16 +42,18 @@ Facultad de Ingeniería, Diseño\\ y Ciencias Aplicadas}
 La clasificación manual de fruta fresca es lenta, subjetiva y propensa a errores. Se desarrolló un
 sistema que, a partir de una foto de una fruta, predice su calidad (Buena, Defectuosa o Podrida) y
 estima su tamaño (Pequeño, Mediano o Grande). El dataset base, FruitNet, solo distingue Good/Bad, por lo
-que se re-anotaron 1.200 imágenes y se añadieron dos fuentes públicas y 81 fotos propias como prueba
-externa. Se encontraron tres fuentes de métricas infladas: copias aumentadas, sesiones de fotos
+que se re-anotaron 1.200 imágenes y se añadieron dos fuentes públicas y dos lotes de fotos propias
+como prueba externa. Se encontraron tres fuentes de métricas infladas: copias aumentadas, sesiones de fotos
 repetidas y un fondo que predice la clase (F1 de 0,65 viendo solo el borde de la imagen). Se
 corrigieron con particiones por grupos y segmentación U\textsuperscript{2}-Net. Se compararon
 regresión logística, SVM y Random Forest sobre 68 rasgos de color, textura y forma, una CNN entrenada
 desde cero y EfficientNetB0 con \emph{transfer learning}. La CNN alcanza un F1-macro de 0,91 en
 validación y EfficientNetB0 0,85 en prueba, con recall de Podrida de 0,91; con las fotos propias todos
 caen a 0,46--0,49, por cambio de dominio y un umbral de pudrición distinto entre fuentes, no por
-sobreajuste. El tamaño se mide con una moneda como escala y corrección de perspectiva, con un error
-medio de 0,57~cm. La aplicación Streamlit responde en 0,34~s por imagen en CPU.
+sobreajuste. Revisar las etiquetas no lo corrigió; restringir el alcance a manzana, banano y naranja
+subió el recall de Podrida con fruta real de 0,30 a 0,48. El tamaño se mide con una moneda como escala
+y corrección de perspectiva, con un error medio de 0,57~cm. La aplicación Streamlit responde en
+0,34~s por imagen en CPU. Código y datos propios: \url{https://github.com/sjrengifo/fruit-quality-classification}.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -108,8 +110,9 @@ funcionar en una fuente nueva.
 % ─────────────────────────────────────────────────────────────
 \section{Metodología}
 
-Se siguió CRISP-DM con dos iteraciones más dos más de diagnóstico y alcance (§\ref{sec:analisis}; Fig.~\ref{fig:crisp}); cada arco de retroceso corresponde a
-un hallazgo concreto que obligó a volver a una fase anterior.
+Se siguió CRISP-DM en cuatro iteraciones (Fig.~\ref{fig:crisp}): la base, el \emph{transfer
+learning}, una revisión de etiquetas y una reducción del alcance (§\ref{sec:analisis}). Cada arco de
+retroceso corresponde a un hallazgo medido que obligó a volver a una fase anterior.
 
 \begin{figure*}[t]
 \centering
@@ -161,12 +164,16 @@ lineal y subjetiva; hay seis especies con aspecto distinto; los datos esconden f
 
 FruitNet \cite{meshram2022} (dataset base exigido) solo trae Good/Bad, y Bad mezcla defectos leves
 con pudrición. Se re-anotó con criterios escritos una muestra fija de 1.200 imágenes Bad (200 por
-fruta): 842 Podrida, 211 Defectuosa, 13 Buena y 134 descartadas. Healthy-Defective-Fruits (HDF)
+fruta): 842 Podrida, 211 Defectuosa, 13 Buena y 134 descartadas; la anotó un integrante y los tres la
+revisaron y acordaron por consenso. Healthy-Defective-Fruits (HDF)
 \cite{pacheco2023}, del que se usaron solo las imágenes reales de manzana y mango, aporta las tres
 clases desde una segunda fuente: si cada clase viniera de una fuente distinta, el modelo aprendería la
-fuente y no la calidad. El equipo tomó 81 fotos propias sobre fondo blanco (28 Buena, 23 Defectuosa,
-30 Podrida) que se reservaron como prueba externa y nunca se usaron para entrenar ni para elegir
-modelos (Tabla~\ref{tab:datos}).
+fuente y no la calidad. El equipo tomó fotos propias de una fruta sobre fondo claro, en casa y en
+mercados, en dos lotes que se reservaron como prueba externa y nunca se usaron para entrenar ni para
+elegir modelos (Tabla~\ref{tab:datos}). Cada foto se anotó con su calidad según los criterios
+escritos; el tamaño se anotó en fotos aparte, con una moneda de referencia y el diámetro medido con
+regla. Las fotos y anotaciones se compartieron con el curso en Google Drive. La carpeta \emph{Mixed
+Quality} (varias frutas por foto, sin etiqueta) no se usó.
 
 \begin{table}[t]
 \caption{Imágenes por fuente y clase (sin las 1.292 en escala de grises)}
@@ -179,7 +186,8 @@ Fuente & Buena & Defect. & Podrida & Uso \\
 FruitNet \cite{meshram2022} & 10.489 & 211 & 842 & train/val/test \\
 HDF \cite{pacheco2023} & 4.909 & 2.987 & 2.000 & train/val/test \\
 FruQ \cite{abayomi2023} & 596 & 325 & 594 & solo train (2.ª it.) \\
-Propias & 28 & 23 & 30 & prueba externa \\
+Propias (lote 1) & 28 & 23 & 30 & prueba externa \\
+Propias (lote 2) & 29 & 0 & 6 & prueba (4.ª it.) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -229,8 +237,8 @@ optimista. La causa era un gradiente ruidoso por los pesos tan desiguales de \eq
 lotes de 128 y tasa coseno la desviación en las últimas 5 épocas bajó a $\pm$0,007. Entrenar sin
 aumento de datos fue mejor en dos búsquedas independientes (+0,02 a +0,04, IC95 sin cero).
 
-\textbf{Segunda iteración.} Para atacar la caída con fruta real (§\ref{sec:analisis}) sin tocar las 81
-fotos: EfficientNetB0 \cite{tan2019} (3 épocas de cabeza, 15 de ajuste fino desde $10^{-4}$) y FruQ
+\textbf{Segunda iteración.} Para atacar la caída con fruta real (§\ref{sec:analisis}) sin tocar las fotos
+propias: EfficientNetB0 \cite{tan2019} (3 épocas de cabeza, 15 de ajuste fino desde $10^{-4}$) y FruQ
 \cite{abayomi2023}, \emph{time-lapses} de una sola fruta que pasa de fresca a podrida, solo para
 entrenar. El criterio, fijado antes de entrenar, fue la validación más una prueba \emph{dejando una
 fuente fuera}: entrenar sin Kaggle o sin HDF y validar en la fuente excluida. Se eligió aumento de
@@ -246,7 +254,7 @@ color, 0,74 solo con textura, 0,56 solo con forma y 0,84 con los tres: color y t
 complementarios.
 
 \begin{table*}[t]
-\caption{F1-macro [IC95 por grupos] y recall de Podrida ($R_P$). Test y fotos propias se evaluaron una sola vez por modelo}
+\caption{F1-macro [IC95 por grupos] y recall de Podrida ($R_P$). Test y fotos propias (lote 1) se evaluaron una sola vez por modelo}
 \label{tab:res}
 \centering\small
 \begin{tabular}{@{}lcccccc@{}}
@@ -337,9 +345,9 @@ modelos no mejoraron con las fotos propias (tercera mirada a ese conjunto): CNN 
 \emph{definición operativa} de Podrida, no a la cantidad de datos ni a la arquitectura.
 
 \textbf{Cuarta iteración: menos frutas.} Restringido a manzana, banano y naranja, donde el daño
-contrasta con la piel, EfficientNetB0 se evaluó con 35 fotos nuevas, no vistas, y con las 62 fotos
-anteriores de esas frutas. En las nuevas, todos los modelos detectan como dañadas 5--6 de 6 podridas y
-reconocen 20--21 de 26 buenas. En las anteriores, recortar el alcance sube el recall de Podrida de
+contrasta con la piel, EfficientNetB0 se evaluó con el segundo lote de fotos propias, no visto, y con las fotos del primer
+lote de esas frutas. En el segundo lote, todos los modelos detectan como dañadas 5--6 de 6 podridas y
+reconocen 20--21 de 26 buenas. En el primer lote, recortar el alcance sube el recall de Podrida de
 0,30 a 0,48 ($+0{,}19$ [0,04; 0,34]); con etiquetas revisadas, el F1 pasa de 0,42 a 0,51, sin
 significancia. Es una mejora de \emph{alcance}, no un modelo mejor para las seis frutas; la aplicación
 conserva el modelo de seis frutas.
@@ -397,13 +405,13 @@ global (principio 1.4).
 \toprule
 Situación & Dilema & Principio ACM & Medida adoptada \\
 \midrule
-Fotos propias en casa y mercado & Privacidad; captura de personas & 1.6 Privacidad & Solo la fruta sobre fondo blanco, sin personas; las 104 fotos versionadas no tienen GPS en el EXIF (verificado) \\
+Fotos propias en casa y mercado & Privacidad; captura de personas & 1.6 Privacidad & Solo la fruta sobre fondo blanco, sin personas; ninguna de las fotos versionadas tiene GPS en el EXIF (verificado) \\
 Datasets de terceros & Atribución y licencias & 1.5 Reconocer el trabajo ajeno & Fuentes y código citados; HDF y FruQ (CC~BY~4.0) con atribución; el repositorio solo versiona fotos propias \\
 Métricas infladas (copias, atajos) & Reportar la cifra que favorece al proyecto & 1.3 Honestidad; 2.5 Evaluación completa & Particiones por grupo; test abierto una sola vez con el modelo fijado; se reporta F1 0,47 con fruta real \\
 Error Podrida $\rightarrow$ Buena & Riesgo para el consumidor & 1.2 Evitar daño & KPI de recall de Podrida; la app muestra la confianza; uso como filtro con revisión humana \\
 Sesgo por variedad y fuente & Peor desempeño con fruta local & 1.4 Equidad & Análisis por fuente y por fruta; limitación declarada \\
 Automatizar la clasificación & Desplazamiento laboral & 1.1 Bienestar social & Herramienta asistiva: el operario decide \\
-Etiquetas subjetivas & Criterio de un solo anotador & 2.5 Evaluación completa & Criterios escritos; kappa de Cohen \cite{cohen1960}: 0,29 entre la re-anotación y la revisión de la 3.ª iteración \\
+Etiquetas subjetivas & Frontera Defectuosa/Podrida ambigua & 2.5 Evaluación completa & Criterios escritos; re-anotación acordada por los tres integrantes; kappa de Cohen \cite{cohen1960} de 0,29 frente a la revisión de la 3.ª iteración, declarada como hecha con IA \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -431,21 +439,24 @@ Se construyó un sistema completo, de los datos a la aplicación, para clasifica
 tres clases y estimar su tamaño. Dentro de las fuentes públicas, la CNN desde cero y EfficientNetB0
 alcanzan F1-macro de 0,91 en validación y 0,80--0,85 en test, con recall de Podrida de 0,91: cumplen
 el KPI de recall, y EfficientNetB0 el de F1 en test. Con fruta real los tres enfoques caen a
-F1$\approx$0,47 y no son aptos para uso autónomo.
+F1$\approx$0,47 y no son aptos para uso autónomo. Revisar las etiquetas no mejoró ese resultado;
+restringir el alcance a frutas cuyo daño contrasta con la piel sí mejoró la detección de pudrición,
+aunque de forma modesta.
 
 Lo aprendido: en datasets públicos de calidad de fruta, copias, casi-duplicados y fondos
 correlacionados inflan las métricas, y la partición por grupos y una prueba externa son
 indispensables. Elegir la arquitectura importa menos que el dominio y el criterio de etiquetado: el
 \emph{transfer learning} mejora la generalización entre fuentes, pero no cierra la brecha con fruta
-real. La medición de tamaño con moneda tiene un error de 0,57~cm, aunque la clase de tamaño no alcanza
+real, y un desacuerdo de $\kappa=0{,}29$ entre dos etiquetados con el mismo criterio muestra que la
+frontera Defectuosa/Podrida es el cuello de botella. La medición de tamaño con moneda tiene un error de 0,57~cm, aunque la clase de tamaño no alcanza
 el KPI (5/11) por umbrales sin calibrar y medidas de referencia ruidosas.
 
 Trabajo futuro, por impacto esperado: (1)~fotografiar más fruta local y usar parte para ajustar el
 modelo; (2)~alinear el umbral Defectuosa/Podrida de las fuentes públicas con el criterio propio;
 (3)~añadir ejemplos de moho en cítricos; (4)~una salida de rechazo para imágenes fuera de dominio;
-(5)~calibrar los umbrales de tamaño con frutas medidas con calibrador, y (6)~consensuar la frontera
-Defectuosa/Podrida con ejemplos anotados por todo el equipo y medir el acuerdo antes de reetiquetar
-(la revisión de la tercera iteración dio $\kappa=0{,}29$).
+(5)~calibrar los umbrales de tamaño con frutas medidas con calibrador; (6)~fijar la frontera
+Defectuosa/Podrida con ejemplos visuales de referencia antes de volver a etiquetar, y (7)~segmentar las
+imágenes de \emph{Mixed Quality} en frutas individuales para ampliar los datos.
 
 % ─────────────────────────────────────────────────────────────
 \begin{thebibliography}{20}

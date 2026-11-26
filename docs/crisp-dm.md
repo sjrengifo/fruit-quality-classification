@@ -146,7 +146,8 @@ el modelo aprenda a reconocer el dataset de origen en lugar de la calidad):
 | Podrida | `Bad` re-anotado | `rot` (2.000) | prueba externa |
 
 - **Re-anotación de `Bad`:** muestra de 200 imágenes por fruta (semilla 42); 10 por fruta las
-  anotan todos para medir el **acuerdo entre anotadores** (kappa de Cohen). Criterios en
+  anotan todos para medir el **acuerdo entre anotadores** (kappa de Cohen). _En la práctica la anotó un
+  integrante y los tres la revisaron y acordaron por consenso; no se calculó kappa entre integrantes._ Criterios en
   [`criterios_anotacion.md`](criterios_anotacion.md).
 - **Riesgo de atajo detectado:** en Healthy-Defective-Fruits la mitad de `rot` está en **PNG** y el
   resto en JPEG; todas las imágenes de ese dataset son 256×256 mientras que Kaggle llega a 8000×6000.

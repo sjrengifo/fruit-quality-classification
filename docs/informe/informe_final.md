@@ -1,7 +1,7 @@
 # Clasificación de la calidad y estimación del tamaño de frutas por visión por computador: atajos, fuga de datos y cambio de dominio
 
 **Autores:** Juan Manuel Ramírez, Juan Sebastian Poveda, Samuel Jose Rengifo
-**Curso:** Algoritmos y Programación III, 2026-2 · Repositorio: _[enlace de GitHub]_
+**Curso:** Algoritmos y Programación III, 2026-2 · Repositorio: <https://github.com/sjrengifo/fruit-quality-classification>
 
 > Borrador de contenido. **La versión oficial es la de LaTeX** (`docs/informe/latex/informe.tex` →
 > `informe.pdf`, clase IEEEtran, 6 páginas); los cambios se hacen allí. Las cifras salen de
@@ -16,7 +16,7 @@ trabajo desarrolla un sistema que, a partir de una foto de una fruta, predice su
 Defectuosa o Podrida) y estima su tamaño (Pequeño, Mediano o Grande).
 
 **Datos.** La base pedida, FruitNet [3], solo distingue Good/Bad. Se re-anotaron 1.200 imágenes Bad,
-se agregaron dos fuentes públicas [4], [5] y 81 fotos propias como prueba externa.
+se agregaron dos fuentes públicas [4], [5] y dos lotes de fotos propias como prueba externa.
 
 **Hallazgos sobre los datos.** Tres problemas inflaban las métricas: copias aumentadas, sesiones de
 fotos repetidas y un fondo que predecía la clase (F1 0,65 viendo solo el borde de la imagen). Se
@@ -159,13 +159,19 @@ exactitud porque, con este desbalanceo, la clase mayoritaria sola ya alcanza 0,6
 **Fuentes** (Tabla I):
 - **FruitNet** [3] (Kaggle, base exigida) solo trae Good/Bad, y Bad mezcla defectos leves con
   pudrición. Se re-anotó una muestra fija de **1.200 Bad** (200 por fruta, semilla 42) según criterios
-  escritos: 842 → Podrida, 211 → Defectuosa, 13 → Buena y 134 descartadas.
+  escritos: 842 → Podrida, 211 → Defectuosa, 13 → Buena y 134 descartadas. La anotó un integrante y
+  los tres la revisaron y acordaron por consenso.
 - **Healthy-Defective-Fruits (HDF)** [4]: se usaron solo las imágenes reales de manzana y mango. Aporta
   las tres clases desde una segunda fuente.
 - **Regla de diseño:** las tres clases deben provenir de las mismas fuentes; si no, el modelo aprende la
   fuente en lugar de la calidad.
-- **Fotos propias:** el equipo tomó **81** sobre fondo blanco (28 Buena, 23 Defectuosa, 30 Podrida).
-  Se reservaron como prueba externa y nunca se usaron para entrenar ni para elegir modelos.
+- **Fotos propias:** una fruta sobre fondo claro, en casa y en mercados, en dos lotes reservados como
+  prueba externa; nunca se usaron para entrenar ni para elegir modelos. Cada foto se anotó con su
+  calidad según los criterios escritos; el tamaño se anotó en fotos aparte, con una moneda de
+  referencia y el diámetro medido con regla. Las fotos y anotaciones se compartieron con el curso en
+  Google Drive.
+- **`Mixed Quality`** (varias frutas por foto, sin etiqueta) no se usó; segmentarla queda como trabajo
+  futuro.
 
 *Tabla I. Imágenes por fuente y clase (después de excluir 1.292 imágenes en escala de grises).*
 
@@ -174,7 +180,8 @@ exactitud porque, con este desbalanceo, la clase mayoritaria sola ya alcanza 0,6
 | FruitNet (Kaggle) | 10.489 | 211 | 842 | train/val/test |
 | HDF (reales) | 4.909 | 2.987 | 2.000 | train/val/test |
 | FruQ [5] | 596 | 325 | 594 | solo train (2.ª iteración) |
-| Propias | 28 | 23 | 30 | prueba externa |
+| Propias (lote 1) | 28 | 23 | 30 | prueba externa |
+| Propias (lote 2) | 29 | 0 | 6 | prueba (4.ª iteración) |
 
 **Hallazgo 1: copias aumentadas.** El 79 % de las granadas de FruitNet son copias aumentadas de 1.291
 fotos únicas. El desbalanceo de granada que mostró el EDA era artificial. Si una copia cae en
@@ -227,7 +234,7 @@ mayor a la resolución de trabajo sin deformar → relleno replicando el borde �
   sin cero).
 
 **Segunda iteración.** Las fotos propias mostraron la falla de dominio (§IV). Para atacarla sin tocar
-esas 81 fotos:
+las fotos propias:
 - **EfficientNetB0** [7]: 3 épocas entrenando solo la cabeza y 15 de ajuste fino con tasa coseno desde
   1e-4.
 - **FruQ** [5]: *time-lapses* de una sola fruta que pasa de fresca a podrida, usados solo para
