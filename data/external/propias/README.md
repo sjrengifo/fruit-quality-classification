@@ -77,3 +77,11 @@ limones) y 6 Podrida (3 manzanas, 3 naranjas). Es una **prueba limpia** de la cu
 (`python -m src.evaluation.iteracion4`): no está en `index.csv`, no se usa para entrenar y se
 predice con el mismo camino que la app. `manzana_podrida_v3` posiblemente es la misma manzana que
 `v1` (anotado en `notas`).
+
+## Calidad, tamaño y anotaciones compartidas
+
+- **Calidad:** cada foto se anotó con su clase según `docs/criterios_anotacion.md` (`anotaciones.csv`).
+- **Tamaño:** se anotó en fotos aparte (`tamano/`), con una moneda de $1.000 como referencia de escala
+  y el diámetro de cada fruta medido con regla (`tamano/anotaciones_tamano.csv`). Las fotos de calidad
+  no tienen escala, por eso su columna `tamano` va vacía.
+- **Compartidas con el curso:** las fotos y sus anotaciones se subieron a la carpeta común de Google Drive.

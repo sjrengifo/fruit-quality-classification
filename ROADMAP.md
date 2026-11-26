@@ -128,7 +128,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Herramienta de re-anotación de `Bad` con medición de acuerdo (kappa) — `streamlit run src/app/anotar.py`.
 - [x] Índice unificado de fuentes (`python -m src.main index` → `data/processed/index.csv`).
 - [x] **Re-anotar la muestra de `Bad`** (1.200 imágenes): Podrida 842 · Defectuosa 211 · Buena 13 · Descartar 137.
-- [ ] Anotación de las 60 imágenes de acuerdo por los otros integrantes (kappa) — _equipo_.
+- [x] Re-anotación revisada y acordada por consenso entre los tres integrantes (sin kappa entre integrantes; κ = 0,29 frente a la revisión de la 3.ª iteración).
 
 - [x] **Recolección propia:** 81 fotos de 6 frutas (Buena 28 · Defectuosa 23 · Podrida 30).
 - [x] **Anotación manual** de calidad en `data/external/propias/anotaciones.csv` (tamaño sin anotar: fotos recortadas, sin escala).
@@ -140,7 +140,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 - [x] Verificado con `python -m src.evaluation.shortcut`: F1 solo-fondo 0,68 → 0,20 (azar 0,32). Queda un atajo de encuadre en HDF (silueta 0,64).
 - [x] Normalizar el encuadre (`python -m src.main crop`): silueta en HDF 0,64 → 0,37 (azar 0,31).
 - [x] Agrupar casi-duplicados de HDF (la misma fruta repetida cientos de veces): F1 en HDF 0,99 → 0,79.
-- [ ] `Mixed Quality`: separar frutas múltiples por componentes de la máscara (no se usa).
+- [ ] `Mixed Quality`: no se usó (opcional en el enunciado); segmentarla queda como trabajo futuro.
 - [x] **Tercera iteración** (§3.11): excluir 1.816 imágenes con varias frutas (componentes de la máscara)
       y revisión visual a ciegas de 2.522 grupos (etiquetas asignadas por IA, declarado) →
       `data/processed/index_v3.csv` (`python -m src.data.revision`). κ con la re-anotación de Kaggle: 0,29.
@@ -203,7 +203,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
       diámetro ecuatorial MAE 0,57 cm, sesgo +0,38 cm, clase correcta 5/11 (no cumple el KPI; §5.5).
 - [x] **Análisis de errores** (una sesión de HDF domina los errores de test; Podrida → Defectuosa en fotos propias).
 - [x] Diagnóstico de **sobreajuste** (CNN train ≈ val; SVM train 1,00): la caída es cambio de dominio.
-- [ ] **Comparación**: modelos entre sí y vs. línea base ✔; falta vs. literatura (NeurIPS/ICML/ICLR).
+- [x] **Comparación**: modelos entre sí, vs. línea base y vs. literatura (informe §V; referencias ICML/ICLR).
 - [x] Extraer *insights* conectados con el problema (`docs/crisp-dm.md` §5).
 - [x] **Segunda iteración** (§4.5, §5.4): FruQ como fuente solo de entrenamiento + transfer learning
       (EfficientNetB0), elegido con validación y generalización entre fuentes. Test F1 0,85; fotos
@@ -250,7 +250,8 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
       Título, Resumen, Introducción, Fundamentos, Metodología, Resultados, Análisis, Ética, Conclusiones, 20 referencias IEEE.
 - [x] Maquetado en LaTeX (IEEEtran): `docs/informe/latex/informe.tex` → `informe.pdf`, 6 páginas; figuras con
       `python -m src.evaluation.figuras_informe`.
-- [ ] Revisión del equipo: leer las referencias, kappa entre anotadores (marcado en rojo), enlace al repositorio.
+- [x] Enlace al repositorio y acuerdo entre anotadores en el informe.
+- [ ] Revisión del equipo: leer las referencias citadas.
 - [x] **Tabla de dilemas éticos** y su relación con el código de ética ACM (PI1), en el informe §VI.
 - [x] **Matriz de impactos** social/económico/ambiental/global + mitigaciones (PI2), en el informe §VI.
 - [x] **Justificación matemática** del modelado (PI3), en el informe §III-A (pérdida ponderada, F1, bootstrap, geometría del tamaño).
