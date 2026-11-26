@@ -28,6 +28,7 @@ def build_models() -> dict:
     from sklearn.svm import SVC
 
     def pipe(clf):
+        """Pipeline estandarización + clasificador (el escalado se ajusta dentro de cada pliegue)."""
         return Pipeline([("scaler", StandardScaler()), ("clf", clf)])
 
     return {

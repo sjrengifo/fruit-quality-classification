@@ -81,16 +81,20 @@ class _RemoteFile:
         self.url, self.size, self.pos = head.geturl(), int(head.headers["Content-Length"]), 0
 
     def seekable(self):
+        """Interfaz de archivo para `zipfile`: el zip remoto admite saltos (lecturas por rangos HTTP)."""
         return True
 
     def tell(self):
+        """Posición actual de lectura dentro del zip remoto."""
         return self.pos
 
     def seek(self, offset, whence=0):
+        """Mueve la posición de lectura (como `io.IOBase.seek`) sin descargar nada."""
         self.pos = {0: offset, 1: self.pos + offset, 2: self.size + offset}[whence]
         return self.pos
 
     def read(self, n=-1):
+        """Lee `n` bytes desde la posición actual con una petición HTTP Range."""
         import urllib.request
 
         end = self.size - 1 if n is None or n < 0 else min(self.pos + n, self.size) - 1
@@ -158,6 +162,7 @@ def download_fruq(workers: int = 3) -> None:
     print(f"FruQ: {len(todo)} fotogramas por descargar en {config.FRUQ_DIR}")
 
     def fetch(info) -> None:
+        """Descarga un cuadro del zip de FruQ a su ruta local (escritura atómica vía `.part`)."""
         out = config.FRUQ_DIR / info.filename.split("/", 1)[1]
         out.parent.mkdir(parents=True, exist_ok=True)
         tmp = out.with_suffix(".part")

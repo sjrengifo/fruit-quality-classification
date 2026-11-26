@@ -37,6 +37,7 @@ def _images(folder: Path):
 
 
 def kaggle_good_rows() -> list[dict]:
+    """Filas del índice para Kaggle `Good`: todas las imágenes se etiquetan Buena."""
     good_dir = config.RAW_DIR / "Good Quality_Fruits"
     return [
         {"ruta": p, "fuente": "kaggle", "fruta": d.name.split("_")[0], "calidad": "Buena"}
@@ -45,6 +46,7 @@ def kaggle_good_rows() -> list[dict]:
 
 
 def kaggle_bad_rows() -> list[dict]:
+    """Filas del índice para Kaggle `Bad`: solo la muestra re-anotada, con su etiqueta consolidada (sin Descartar)."""
     from src.data import relabel
 
     labels = relabel.consolidated_labels(relabel.load_annotations())
@@ -56,6 +58,7 @@ def kaggle_bad_rows() -> list[dict]:
 
 
 def hdf_rows() -> list[dict]:
+    """Filas del índice para Healthy-Defective-Fruits (solo reales); la carpeta da la clase (`config.HDF_LABELS`)."""
     rows = []
     for fruit, sub in config.HDF_REAL_DIRS.items():
         base = config.HDF_DIR / sub
@@ -98,6 +101,7 @@ def fruq_rows() -> list[dict]:
 
 
 def own_rows() -> list[dict]:
+    """Filas del índice para las fotos propias, con la calidad de `anotaciones.csv` (solo prueba externa)."""
     with open(config.OWN_ANNOTATIONS, newline="", encoding="utf-8") as f:
         return [{"ruta": config.OWN_IMAGES_DIR / r["archivo"], "fuente": "propias",
                  "fruta": r["fruta"], "calidad": r["calidad"]} for r in csv.DictReader(f)]
@@ -143,6 +147,7 @@ def build_index() -> tuple[list[dict], list[dict]]:
 
 
 def write_index(rows: list[dict], path: Path | None = None) -> Path:
+    """Escribe las filas en el índice CSV (por defecto `config.DATASET_INDEX`) y devuelve su ruta."""
     path = path or config.DATASET_INDEX
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", newline="", encoding="utf-8") as f:
@@ -153,6 +158,7 @@ def write_index(rows: list[dict], path: Path | None = None) -> Path:
 
 
 def main() -> None:
+    """Construye y escribe el índice, guarda las imágenes excluidas e imprime el conteo por fuente, clase y split."""
     from collections import Counter
 
     rows, excluded = build_index()

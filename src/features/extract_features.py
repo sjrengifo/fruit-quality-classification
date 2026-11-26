@@ -158,6 +158,7 @@ def load_features(split: str | None = None) -> tuple[np.ndarray, list[dict]]:
 
 
 def main() -> None:
+    """Calcula φ(x) para las imágenes nuevas del índice y lo guarda en `features.npz`."""
     n = build_features()
     print(f"{n} imágenes nuevas · {sum(FEATURE_GROUPS.values())} características → {FEATURES_PATH}")
 

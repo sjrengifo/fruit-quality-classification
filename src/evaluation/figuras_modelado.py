@@ -113,6 +113,7 @@ def confusion_matrices(plt) -> None:
 
 
 def main() -> None:
+    """Genera las figuras de la Fase 4 (búsquedas, curvas, comparación de modelos) en `assets/modelado/`."""
     import matplotlib
 
     matplotlib.use("Agg")

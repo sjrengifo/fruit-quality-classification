@@ -60,6 +60,7 @@ def build_bundle() -> tuple[int, int]:
 
 
 def main() -> None:
+    """Arma el zip para Colab e indica el siguiente paso."""
     n, mb = build_bundle()
     print(f"{BUNDLE} · {n} imágenes · {mb} MB · commit {git_version()}")
     print("Siguiente paso: subirlo a Google Drive (carpeta fruit-quality/) y abrir notebooks/colab_entrenar_cnn.ipynb")

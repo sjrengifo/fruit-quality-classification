@@ -19,6 +19,7 @@ GROUP_SETS = [["color"], ["textura"], ["forma"], ["color", "textura"], ["color",
 
 
 def main() -> None:
+    """Ablación de rasgos del SVM (color, textura, forma) y prueba de generalización entre fuentes."""
     import joblib
     from sklearn.base import clone
     from sklearn.metrics import f1_score

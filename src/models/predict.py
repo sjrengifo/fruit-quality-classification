@@ -32,6 +32,7 @@ class Prediction:
 
     @property
     def confianza(self) -> float | None:
+        """Probabilidad de la clase predicha (None si el modelo no entrega probabilidades, p. ej. el SVM)."""
         return max(self.probabilidades.values()) if self.probabilidades else None
 
 
@@ -88,6 +89,7 @@ class Predictor:
 
 
 def main() -> None:
+    """CLI: predice la calidad (y opcionalmente el tamaño) de una foto e imprime el resultado y los tiempos."""
     parser = argparse.ArgumentParser(description="Predice la calidad de una foto de fruta")
     parser.add_argument("imagen")
     parser.add_argument("--model", default=None, help=f"por defecto config.FINAL_TRANSFER ({config.FINAL_TRANSFER})")

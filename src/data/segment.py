@@ -251,6 +251,7 @@ def diameter_to_size_class(diameter_norm: float, thresholds=(0.33, 0.66)) -> str
 
 
 def main() -> None:
+    """Segmenta con U²-Net las imágenes del índice que faltan en la caché e informa los errores."""
     n, errors = segment_index()
     for e in errors:
         print(f"✗ {e}")
@@ -258,6 +259,7 @@ def main() -> None:
 
 
 def crop_main() -> None:
+    """Recorta cada fruta segmentada a la caja de su máscara (caché `crop128`) e informa los errores."""
     n, errors = crop_index()
     for e in errors:
         print(f"✗ {e}")

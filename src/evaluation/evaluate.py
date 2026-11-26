@@ -55,6 +55,7 @@ def predict(model_name: str, split: str) -> tuple[np.ndarray, np.ndarray, list[d
 
 
 def f1_macro(y_true, y_pred) -> float:
+    """F1-macro sobre las tres clases (una clase ausente cuenta como 0, no se omite)."""
     from sklearn.metrics import f1_score
 
     return float(f1_score(y_true, y_pred, labels=[0, 1, 2], average="macro", zero_division=0))
@@ -63,12 +64,14 @@ def f1_macro(y_true, y_pred) -> float:
 def recall_of(cls: int):
     """Recall de una clase; NaN si la clase no aparece (p. ej. en un remuestreo)."""
     def recall(y_true, y_pred) -> float:
+        """Recall de la clase `cls` (NaN si la muestra no la contiene)."""
         mask = y_true == cls
         return float((y_pred[mask] == cls).mean()) if mask.any() else float("nan")
     return recall
 
 
 def accuracy(y_true, y_pred) -> float:
+    """Exactitud: fracción de predicciones correctas."""
     return float((y_true == y_pred).mean())
 
 
@@ -136,6 +139,7 @@ def evaluate(model_name: str, split: str = "val") -> dict:
 
 
 def main() -> None:
+    """CLI: evalúa un modelo guardado en un split; test y externa exigen `--final`."""
     parser = argparse.ArgumentParser(description="Evaluación de un modelo guardado")
     parser.add_argument("--model", required=True, help="nombre en experiments/checkpoints/ (sin extensión)")
     parser.add_argument("--split", default="val", choices=["train", "val", *FINAL_SPLITS])

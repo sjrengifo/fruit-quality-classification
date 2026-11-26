@@ -86,6 +86,7 @@ def validate_annotations(
 
 
 def main() -> None:
+    """CLI de la recolección propia: `redimensionar` las fotos nuevas o `validar` el CSV contra las imágenes."""
     parser = argparse.ArgumentParser(description="Recolección propia de imágenes")
     parser.add_argument("accion", choices=["redimensionar", "validar"])
     args = parser.parse_args()

@@ -74,6 +74,7 @@ def shortcut_f1(rows: list[dict], features) -> tuple[float, float]:
 
 
 def main() -> None:
+    """Diagnóstico de atajos: F1 de modelos que solo ven el fondo o la silueta, antes y después de segmentar."""
     with open(config.DATASET_INDEX, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     tests = {
