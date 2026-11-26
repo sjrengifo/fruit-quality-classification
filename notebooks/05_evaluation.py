@@ -281,3 +281,126 @@ pd.DataFrame({s: {c: roc_auc_score(y == k, p[:, k]) for k, c in enumerate(C)}
 # contaminar la evaluación): fotografiar más fruta propia y usar una parte para entrenar o ajustar
 # (manteniendo otra parte, de **otras frutas**, como prueba), alinear el criterio Defectuosa/Podrida
 # en las etiquetas de entrenamiento y agregar una opción de "no sé" para fotos fuera de dominio.
+
+# %% [markdown]
+# ## 6. Iteraciones posteriores: segunda y tercera mirada a las fotos propias
+#
+# Las fotos propias son la prueba que importa, pero **cada vez que se usan dejan de ser nuevas**: se
+# registra cuántas veces se miraron y con qué modelo fijado antes.
+#
+# | Mirada | Modelo | Qué cambió | Fijado en |
+# |---|---|---|---|
+# | 1.ª | CNN `cnn_estable_1`, SVM | — (Fase 5) | commit `d7b6928` |
+# | 2.ª | Transfer `tl_busqueda_4` (EfficientNetB0 + color + FruQ) | modelo preentrenado y fuente FruQ (§4.5) | commit `8818bb0` |
+# | 3.ª | `v3_0` (CNN) y `v3_1` (transfer), misma configuración | **etiquetas revisadas** y sin imágenes de varias frutas (`index_v3.csv`, `02_preprocessing` §8) | commit `4bac7a8` |
+#
+# Los modelos `v3_*` se entrenaron en Colab (búsqueda `v3` de `src/models/transfer.py`) y se evaluaron
+# **solo** con las fotos propias: `test` cambió de etiquetas en v3, así que su cifra no sería
+# comparable con las anteriores.
+
+# %%
+ITER = {"cnn_estable_1": "CNN · original", "v3_0": "CNN · v3",
+        "tl_busqueda_4": "Transfer · original", "v3_1": "Transfer · v3"}
+pd.DataFrame({ITER[m]: {"F1-macro": e["f1_macro"], "IC95": "[{:.2f}; {:.2f}]".format(*e["ic95"]["f1_macro"]),
+                        "recall Podrida": e["por_clase"]["Podrida"]["recall"],
+                        "Podrida → Defectuosa": e["matriz_confusion"][2][1]}
+              for m in ITER for e in [load_eval(m, "externa")]}).T
+
+# %% [markdown]
+# Diferencias **pareadas** (mismas 81 fotos, bootstrap por grupos): `original − v3`.
+
+# %%
+from src.evaluation.evaluate import paired_diff_ci  # noqa: E402
+
+preds = {m: predict(m, "externa") for m in ITER}
+y_ex3, _, rows_ex3 = preds["v3_0"]
+groups_ex3 = [r["grupo"] for r in rows_ex3]
+podrida = C.index("Podrida")
+pd.DataFrame({f"{ITER[a]} − {ITER[b]}": {
+    name: "{:+.3f} [{:+.3f}; {:+.3f}]".format(*paired_diff_ci(y_ex3, preds[a][1], preds[b][1], groups_ex3, metric))
+    for name, metric in {"F1-macro": f1_macro, "recall Podrida": recall_of(podrida)}.items()}
+    for a, b in [("cnn_estable_1", "v3_0"), ("tl_busqueda_4", "v3_1")]}).T
+
+# %% [markdown]
+# ¿Los modelos v3 aprendieron mejor sus propias etiquetas? Las **mismas** imágenes de validación
+# (las que siguen en v3), calificadas con las etiquetas originales y con las revisadas:
+
+# %%
+from src.data.preprocess import load_split  # noqa: E402
+from tensorflow import keras  # noqa: E402
+
+X_va3, rows_va3 = load_split("val", config.DATASET_INDEX_V3)
+original_label = pd.read_csv(config.DATASET_INDEX).set_index("id")["calidad"]
+y_v3 = np.array([C.index(r["calidad"]) for r in rows_va3])
+y_v1 = np.array([C.index(original_label[r["id"]]) for r in rows_va3])
+cross = {}
+for m in ITER:
+    p = keras.models.load_model(config.CHECKPOINTS_DIR / f"{m}.keras").predict(X_va3, batch_size=256, verbose=0).argmax(1)
+    cross[ITER[m]] = {"F1 con etiquetas originales": f1_macro(y_v1, p), "F1 con etiquetas v3": f1_macro(y_v3, p)}
+print(len(rows_va3), "imágenes de validación")
+pd.DataFrame(cross).T
+
+# %% [markdown]
+# ### Conclusión de la tercera iteración (resultado negativo)
+#
+# - **No mejoró la generalización.** La CNN v3 empeora con las fotos propias (−0,11 de F1, IC95 sin
+#   cero); el transfer v3 sube +0,045, pero el IC95 incluye el cero. El recall de Podrida no mejora:
+#   el transfer v3 sigue mandando 21 de 30 podridas a Defectuosa (la CNN v3, 26 de 30).
+# - **Por qué:** la revisión hizo Podrida *más* exigente (945 imágenes Podrida → Defectuosa), así que
+#   los modelos aprendieron que "podrido" es "muy podrido", justo el sesgo que se quería corregir. Y
+#   ni siquiera con sus propias etiquetas los modelos v3 superan a los originales con claridad: las
+#   etiquetas revisadas no son más fáciles de aprender.
+# - **Lo que sí deja:** el acuerdo entre anotadores en Kaggle es κ = 0,29. La frontera
+#   Defectuosa/Podrida no está bien definida ni con el criterio escrito: el cuello de botella es la
+#   **definición de la clase**, no la cantidad de datos ni la arquitectura.
+# - **Decisión:** los modelos finales no cambian (`config.FINAL_MODEL`, `config.FINAL_TRANSFER`).
+
+# %% [markdown]
+# ## 7. Cuarta iteración: solo manzana, banano y naranja, y fotos nuevas
+#
+# Plan fijado antes de entrenar (commit `7de73d9`, `docs/crisp-dm.md` §3.12): transfer final con 3
+# frutas, con etiquetas originales (`v4_0`) o v4 (`v4_1`), frente al modelo actual de la app. Se evalúa
+# en las **35 fotos nuevas** del 24 nov. (primera mirada, camino de la app) y en las 81 anteriores
+# **restringidas a las 3 frutas** (cuarta mirada). Resultados de `python -m src.evaluation.iteracion4`.
+
+# %%
+it4 = json.load(open(config.RESULTS_DIR / "iteracion4.json", encoding="utf-8"))
+pd.DataFrame({m: {"Buena → Buena": r["buena_como_buena"], "IC95": "[{:.2f}; {:.2f}]".format(*r["recall_buena_ic95"]),
+                  "Podrida detectada como dañada": r["podrida_detectada_como_danada"],
+                  "Podrida → Podrida": r["podrida_como_podrida"], "limones (fuera de alcance)": it4["nov24_limon"][m]}
+              for m, r in it4["nov24"].items()}).T
+
+# %%
+fmt = "{:+.3f} [{:+.3f}; {:+.3f}]".format
+base = it4["modelos"][0]
+pd.DataFrame({m: {"F1-macro": r["f1_macro"], "recall Podrida": r["recall_podrida"],
+                  "Δ F1 vs actual": fmt(*r[f"dif_f1_vs_{base}"]) if m != base else "—",
+                  "Δ recall Podrida vs actual": fmt(*r[f"dif_recall_podrida_vs_{base}"]) if m != base else "—"}
+              for m, r in it4["externa_3_frutas"].items()}).T
+
+# %%
+fig, axes = plt.subplots(1, 3, figsize=(11, 3.2))
+for ax, (m, r) in zip(axes, it4["externa_3_frutas"].items()):
+    cm = np.array(r["matriz_confusion"])
+    ax.imshow(cm, cmap="Greens")
+    for i in range(3):
+        for j in range(3):
+            ax.text(j, i, cm[i, j], ha="center", va="center", fontsize=10)
+    ax.set_xticks(range(3), C, fontsize=8)
+    ax.set_yticks(range(3), C, fontsize=8)
+    ax.set_title(f"{m} · fotos anteriores, 3 frutas", fontsize=9)
+    ax.set_xlabel("predicha", fontsize=8)
+axes[0].set_ylabel("real", fontsize=8)
+plt.tight_layout()
+save(fig, "iteracion4_matrices")
+
+# %% [markdown]
+# - **Fotos nuevas:** los tres modelos detectan como dañadas casi todas las podridas y reconocen ~80 %
+#   de las buenas; con 6 podridas no hay diferencias demostrables. Los 6 bananos se aciertan siempre.
+#   Errores comunes: manzanas buenas rayadas y naranjas verdes con cicatrices → Defectuosa.
+# - **Fotos anteriores (3 frutas):** recortar el alcance sube el recall de Podrida (`v4_0`: +0,19,
+#   IC sin cero); `v4_1` tiene el mejor F1 (+0,10, IC toca el cero) y ninguna falsa alarma
+#   Buena → Podrida.
+# - **Conclusión:** tendencia favorable pero modesta; es un cambio de **alcance** (3 frutas), no un
+#   modelo mejor para las 6 frutas. **Decisión del equipo:** se mantiene `tl_busqueda_4` como modelo de
+#   la app; `v4` queda como experimento documentado.

@@ -23,7 +23,7 @@ from pathlib import PurePosixPath
 
 from src import config
 
-SPLITS = ["train", "val", "test", "externa"]
+SPLITS = ["train", "val", "test", "externa", "extra"]  # extra: fuentes solo-entrenamiento
 _TIMESTAMP = re.compile(r"(\d{8})_?(\d{6})")
 _VARIANT = re.compile(r"(_\d{1,2})?$")
 DUP_BINS = (12, 4, 4)     # histograma H, S, V de la imagen completa
@@ -37,6 +37,9 @@ def group_key(ruta: str, fuente: str) -> str:
         m = _TIMESTAMP.search(path.stem)
         stem = m.group(1) + m.group(2) if m else _VARIANT.sub("", path.stem)
         return f"{path.parent}/{stem}"
+    if fuente == "fruq":  # time-lapse: ventana de fotogramas consecutivos del mismo objeto
+        frame = int(re.search(r"(\d+)", path.stem).group(1))
+        return f"{path.parent}/{frame // (config.FRUQ_STEP * config.FRUQ_GROUP_FRAMES)}"
     return ruta
 
 
@@ -73,6 +76,8 @@ def assign_split(grupo: str, fuente: str) -> str:
     """Asigna train/val/test según un hash estable del grupo (≈ 60/20/20 por defecto)."""
     if fuente == "propias":
         return "externa"
+    if fuente in config.TRAIN_ONLY_SOURCES:
+        return "extra"
     digest = hashlib.md5(f"{config.RANDOM_SEED}:{grupo}".encode()).hexdigest()
     u = int(digest[:8], 16) / 0xFFFFFFFF
     if u < config.TEST_SIZE:

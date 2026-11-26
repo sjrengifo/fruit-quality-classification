@@ -18,10 +18,11 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.stage == "download":
-        from src.data.download import download_dataset, download_healthy_defective
+        from src.data.download import download_dataset, download_fruq, download_healthy_defective
 
         download_dataset()
         download_healthy_defective()
+        download_fruq()
     elif args.stage == "index":
         from src.data.dataset import main as index_main
 

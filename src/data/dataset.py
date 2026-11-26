@@ -4,6 +4,8 @@ Fase 3 de CRISP-DM. Fuentes:
 - Kaggle `Good`                → Buena
 - Kaggle `Bad` re-anotado      → Defectuosa / Podrida / Buena (solo la muestra ya anotada)
 - Healthy-Defective-Fruits     → según config.HDF_LABELS (solo imágenes reales)
+- FruQ (frutas enteras)        → Fresh/Good → Buena, Mild → Defectuosa, Rotten → Podrida
+                                 (fuente "fruq": split "extra", solo entrenamiento; ver config.FRUQ_*)
 - Recolección propia           → anotaciones.csv (fuente "propias": reservada como prueba externa)
 
 Escribe data/processed/index.csv con una fila por imagen: id (hash estable de la ruta), ruta
@@ -82,6 +84,19 @@ def hdf_duplicate_groups(rows: list[dict]) -> None:
             r["grupo"] = first.setdefault(label, r["ruta"])
 
 
+def fruq_rows() -> list[dict]:
+    """Fotogramas de FruQ descargados por `download_fruq` (data/external/fruq/<fruta>/<clase>/)."""
+    rows = []
+    for folder, fruit in config.FRUQ_FRUITS.items():
+        base = config.FRUQ_DIR / folder
+        if not base.exists():
+            continue
+        for d in sorted(p for p in base.iterdir() if p.is_dir() and (folder, p.name.lower()) not in config.FRUQ_SKIP):
+            rows += [{"ruta": p, "fuente": "fruq", "fruta": fruit, "calidad": config.FRUQ_LABELS[d.name.lower()]}
+                     for p in _images(d)]
+    return rows
+
+
 def own_rows() -> list[dict]:
     with open(config.OWN_ANNOTATIONS, newline="", encoding="utf-8") as f:
         return [{"ruta": config.OWN_IMAGES_DIR / r["archivo"], "fuente": "propias",
@@ -108,7 +123,7 @@ def build_index() -> tuple[list[dict], list[dict]]:
 
     from src.data.split import assign_split, group_key
 
-    rows = kaggle_good_rows() + kaggle_bad_rows() + hdf_rows() + own_rows()
+    rows = kaggle_good_rows() + kaggle_bad_rows() + hdf_rows() + fruq_rows() + own_rows()
     with ThreadPoolExecutor() as pool:
         gray = list(pool.map(is_grayscale, [r["ruta"] for r in rows]))
     excluded = [{"ruta": Path(r["ruta"]).relative_to(config.DATA_DIR).as_posix(), "motivo": "escala de grises"}

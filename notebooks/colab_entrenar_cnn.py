@@ -1,5 +1,5 @@
 # %% [markdown]
-# # Entrenar la CNN en Google Colab (GPU)
+# # Entrenar la CNN y el transfer learning en Google Colab (GPU)
 #
 # **Fase 4 de CRISP-DM.** Corre en Colab el mismo código de `src/` que en local, pero con GPU.
 #
@@ -14,10 +14,29 @@
 #
 # Al final: descargar `Mi unidad/fruit-quality/experiments/` y copiar su contenido en `experiments/`
 # del repositorio (o pedírselo a Claude).
+#
+# ### Historial de corridas en Colab (T4)
+#
+# | Corrida | Búsqueda (`SEARCH_LIST`) | Qué se probó | Resultado | Detalle |
+# |---|---|---|---|---|
+# | 1 | `cnn_busqueda`, `cnn_estable` | CNN desde cero: tamaño, regularización, lote 128 + coseno | elegido `cnn_estable_1` (val F1 0,91) | `docs/crisp-dm.md` §4.2 |
+# | 2 | `tl_busqueda`, `tl_entre_fuentes` | EfficientNetB0: aumento de datos, FruQ, generalización entre fuentes | elegido `tl_busqueda_4` (test F1 0,85; fotos propias 0,47) | §4.5, §5.4 |
+# | 3 | `v3` | los dos modelos finales, misma configuración, **desde cero con etiquetas revisadas** y sin imágenes de varias frutas (`index_v3.csv`) | **sin mejora** con fotos propias (CNN 0,38, transfer 0,52); no se adoptan | §3.11, §4.6, §5.6 |
+# | 4 | `v4` | transfer final **solo con manzana, banano y naranja**: con etiquetas originales (`v4_0`) y con etiquetas v4 (`v4_1`) | val (3 frutas) 0,935 y 0,906; fotos nuevas: 6/6 y 5/6 podridas detectadas; fotos anteriores (3 frutas): recall Podrida 0,30 → 0,48 (`v4_0`), F1 0,42 → 0,51 (`v4_1`); se mantiene el modelo actual en la app | §3.12, §5.7 |
+#
+# Una primera versión de la corrida 2 entrenó por error la CNN en lugar de EfficientNet (faltaba
+# `"modelo": "transfer"`); se corrigió y se descartó. El zip lleva los dos índices (`index.csv` e
+# `index_v3.csv`); cada configuración elige el suyo con la clave `"indice"`.
 
 # %%
-# Configuración: qué búsqueda correr (ver SEARCHES en src/models/cnn.py)
-SEARCH = "cnn_estable"
+# Configuración: qué búsquedas correr, en orden (SEARCHES en src/models/cnn.py y src/models/transfer.py)
+#   cnn_busqueda, cnn_estable      → CNN desde cero (ya entrenadas)
+#   tl_busqueda                    → transfer learning: aumento de datos y aporte de FruQ (5 config.)
+#   tl_entre_fuentes               → generalización: entrena sin una fuente y valida en ella (ya entrenadas)
+#   v3                             → 3.ª iteración: CNN final y transfer final desde cero con las
+#                                    etiquetas revisadas (index_v3.csv, src/data/revision.py) (ya entrenadas)
+#   v4                             → 4.ª iteración: transfer final solo con manzana, banano y naranja (2 config.)
+SEARCH_LIST = ["v4"]
 DRIVE_DIR = "/content/drive/MyDrive/fruit-quality"
 
 # %% [markdown]
@@ -68,21 +87,25 @@ if (drive_dir / "experiments").exists():
     shutil.copytree(drive_dir / "experiments", config.EXPERIMENTS_DIR, dirs_exist_ok=True)
 for d in (config.CHECKPOINTS_DIR, config.RESULTS_DIR, config.LOGS_DIR):
     d.mkdir(parents=True, exist_ok=True)
-print("Ya entrenadas:", sorted(p.stem for p in config.RESULTS_DIR.glob(f"{SEARCH}_*.json")))
+for search in SEARCH_LIST:
+    print(search, "· ya entrenadas:", sorted(p.stem for p in config.RESULTS_DIR.glob(f"{search}_*.json")))
 
 # %% [markdown]
 # ## 4. Entrenar
 #
 # Cada configuración imprime una línea por época (con los segundos acumulados) y al final su F1 en
-# validación. Estimado con T4: ~10–20 s por época → ~10 min por configuración.
+# validación. Con T4: CNN desde cero ~5–10 min por configuración; transfer learning (EfficientNetB0,
+# 18 épocas) ~5–15 min. Las búsquedas de transfer learning descargan los pesos de ImageNet (16 MB).
 
 # %%
-from src.models.cnn import SEARCHES
-from src.training.train import search_cnn
+from src.training.train import all_searches, search_cnn
 
-for i, overrides in enumerate(SEARCHES[SEARCH]):
-    print(f"{SEARCH}_{i}: {overrides}")
-summary = search_cnn(SEARCH, sync_dir=drive_dir / "experiments")
+summaries = {}
+for search in SEARCH_LIST:
+    for i, overrides in enumerate(all_searches()[search]):
+        print(f"{search}_{i}: {overrides}")
+    # isolate=True: cada configuración en su propio proceso (si no, la RAM de Colab se agota tras varias)
+    summaries[search] = search_cnn(search, sync_dir=drive_dir / "experiments", isolate=True)
 
 # %% [markdown]
 # ## 5. Resumen
@@ -93,7 +116,29 @@ summary = search_cnn(SEARCH, sync_dir=drive_dir / "experiments")
 # %%
 import pandas as pd
 
-pd.DataFrame(summary)
+for search, summary in summaries.items():
+    print(search)
+    display(pd.DataFrame(summary))  # noqa: F821
+
+# %% [markdown]
+# Para las corridas 3 y 4: comparación con los modelos originales de la misma configuración (en v4 la
+# validación además solo tiene 3 frutas). **Ojo:** el F1
+# de validación de `v3_*` se mide con las etiquetas revisadas y el de los originales con las
+# originales, así que no son directamente comparables; la comparación justa (mismas imágenes y fotos
+# propias) se hace en local en `notebooks/05_evaluation` §6.
+
+# %%
+import json
+
+pairs = [("cnn_estable_1", "v3_0"), ("tl_busqueda_4", "v3_1"), ("tl_busqueda_4", "v4_0"), ("tl_busqueda_4", "v4_1")]
+for original, nuevo in pairs:
+    for name in (original, nuevo):
+        path = config.RESULTS_DIR / f"{name}.json"
+        if path.exists():
+            r = json.load(open(path, encoding="utf-8"))
+            print(f"{name:14s} índice={r['configuracion'].get('indice') or 'original':9s} "
+                  f"F1 val={r['val']['f1_macro']:.3f} · media últimas 5={r['f1_val_ultimas_5_media']:.3f} · "
+                  f"{r['minutos']} min")
 
 # %% [markdown]
 # Listo: los resultados están en `Mi unidad/fruit-quality/experiments/`. Descargar esa carpeta y

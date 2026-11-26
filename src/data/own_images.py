@@ -37,7 +37,7 @@ def resize_images(images_dir: Path | None = None, max_side: int | None = None) -
             if max(img.size) <= max_side:
                 continue
             img.thumbnail((max_side, max_side))
-            img.convert("RGB").save(path, quality=90)
+            img.convert("RGB").save(path, quality=90, exif=img.info.get("exif", b""))  # conserva la focal (tamaño)
         changed += 1
     return changed
 

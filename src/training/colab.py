@@ -1,7 +1,8 @@
 """Paquete para entrenar la CNN en Google Colab (GPU) — Fase 4 de CRISP-DM.
 
 Arma un zip con el código (`src/`) y lo mínimo para entrenar: el índice y las imágenes recortadas
-de **train y val**. Las de `test` y las fotos propias (`externa`) no se incluyen: así es imposible
+de **train, val y extra** (fuentes solo-entrenamiento, p. ej. FruQ). Las de `test` y las fotos
+propias (`externa`) no se incluyen: así es imposible
 usarlas por error antes de la evaluación final (Fase 5). La segmentación ya está hecha, así que en
 Colab no se instala rembg ni se repite nada pesado.
 
@@ -18,7 +19,7 @@ from datetime import datetime
 from src import config
 
 BUNDLE = config.EXPERIMENTS_DIR / "colab" / "fruit_colab.zip"
-SPLITS = ("train", "val")
+SPLITS = ("train", "val", "extra")
 
 
 def git_version() -> str:
@@ -47,8 +48,9 @@ def build_bundle() -> tuple[int, int]:
     with zipfile.ZipFile(BUNDLE, "w") as z:
         for path in sorted(config.ROOT_DIR.glob("src/**/*.py")):
             z.write(path, path.relative_to(config.ROOT_DIR).as_posix(), zipfile.ZIP_DEFLATED)
-        z.write(config.DATASET_INDEX, config.DATASET_INDEX.relative_to(config.ROOT_DIR).as_posix(),
-                zipfile.ZIP_DEFLATED)
+        for index in (config.DATASET_INDEX, config.DATASET_INDEX_V3, config.DATASET_INDEX_V4):  # ⊂ original
+            if index.exists():
+                z.write(index, index.relative_to(config.ROOT_DIR).as_posix(), zipfile.ZIP_DEFLATED)
         for r in rows:  # PNG ya está comprimido: se guarda sin volver a comprimir (más rápido)
             path = cache_path(r["id"], variant="crop")
             z.write(path, path.relative_to(config.ROOT_DIR).as_posix(), zipfile.ZIP_STORED)
