@@ -13,7 +13,7 @@
 # basta con volver a ejecutar todo: las configuraciones ya terminadas se saltan.
 #
 # Al final: descargar `Mi unidad/fruit-quality/experiments/` y copiar su contenido en `experiments/`
-# del repositorio (o pedírselo a Claude).
+# del repositorio.
 #
 # ### Historial de corridas en Colab (T4)
 #

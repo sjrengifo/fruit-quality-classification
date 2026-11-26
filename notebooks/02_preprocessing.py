@@ -286,7 +286,7 @@ fig.savefig(ASSETS / "varias_frutas.png", dpi=150, bbox_inches="tight")
 #   2×2. Los grupos de 40 o más imágenes se verificaron después con 24 imágenes cada uno.
 # - **A ciegas:** las hojas no muestran la etiqueta original ni la fuente.
 # - **Criterio:** el mismo de `docs/criterios_anotacion.md`.
-# - **Quién:** las etiquetas las asignó **un modelo de IA (Claude)** a pedido del equipo, por falta de
+# - **Quién:** las etiquetas las asignó **un modelo de IA** a pedido del equipo, por falta de
 #   tiempo para revisarlas a mano. Se declara en el informe.
 # - **Formato:** `data/anotaciones/revision_v3.txt`, una línea por hoja con una letra por celda
 #   (B/D/P/X = Buena/Defectuosa/Podrida/Descartar).

@@ -54,3 +54,6 @@ Thumbs.db
 
 # ─── Credenciales Kaggle ──────────────────────────────────
 kaggle.json
+
+# Instrucciones locales del asistente (no se versionan)
+CLAUDE.md

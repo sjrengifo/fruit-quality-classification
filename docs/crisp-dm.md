@@ -337,7 +337,7 @@ modificó: el resultado es un índice aparte, `data/processed/index_v3.csv`.
    Defectuosa y Podrida (Kaggle, HDF, FruQ) y los de `Buena` de HDF y FruQ. Una celda por grupo
    (representante, o mosaico 2×2 si tiene más de 5 imágenes); los 23 grupos de 40 o más imágenes
    se verificaron después con 24 imágenes cada uno (6 decisiones del mosaico se corrigieron).
-   Criterio: `docs/criterios_anotacion.md`. Las etiquetas las asignó **un modelo de IA (Claude)** a
+   Criterio: `docs/criterios_anotacion.md`. Las etiquetas las asignó **un modelo de IA** a
    pedido del equipo, por falta de tiempo para revisarlas a mano; se declara en el informe.
 3. **Índice v3:** etiqueta revisada por grupo, sin varias frutas ni `Descartar`. Los splits no
    cambian (hash por grupo). Kaggle `Buena` (6.353 grupos) solo se filtró por varias frutas.
@@ -578,7 +578,7 @@ cambio de dominio sin gastar test ni las fotos propias. Diferencias pareadas con
   Podrida en la fuente no vista (0,43 vs. 0,28 en HDF; 0,67 vs. 0,61 en Kaggle), justo la debilidad
   vista en las fotos propias.
 - **Elegido: `tl_busqueda_4`** (color + FruQ) → `config.FINAL_TRANSFER`, fijado en el commit
-  `8818bb0` antes de mirar test o las fotos propias. Pasa a ser el modelo de la app; la CNN desde
+  `de2a9c9` antes de mirar test o las fotos propias. Pasa a ser el modelo de la app; la CNN desde
   cero sigue siendo el modelo exigido por el enunciado y se reporta igual.
 - Nota de proceso: una primera corrida en Colab entrenó por error la CNN en lugar de EfficientNet
   (faltaba `"modelo": "transfer"` en la búsqueda); se corrigió y se descartó.
@@ -588,7 +588,7 @@ cambio de dominio sin gastar test ni las fotos propias. Diferencias pareadas con
 Los dos modelos finales, con **la misma configuración** y entrenados desde cero con `index_v3.csv`
 (§3.11) en Colab (T4): búsqueda `v3` de `src/models/transfer.py` (clave `"indice": "v3"`).
 `v3_0` = CNN `cnn_estable_1`; `v3_1` = transfer `tl_busqueda_4`. No hubo selección: solo estas dos
-configuraciones, fijadas antes de entrenar (commit `4bac7a8`).
+configuraciones, fijadas antes de entrenar (commit `7475c12`).
 
 | Modelo | Épocas (mejor) | F1 train | F1 val (etiquetas v3) | Media últimas 5 | Minutos |
 |---|---|---:|---:|---:|---:|
@@ -614,7 +614,7 @@ etiquetas revisadas no son más fáciles de aprender (coherente con κ = 0,29). 
 
 ## 5. Evaluación
 
-Protocolo: los dos modelos de §4.3 (elegidos con validación, commit `d7b6928`) se evalúan **una
+Protocolo: los dos modelos de §4.3 (elegidos con validación, commit `f68bcf1`) se evalúan **una
 sola vez** en `test` (4.653 imágenes, 1.747 grupos) y en las 81 fotos propias
 (`python -m src.evaluation.evaluate --split test|externa --final`). IC95 por bootstrap de grupos.
 Detalle y figuras: `notebooks/05_evaluation`, `assets/evaluacion/`.
@@ -666,7 +666,7 @@ etiquetas de entrenamiento y añadir una salida "no sé" para fotos fuera de dom
 ### 5.4 Segunda mirada: transfer learning (§4.5)
 
 Las fotos propias **ya se habían usado una vez** (§5.1); esta es una **segunda mirada**, con el
-modelo fijado antes (commit `8818bb0`). Diferencias pareadas frente a la CNN con IC95 por grupos.
+modelo fijado antes (commit `de2a9c9`). Diferencias pareadas frente a la CNN con IC95 por grupos.
 
 | Modelo | Conjunto | F1-macro [IC95] | Exactitud | Recall Podrida [IC95] | vs. CNN (F1) |
 |--------|----------|-----------------|----------:|-----------------------|--------------|
@@ -690,7 +690,7 @@ modelo fijado antes (commit `8818bb0`). Diferencias pareadas frente a la CNN con
 
 ### 5.6 Tercera mirada: etiquetas revisadas (§3.11, §4.6)
 
-Las fotos propias se usan por **tercera vez**, con los modelos fijados antes (commit `4bac7a8`). Solo
+Las fotos propias se usan por **tercera vez**, con los modelos fijados antes (commit `7475c12`). Solo
 se evalúa en `externa`: `test` cambió de etiquetas en v3 y su cifra no sería comparable.
 
 | Modelo | F1-macro [IC95] | Recall Podrida [IC95] | Podrida → Defectuosa |
@@ -719,7 +719,7 @@ visuales anotados por todo el equipo, medir el κ antes de reetiquetar, y fotogr
 
 Modelos de la búsqueda `v4` (Colab, T4, ~7 min cada uno; validación solo con las 3 frutas):
 `v4_0` (etiquetas originales) F1 val 0,935, media últimas 5 0,925; `v4_1` (etiquetas v4) 0,906 y
-0,903. Evaluación fijada en el commit `7de73d9`: `python -m src.evaluation.iteracion4`.
+0,903. Evaluación fijada en el commit `78e59d9`: `python -m src.evaluation.iteracion4`.
 
 **Fotos nuevas** (32 de manzana, banano y naranja; **primera mirada**; camino de la app):
 

@@ -8,7 +8,7 @@
 # - **`test`**: 4.653 imágenes de Kaggle + HDF (mismas fuentes que entrenamiento, otras frutas).
 # - **`externa`**: las 81 fotos propias del equipo (otra cámara, otra luz, otras frutas).
 #
-# La elección quedó registrada en el commit `d7b6928` **antes** de correr esta evaluación, que se
+# La elección quedó registrada en el commit `f68bcf1` **antes** de correr esta evaluación, que se
 # corre una sola vez:
 #
 # ```bash
@@ -290,9 +290,9 @@ pd.DataFrame({s: {c: roc_auc_score(y == k, p[:, k]) for k, c in enumerate(C)}
 #
 # | Mirada | Modelo | Qué cambió | Fijado en |
 # |---|---|---|---|
-# | 1.ª | CNN `cnn_estable_1`, SVM | — (Fase 5) | commit `d7b6928` |
-# | 2.ª | Transfer `tl_busqueda_4` (EfficientNetB0 + color + FruQ) | modelo preentrenado y fuente FruQ (§4.5) | commit `8818bb0` |
-# | 3.ª | `v3_0` (CNN) y `v3_1` (transfer), misma configuración | **etiquetas revisadas** y sin imágenes de varias frutas (`index_v3.csv`, `02_preprocessing` §8) | commit `4bac7a8` |
+# | 1.ª | CNN `cnn_estable_1`, SVM | — (Fase 5) | commit `f68bcf1` |
+# | 2.ª | Transfer `tl_busqueda_4` (EfficientNetB0 + color + FruQ) | modelo preentrenado y fuente FruQ (§4.5) | commit `de2a9c9` |
+# | 3.ª | `v3_0` (CNN) y `v3_1` (transfer), misma configuración | **etiquetas revisadas** y sin imágenes de varias frutas (`index_v3.csv`, `02_preprocessing` §8) | commit `7475c12` |
 #
 # Los modelos `v3_*` se entrenaron en Colab (búsqueda `v3` de `src/models/transfer.py`) y se evaluaron
 # **solo** con las fotos propias: `test` cambió de etiquetas en v3, así que su cifra no sería
@@ -358,7 +358,7 @@ pd.DataFrame(cross).T
 # %% [markdown]
 # ## 7. Cuarta iteración: solo manzana, banano y naranja, y fotos nuevas
 #
-# Plan fijado antes de entrenar (commit `7de73d9`, `docs/crisp-dm.md` §3.12): transfer final con 3
+# Plan fijado antes de entrenar (commit `78e59d9`, `docs/crisp-dm.md` §3.12): transfer final con 3
 # frutas, con etiquetas originales (`v4_0`) o v4 (`v4_1`), frente al modelo actual de la app. Se evalúa
 # en las **35 fotos nuevas** del 24 nov. (primera mirada, camino de la app) y en las 81 anteriores
 # **restringidas a las 3 frutas** (cuarta mirada). Resultados de `python -m src.evaluation.iteracion4`.

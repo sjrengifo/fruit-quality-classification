@@ -135,8 +135,8 @@ pytest                                       # pruebas
 ```
 
 Para **reproducir el pipeline** completo (descarga de datos, segmentación, entrenamiento y
-evaluación) ver [`docs/instalacion.md`](docs/instalacion.md) y la lista de comandos en
-[`CLAUDE.md`](CLAUDE.md). Las redes se entrenaron en Google Colab (GPU T4) con
+evaluación) ver [`docs/instalacion.md`](docs/instalacion.md).
+Las redes se entrenaron en Google Colab (GPU T4) con
 [`notebooks/colab_entrenar_cnn`](notebooks/colab_entrenar_cnn.ipynb).
 
 ---

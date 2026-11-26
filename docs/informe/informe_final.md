@@ -214,7 +214,7 @@ mayor a la resolución de trabajo sin deformar → relleno replicando el borde �
 **Protocolo.**
 - Se entrena con *train* y se elige con *val*.
 - *Test* y las fotos propias se abren una sola vez, con el modelo ya fijado en un *commit*
-  (`d7b6928` y `8818bb0`).
+  (`f68bcf1` y `de2a9c9`).
 
 **ML clásico.**
 - Entrada: φ(x) ∈ ℝ⁶⁸, calculado solo sobre los píxeles de la fruta: color (38), textura LBP + GLCM
@@ -341,7 +341,7 @@ primer filtro con revisión humana, no como clasificador autónomo de tres clase
 **Tercera iteración: ¿son las etiquetas?**
 - Para probar el umbral de pudrición como causa se excluyeron 1.816 imágenes con varias frutas (casi
   todas Kaggle `Buena`, un atajo posible) y se revisaron a ciegas 2.522 grupos con nuestro criterio.
-  La revisión la hizo **un modelo de IA (Claude)** a pedido del equipo, por falta de tiempo.
+  La revisión la hizo **un modelo de IA** a pedido del equipo, por falta de tiempo.
 - Acuerdo con la re-anotación previa de Kaggle: κ = 0,29. La revisión hizo Podrida *más* exigente
   (945 imágenes Podrida → Defectuosa).
 - Reentrenados desde cero con la misma configuración, no mejoraron con las fotos propias (tercera

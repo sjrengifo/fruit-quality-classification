@@ -59,7 +59,7 @@ Revisión completa de Defectuosa/Podrida con estos mismos criterios, para reentr
 cero (`docs/crisp-dm.md` §3.11). No reemplaza la re-anotación anterior: produce un índice aparte
 (`data/processed/index_v3.csv`).
 
-- **Quién:** las etiquetas las asignó **un modelo de IA (Claude)** a pedido del equipo, por falta de
+- **Quién:** las etiquetas las asignó **un modelo de IA** a pedido del equipo, por falta de
   tiempo para revisarlas a mano. Debe declararse así en el informe.
 - **Unidad:** el grupo (misma fruta), a ciegas: hojas de contacto numeradas sin etiqueta ni fuente
   (`python -m src.data.revision hojas`). Los grupos de 40 o más imágenes se verificaron con 24
