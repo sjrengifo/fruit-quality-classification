@@ -53,7 +53,7 @@ caen a 0,46--0,49, por cambio de dominio y un umbral de pudrición distinto entr
 sobreajuste. Revisar las etiquetas no lo corrigió; restringir el alcance a manzana, banano y naranja
 subió el recall de Podrida con fruta real de 0,30 a 0,48. El tamaño se mide con una moneda como escala
 y corrección de perspectiva, con un error medio de 0,57~cm. La aplicación Streamlit responde en
-0,34~s por imagen en CPU. Código y datos propios: \url{https://github.com/sjrengifo/fruit-quality-classification}.
+0,34~s por imagen en CPU. Código y datos propios: \url{https://github.com/sjrengifo/fruit-quality-classification}; aplicación desplegada: \url{https://fruit-quality-classification-2026.streamlit.app}.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -306,7 +306,7 @@ en 5 de 11. Una primera versión medía el ancho máximo, que incluye las puntas
 y daba 1,10~cm; se cambió al diámetro ecuatorial, el calibre de las normas comerciales
 \cite{codex2010}.
 
-\textbf{Latencia.} 0,34~s por imagen en CPU (Apple M4) con EfficientNetB0, incluida la segmentación;
+\textbf{Despliegue.} La aplicación Streamlit está publicada en \url{https://fruit-quality-classification-2026.streamlit.app}: permite subir fotos o capturarlas con la cámara, también desde el celular. \textbf{Latencia.} 0,34~s por imagen en CPU (Apple M4) con EfficientNetB0, incluida la segmentación;
 0,37~s con la medición de tamaño.
 
 % ─────────────────────────────────────────────────────────────
