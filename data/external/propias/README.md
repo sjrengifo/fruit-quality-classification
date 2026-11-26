@@ -49,3 +49,39 @@ validar la estimación de tamaño de la Fase 3.
 5. Commit en una rama `feature/*` y PR hacia `dev`.
 
 Para compartir con el resto de la clase basta con enlazar esta carpeta del repositorio.
+
+## Fotos para validar el tamaño (`tamano/`)
+
+La estimación de tamaño (`src/features/size.py`) usa una **moneda de diámetro conocido** como escala.
+
+| Carpeta / archivo | Contenido |
+|-------------------|-----------|
+| `tamano/monedas/` | Cada moneda junto a una regla (prueba de la medición de la moneda) |
+| `tamano/imagenes/` | Fruta + moneda de $1.000 al lado, sin tocarse, foto desde arriba |
+| `tamano/anotaciones_tamano.csv` | `archivo, fruta, moneda, diametro_fruta_cm, notas` |
+
+- `diametro_fruta_cm`: diámetro ecuatorial (el más ancho, perpendicular al eje pedúnculo–punta) medido con regla:
+  fruta entre dos libros parados, distancia entre ellos.
+- `moneda`: clave de `config.COIN_DIAMETERS_MM` (p. ej. `1000_nueva`).
+- Preparar y validar:
+  ```bash
+  python -m src.features.size preparar   # HEIC → JPEG ≤ 1024 px conservando el EXIF (la focal corrige la perspectiva)
+  python -m src.features.size validar    # error en cm y % de clase de tamaño correcta
+  ```
+
+## Segundo lote: `nov24/` (24 nov. 2026)
+
+35 fotos nuevas (fondo de bolsa blanca, luz natural; originales HEIC del iPhone convertidos a JPEG
+≤ 1024 px) con su propio `anotaciones.csv`: 29 Buena (11 manzanas, 9 naranjas, 6 bananos, 3
+limones) y 6 Podrida (3 manzanas, 3 naranjas). Es una **prueba limpia** de la cuarta iteración
+(`python -m src.evaluation.iteracion4`): no está en `index.csv`, no se usa para entrenar y se
+predice con el mismo camino que la app. `manzana_podrida_v3` posiblemente es la misma manzana que
+`v1` (anotado en `notas`).
+
+## Calidad, tamaño y anotaciones compartidas
+
+- **Calidad:** cada foto se anotó con su clase según `docs/criterios_anotacion.md` (`anotaciones.csv`).
+- **Tamaño:** se anotó en fotos aparte (`tamano/`), con una moneda de $1.000 como referencia de escala
+  y el diámetro de cada fruta medido con regla (`tamano/anotaciones_tamano.csv`). Las fotos de calidad
+  no tienen escala, por eso su columna `tamano` va vacía.
+- **Compartidas con el curso:** las fotos y sus anotaciones se subieron a la carpeta común de Google Drive.

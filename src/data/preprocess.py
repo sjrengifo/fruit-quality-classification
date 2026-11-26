@@ -27,6 +27,8 @@ def prepare_image(source, size: tuple[int, int] | None = None) -> np.ndarray:
     from PIL import Image, ImageOps  # import diferido
 
     size = size or config.IMAGE_SIZE
+    if hasattr(source, "seek"):  # archivo subido: puede leerse varias veces (calidad, tamaño, figura)
+        source.seek(0)
     img = source if isinstance(source, Image.Image) else Image.open(source)
     img.draft("RGB", (size[1] * 2, size[0] * 2))  # JPEG grandes: decodifica ya reducido (mucho más rápido)
     img = ImageOps.exif_transpose(img).convert("RGB")

@@ -31,7 +31,7 @@ Usuario ──► App Streamlit (src/app/app.py)
 5. `src/features/extract_features.py` — características de color/textura/forma (para ML).
 6. `src/training/train.py` — entrenamiento y ajuste; artefactos → `experiments/`.
 7. `src/evaluation/` — diagnóstico de atajos, ablación, métricas y análisis de error.
-8. `src/app/app.py` — despliegue (carga el mejor modelo + el mismo preprocesamiento).
+8. `src/app/app.py` — despliegue: `src/models/predict.py` (`Predictor`) aplica `segment_and_crop` (mismo camino que la caché de entrenamiento) y el modelo de `config.FINAL_MODEL` (o el SVM).
 
 Constantes y rutas centralizadas en `src/config.py`.
 

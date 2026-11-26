@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 55 1200 430" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <!-- CRISP-DM como recorrido real: fases en una línea, retrocesos como arcos con el hallazgo que los motivó -->
+  <defs>
+    <marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M1 1 L9 5 L1 9" fill="none" stroke="#c8553d" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <style>
+    .eje { stroke: #1b241c; stroke-width: 2; }
+    .arco { fill: none; stroke: #c8553d; stroke-width: 1.6; }
+    .num { fill: #8a877c; font-family: Menlo, monospace; font-size: 13px; letter-spacing: 1px; }
+    .fase { fill: #1b241c; font-size: 18px; font-weight: bold; }
+    .dato { fill: #5c5a52; font-size: 15px; }
+    .hall { fill: #c8553d; font-size: 15px; paint-order: stroke; stroke: #fff; stroke-width: 5px; stroke-linejoin: round; }
+    .k { font-weight: bold; }
+  </style>
+  <rect y="55" width="1200" height="430" fill="#fff"/>
+
+  <!-- retrocesos (anidados: el más largo por fuera) -->
+  <path class="arco" d="M908 370 V117 Q908 95 886 95 H122 Q100 95 100 117 V363" marker-end="url(#p)"/>
+  <path class="arco" d="M892 370 V182 Q892 160 870 160 H322 Q300 160 300 182 V363" marker-end="url(#p)"/>
+  <path class="arco" d="M876 370 V257 Q876 235 854 235 H514 Q492 235 492 257 V363" marker-end="url(#p)"/>
+  <path class="arco" d="M700 370 V317 Q700 295 678 295 H530 Q508 295 508 317 V363" marker-end="url(#p)"/>
+  <circle cx="908" cy="370" r="3" fill="#c8553d"/>
+  <circle cx="892" cy="370" r="3" fill="#c8553d"/>
+  <circle cx="876" cy="370" r="3" fill="#c8553d"/>
+  <circle cx="700" cy="370" r="3" fill="#c8553d"/>
+
+  <text class="hall" x="504" y="83" text-anchor="middle">KPIs revisados: se cumplen en fuentes públicas, no con fruta real</text>
+  <text class="hall" x="596" y="148" text-anchor="middle"><tspan class="k">2.ª iteración</tspan> · F1 0,49 con fotos propias → FruQ + transfer learning</text>
+  <text class="hall" x="680" y="205" text-anchor="middle"><tspan class="k">3.ª</tspan> · etiquetas revisadas (κ 0,29) → sin mejora</text>
+  <text class="hall" x="680" y="224" text-anchor="middle"><tspan class="k">4.ª</tspan> · manzana, banano, naranja → recall P 0,30 → 0,48</text>
+  <text class="hall" x="518" y="283">F1 0,99 era la misma fruta en train y val → grupos</text>
+
+  <!-- eje de fases -->
+  <line class="eje" x1="100" y1="370" x2="1100" y2="370"/>
+  <g fill="#1b241c">
+    <circle cx="100" cy="370" r="6"/><circle cx="300" cy="370" r="6"/><circle cx="500" cy="370" r="6"/>
+    <circle cx="700" cy="370" r="6"/><circle cx="900" cy="370" r="6"/><circle cx="1100" cy="370" r="6"/>
+  </g>
+
+  <g text-anchor="middle">
+    <text class="num" x="100" y="400">01</text>
+    <text class="fase" x="100" y="422">Negocio</text>
+    <text class="dato" x="100" y="444">3 clases + tamaño</text>
+    <text class="dato" x="100" y="463">4 KPIs</text>
+
+    <text class="num" x="300" y="400">02</text>
+    <text class="fase" x="300" y="422">Datos</text>
+    <text class="dato" x="300" y="444">4 fuentes</text>
+    <text class="dato" x="300" y="463">Kaggle solo Good/Bad</text>
+
+    <text class="num" x="500" y="400">03</text>
+    <text class="fase" x="500" y="422">Preparación</text>
+    <text class="dato" x="500" y="444">re-anotar 1.200 Bad</text>
+    <text class="dato" x="500" y="463">U²-Net: el fondo daba F1 0,65</text>
+
+    <text class="num" x="700" y="400">04</text>
+    <text class="fase" x="700" y="422">Modelado</text>
+    <text class="dato" x="700" y="444">RegLog · SVM · RF</text>
+    <text class="dato" x="700" y="463">CNN · EfficientNetB0</text>
+
+    <text class="num" x="900" y="400">05</text>
+    <text class="fase" x="900" y="422">Evaluación</text>
+    <text class="dato" x="900" y="444">test 0,85</text>
+    <text class="dato" x="900" y="463">fotos propias 0,47</text>
+
+    <text class="num" x="1100" y="400">06</text>
+    <text class="fase" x="1100" y="422">Despliegue</text>
+    <text class="dato" x="1100" y="444">app Streamlit</text>
+    <text class="dato" x="1100" y="463">0,34 s por imagen</text>
+  </g>
+</svg>
