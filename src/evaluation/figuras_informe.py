@@ -19,6 +19,7 @@ OUT = config.ROOT_DIR / "docs" / "informe" / "latex" / "figuras"
 SVGS = {
     "flujo_crisp_dm": config.ROOT_DIR / "assets" / "informe" / "flujo_crisp_dm.svg",
     "matrices_confusion": config.ROOT_DIR / "assets" / "evaluacion" / "matrices_confusion_final.svg",
+    "arquitectura": config.ROOT_DIR / "assets" / "informe" / "arquitectura.svg",
 }
 # (id del índice, rótulo): fruta en la mano o en el árbol, y esquinas negras de rotación (atajos de fondo)
 EXAMPLES = [("a6b899dd149c4eeb", "HDF · Defectuosa"), ("6e396999887e9b42", "HDF · Podrida"),
@@ -27,6 +28,7 @@ SIZE_PHOTO = "manzana1.jpg"
 
 
 def preparation_figure() -> None:
+    """Figura de preparación: original frente a segmentada de tres ejemplos y la medición de tamaño con moneda."""
     import matplotlib.pyplot as plt
     from PIL import Image
 
@@ -57,6 +59,7 @@ def preparation_figure() -> None:
 
 
 def convert_svgs() -> None:
+    """Convierte a PDF vectorial (rsvg-convert) las figuras SVG de `assets/` que usa el informe."""
     if shutil.which("rsvg-convert") is None:
         raise SystemExit("Falta rsvg-convert (librsvg): brew install librsvg")
     for name, svg in SVGS.items():
@@ -64,6 +67,7 @@ def convert_svgs() -> None:
 
 
 def main() -> None:
+    """Regenera todas las figuras del informe en `docs/informe/latex/figuras/`."""
     OUT.mkdir(parents=True, exist_ok=True)
     convert_svgs()
     preparation_figure()

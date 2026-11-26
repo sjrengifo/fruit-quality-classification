@@ -33,6 +33,7 @@ def sample_weights(rows: list[dict], power: float = 1.0) -> np.ndarray:
 
 
 def labels(rows: list[dict]) -> np.ndarray:
+    """Índices de clase (0 Buena, 1 Defectuosa, 2 Podrida) de las filas del índice."""
     return np.array([config.QUALITY_CLASSES.index(r["calidad"]) for r in rows])
 
 
@@ -58,6 +59,7 @@ def evaluate_split(y_true: np.ndarray, y_pred: np.ndarray, rows: list[dict]) -> 
 
 
 def save_results(name: str, results: dict) -> None:
+    """Guarda un diccionario de resultados como `experiments/results/<name>.json`."""
     config.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     with open(config.RESULTS_DIR / f"{name}.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)
@@ -152,6 +154,7 @@ def _best_f1_callback(X_va, y_va, checkpoint: Path, patience: int | None):
             self.start = time.time()
 
         def on_epoch_end(self, epoch, logs=None):
+            """F1-macro de validación por época: guarda el mejor modelo y detiene si deja de mejorar."""
             pred = self.model.predict(X_va, batch_size=512, verbose=0).argmax(1)
             f1 = f1_score(y_va, pred, average="macro")
             logs["val_f1_macro"] = f1
@@ -350,6 +353,7 @@ def search_cnn(search: str = "cnn_busqueda", sync_dir: Path | None = None, isola
 
 
 def main():
+    """CLI de entrenamiento: modelos clásicos, CNN, transfer learning o una búsqueda completa."""
     parser = argparse.ArgumentParser(description="Entrenamiento de modelos")
     parser.add_argument("--model", default="cnn",
                         choices=["cnn", "cnn_search", "cnn_stable", "classic", "transfer", "tl_busqueda", "tl_entre_fuentes",

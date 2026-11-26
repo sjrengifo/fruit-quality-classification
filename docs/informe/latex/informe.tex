@@ -330,7 +330,15 @@ en 5 de 11. Una primera versión medía el ancho máximo, que incluye las puntas
 y daba 1,10~cm; se cambió al diámetro ecuatorial, el calibre de las normas comerciales
 \cite{codex2010}.
 
-\textbf{Despliegue.} La aplicación Streamlit está publicada en \url{https://fruit-quality-classification-2026.streamlit.app}: permite subir fotos o capturarlas con la cámara, también desde el celular. \textbf{Latencia.} 0,34~s por imagen en CPU (Apple M4) con EfficientNetB0, incluida la segmentación;
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{arquitectura.pdf}
+\caption{Arquitectura de software: la aplicación usa el mismo preprocesamiento que el entrenamiento y
+permite elegir entre los tres modelos finales; el tamaño es una rama opcional con moneda.}
+\label{fig:arq}
+\end{figure}
+
+\textbf{Despliegue} (Fig.~\ref{fig:arq}). La aplicación Streamlit está publicada en \url{https://fruit-quality-classification-2026.streamlit.app}: permite subir fotos o capturarlas con la cámara, también desde el celular. \textbf{Latencia.} 0,34~s por imagen en CPU (Apple M4) con EfficientNetB0, incluida la segmentación;
 0,37~s con la medición de tamaño.
 
 % ─────────────────────────────────────────────────────────────

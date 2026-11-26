@@ -58,6 +58,7 @@ def cache_dir(size: tuple[int, int] | None = None, variant: str = "img") -> Path
 
 
 def cache_path(image_id: str, size: tuple[int, int] | None = None, variant: str = "img") -> Path:
+    """Ruta en la caché de una imagen ya procesada (`variant`: img, seg, crop, mask o cropmask)."""
     return cache_dir(size, variant) / f"{image_id}.png"
 
 
@@ -109,6 +110,7 @@ def load_split(split: str, index_path: Path | None = None, size: tuple[int, int]
 
 
 def main() -> None:
+    """Preprocesa (128×128) las imágenes del índice que faltan en la caché e informa los errores."""
     n, errors = preprocess_index()
     for e in errors:
         print(f"✗ {e}")

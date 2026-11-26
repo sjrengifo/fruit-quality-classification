@@ -56,6 +56,7 @@ def author_slug(name: str) -> str:
 
 
 def annotations_path(author: str, annotations_dir: Path | None = None) -> Path:
+    """CSV de anotaciones de un autor (`data/anotaciones/bad_<autor>.csv`)."""
     return (annotations_dir or config.ANNOTATIONS_DIR) / f"bad_{author_slug(author)}.csv"
 
 
@@ -142,6 +143,7 @@ def consolidated_labels(annotations: dict[str, dict[str, str]]) -> dict[str, str
 
 
 def main() -> None:
+    """Resumen de la re-anotación: avance por fruta, etiquetas consolidadas y kappa entre anotadores."""
     sample = build_sample()
     annotations = load_annotations()
     final = consolidated_labels(annotations)
