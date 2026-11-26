@@ -4,7 +4,7 @@
 **Curso:** Algoritmos y Programación III, 2026-2 · Repositorio: <https://github.com/sjrengifo/fruit-quality-classification> · App: <https://fruit-quality-classification-2026.streamlit.app>
 
 > Borrador de contenido. **La versión oficial es la de LaTeX** (`docs/informe/latex/informe.tex` →
-> `informe.pdf`, clase IEEEtran, 6 páginas); los cambios se hacen allí. Las cifras salen de
+> `informe.pdf`, clase IEEEtran, 7 páginas); los cambios se hacen allí. Las cifras salen de
 > `docs/crisp-dm.md` y de `experiments/results/`.
 
 ---
@@ -70,6 +70,8 @@ dataset de entrenamiento.
 2. Una comparación honesta de ML clásico, una CNN desde cero y *transfer learning* en tres
    escenarios: las mismas fuentes, una fuente no vista y fotos propias.
 3. Una medición de tamaño con referencia física, validada contra regla.
+4. Dos experimentos controlados (revisar las etiquetas y reducir el alcance a tres frutas) que muestran
+   que el cuello de botella con fruta real es la definición de *Podrida*, no el modelo.
 
 ---
 
@@ -91,6 +93,22 @@ con tasa de aprendizaje de decaimiento coseno [10].
 
 **Transfer learning.** Reutiliza una red preentrenada en ImageNet, aquí EfficientNetB0 [7]. Primero se
 entrena solo la cabeza nueva y después se ajusta toda la red con una tasa baja.
+
+**Normalización.** Los modelos comparan magnitudes, así que las entradas deben estar en una escala
+común. La CNN divide cada píxel entre 255 (dentro del propio modelo, para que la app no pueda olvidar
+ese paso); EfficientNetB0 trae su propia normalización. En el SVM cada rasgo se estandariza,
+z = (φ − μ)/σ, con μ y σ calculadas solo en entrenamiento: el núcleo RBF depende de distancias y, sin
+estandarizar, el área en píxeles dominaría a la circularidad (entre 0 y 1).
+
+**Métricas.** Precisión P_k = VP/(VP+FP): cuántas predicciones de k son correctas. *Recall*
+R_k = VP/(VP+FN): cuántos ejemplos de k se encuentran. F1 es su media armónica. El F1-macro promedia
+las tres clases sin ponderarlas por tamaño, así Podrida (minoritaria) cuenta igual que Buena. El
+*recall* de Podrida se vigila aparte: una fruta podrida que pasa como buena es el error más costoso.
+
+**Bootstrap por grupos** [18]. Se remuestrean los grupos (frutas o sesiones) con reemplazo, se
+recalcula la métrica 2.000 veces y los percentiles 2,5 y 97,5 dan el IC95. Remuestrear imágenes daría
+un intervalo artificialmente estrecho: 30 fotos de la misma fruta no son 30 observaciones
+independientes.
 
 **Aprendizaje por atajos** [11]. Una red aprende la regla más fácil que separa las clases en el
 entrenamiento, aunque no sea la causa real: por ejemplo, el fondo en lugar de la fruta. Esa regla deja
@@ -359,6 +377,21 @@ primer filtro con revisión humana, no como clasificador autónomo de tres clase
 - Es una mejora de **alcance**, no un modelo mejor para las seis frutas; la aplicación conserva el
   modelo de seis frutas.
 
+*Tabla. Iteraciones de diagnóstico con fotos propias (lote 1): F1-macro, recall de Podrida (R_P) y
+diferencia pareada de F1 frente al modelo original [IC95].*
+
+| Modelo | F1 | R_P | ΔF1 |
+|---|---:|---:|---|
+| *6 frutas (81 fotos)* | | | |
+| CNN, etiquetas originales | 0,49 | 0,27 | — |
+| CNN, etiquetas revisadas | 0,38 | 0,13 | −0,11 [−0,22; −0,003] |
+| EfficientNetB0, originales | 0,47 | 0,30 | — |
+| EfficientNetB0, revisadas | 0,52 | 0,27 | +0,05 [−0,06; +0,15] |
+| *Manzana, banano y naranja (62 fotos)* | | | |
+| EfficientNetB0, 6 frutas | 0,42 | 0,30 | — |
+| 3 frutas, originales | 0,47 | **0,48** | +0,05 [−0,06; +0,15] |
+| 3 frutas, revisadas | **0,51** | 0,37 | +0,10 [−0,01; +0,21] |
+
 **Comparación con la literatura:**
 - Con FruitNet, Morshed et al. [13] reportan 99,67 % de exactitud en 3 niveles de calidad. Usan una
   partición 60:20:20 cuyo método no se detalla y no mencionan las copias aumentadas.
@@ -400,7 +433,7 @@ Las decisiones se relacionan con el Código de Ética de la ACM [20]; el detalle
 | Error Podrida → Buena | Riesgo para el consumidor | 1.2 Evitar daño | KPI de recall de Podrida; confianza visible en la app; uso como filtro con revisión humana |
 | Sesgo por variedad y fuente | Peor desempeño en fruta local | 1.4 Equidad | Análisis por fuente y por fruta; limitación declarada |
 | Automatizar la clasificación | Desplazamiento laboral | 1.1 Bienestar social | Herramienta asistiva, el operario decide |
-| Etiquetas subjetivas | Criterio de un solo anotador | 2.5 | Criterios escritos; kappa entre anotadores _[pendiente]_ |
+| Etiquetas subjetivas | Frontera Defectuosa/Podrida ambigua | 2.5 Evaluación completa | Criterios escritos; re-anotación acordada por los tres integrantes; κ = 0,29 frente a la revisión de la 3.ª iteración, declarada como hecha con IA |
 
 *Tabla V. Matriz de impactos y mitigación.*
 
@@ -410,6 +443,17 @@ Las decisiones se relacionan con el Código de Ética de la ACM [20]; el detalle
 | Económica | Menos merma por fruta buena descartada | Descartar fruta buena (15 de 28 Buena propias se marcaron dañadas) | Calibrar con fotos locales antes de usar |
 | Ambiental | Menos desperdicio de alimentos [1], [2] | Energía de la inferencia | Modelos pequeños (341 mil parámetros); CPU, sin GPU |
 | Global | Herramienta barata para mercados pequeños | Datasets de otras regiones (India, Ecuador) | Recolectar datos locales; reportar el desempeño por dominio |
+
+**Impactos y su mitigación.**
+- *Económico:* con fruta real el modelo marca como dañadas 15 de 28 Buena; usado solo descartaría cerca
+  de la mitad de la fruta sana. Como primer filtro sí sirve: casi ninguna fruta dañada pasa como buena
+  (EfficientNetB0 detecta 49 de 53), así que lo aprobado sigue directo y lo marcado va a revisión humana.
+- *Social:* un criterio uniforme reduce la subjetividad, pero puede generar confianza excesiva; la app
+  muestra la confianza y avisa cuando es baja.
+- *Ambiental:* cerca de un tercio de los alimentos se pierde o desperdicia [1], [2]; clasificar mejor
+  permite destinar la fruta defectuosa a procesamiento. La inferencia corre en CPU, en 0,34 s.
+- *Global:* herramienta barata (celular y software libre), pero entrenada con fruta de India y Ecuador;
+  antes de usarla en otra región hay que validarla con fruta local, como se hizo con las fotos propias.
 
 ---
 
@@ -427,7 +471,10 @@ calidad de fruta en tres clases y estimar su tamaño, siguiendo CRISP-DM con dos
 
 **Lo aprendido.**
 - En datasets públicos de calidad de fruta, las copias, los casi-duplicados y los fondos correlacionados
-  inflan las métricas. Una partición por grupos y una prueba externa son indispensables.
+  inflan las métricas. Una partición por grupos y una prueba externa son indispensables: un F1 de 0,99
+  resultó ser 0,79.
+- Una métrica sin intervalo de confianza engaña: varias mejoras aparentes desaparecieron al compararlas
+  de forma pareada.
 - Elegir la arquitectura importa menos que el dominio y el criterio de etiquetado: *transfer learning*
   mejora la generalización entre fuentes, pero no cierra la brecha con fruta real.
 

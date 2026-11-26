@@ -248,7 +248,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 - [x] Borrador completo en `docs/informe/informe_final.md` (≈ 4.200 palabras con tablas y referencias):
       Título, Resumen, Introducción, Fundamentos, Metodología, Resultados, Análisis, Ética, Conclusiones, 20 referencias IEEE.
-- [x] Maquetado en LaTeX (IEEEtran): `docs/informe/latex/informe.tex` → `informe.pdf`, 6 páginas; figuras con
+- [x] Maquetado en LaTeX (IEEEtran): `docs/informe/latex/informe.tex` → `informe.pdf`, 7 páginas (el máximo); figuras con
       `python -m src.evaluation.figuras_informe`.
 - [x] Enlace al repositorio y acuerdo entre anotadores en el informe.
 - [ ] Revisión del equipo: leer las referencias citadas.
