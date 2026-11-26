@@ -45,7 +45,7 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
                  └─────────────────────────────┘
 ```
 
-> El diagrama definitivo (vectorial, para el informe) se generará y guardará en `assets/`.
+> Diagrama definitivo (vectorial, con las iteraciones reales): `assets/informe/flujo_crisp_dm.svg`.
 
 ---
 
@@ -90,97 +90,149 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 ---
 
-## Fase 2 — Comprensión de los datos  ⬜
+## Fase 2 — Comprensión de los datos  ✅
 
 > **Rúbrica:** Criterio 6 (análisis), Criterio 8 (figuras).
 
 **Objetivo:** conocer a fondo los datos disponibles y su calidad.
 
-- [ ] Descargar y explorar el dataset base (`src/data/download.py`).
-- [ ] EDA en `notebooks/01_eda.ipynb`:
-  - [ ] Distribución de clases (calidad y tamaño) → **detectar desbalanceo**.
-  - [ ] Resolución, iluminación, fondos, variabilidad de las imágenes.
-  - [ ] Ejemplos por clase; casos ambiguos.
-  - [ ] Análisis de la carpeta `mixed_quality` (múltiples frutas por imagen).
-- [ ] Documentar calidad de datos y problemas encontrados.
-- [ ] Definir estrategia de recolección propia (30–50 imágenes).
+- [x] Descargar y explorar el dataset base (`src/data/download.py`).
+- [x] EDA en `notebooks/01_eda.ipynb` (figuras en `assets/eda/`):
+  - [x] Distribución de clases → **desbalanceo detectado** (ratio ≈ 5×, `Pomegranate_Good`).
+  - [x] Resolución/dimensiones (heterogéneas) y formato (`.jpg`).
+  - [x] Ejemplos por fruta y calidad (grids).
+  - [x] Análisis de color/brillo por clase (señal separable).
+  - [x] Análisis de la carpeta `Mixed Quality`.
+- [x] Documentar hallazgos en `docs/crisp-dm.md` §2.
+- [x] Definir estrategia de recolección propia (30–50 imágenes): fondo blanco, buena iluminación,
+      una fruta por foto; se versionan en `data/external/propias/` (protocolo en su `README.md`).
 
 **Entregables:** notebook de EDA con figuras, resumen en `docs/crisp-dm.md`.
 
 ---
 
-## Fase 3 — Preparación de los datos  ⬜
+## Fase 3 — Preparación de los datos  🟨
 
 > **Rúbrica:** Criterio 5 (fundamentos matemáticos: normalización), Criterio 6.
 
 **Objetivo:** obtener datasets limpios, balanceados y listos para modelar.
 
-- [ ] **Recolección propia:** capturar y organizar 30–50 imágenes reales.
-- [ ] **Anotación manual:** etiquetar calidad + tamaño con criterios consistentes.
-      Definir mecanismo para compartir anotaciones con la clase.
-- [ ] **Segmentación** de frutas individuales en imágenes con varias (`src/data/segment.py`,
-      OpenCV: umbralización/contornos).
-- [ ] **Preprocesamiento** (`src/data/preprocess.py`): redimensionado, normalización de píxeles,
-      corrección de color, data augmentation.
-- [ ] **Estimación de tamaño**: diámetro en píxeles → normalización → bins (Peq/Med/Grande).
-- [ ] **Extracción de características** para ML tradicional (`src/features/`): histogramas de color
+> **Decisión de datos:** un solo modelo para todas las frutas, 3 clases (Buena / Defectuosa /
+> Podrida). `Bad` de Kaggle mezcla defectos leves y podredumbre → se **re-anota** a mano; se
+> complementa con **Healthy-Defective-Fruits** (ESPOL, CC BY 4.0, manzana y mango con 3 niveles).
+> La recolección propia queda como **conjunto de prueba externo**. Criterios en
+> `docs/criterios_anotacion.md`.
+
+- [x] Criterios de anotación de las 3 clases (`docs/criterios_anotacion.md`).
+- [x] Descarga de Healthy-Defective-Fruits, solo imágenes reales (`python -m src.main download`).
+- [x] Herramienta de re-anotación de `Bad` con medición de acuerdo (kappa) — `streamlit run src/app/anotar.py`.
+- [x] Índice unificado de fuentes (`python -m src.main index` → `data/processed/index.csv`).
+- [x] **Re-anotar la muestra de `Bad`** (1.200 imágenes): Podrida 842 · Defectuosa 211 · Buena 13 · Descartar 137.
+- [x] Re-anotación revisada y acordada por consenso entre los tres integrantes (sin kappa entre integrantes; κ = 0,29 frente a la revisión de la 3.ª iteración).
+
+- [x] **Recolección propia:** 81 fotos de 6 frutas (Buena 28 · Defectuosa 23 · Podrida 30).
+- [x] **Anotación manual** de calidad en `data/external/propias/anotaciones.csv` (tamaño sin anotar: fotos recortadas, sin escala).
+- [x] Criterios de clase precisados: Podrida no exige moho; la madurez no es un defecto (`docs/criterios_anotacion.md`).
+- [x] Notebook de trazabilidad `notebooks/02_preprocessing.ipynb`.
+- [x] Diagnóstico de atajo por fondo (`python -m src.evaluation.shortcut`): F1 solo-fondo 0,67 (azar 0,33).
+- [x] Exclusión de imágenes en escala de grises (1.292, solo `Buena` → atajo).
+- [x] **Segmentación** con U²-Net (`python -m src.main segment`): fruta sobre fondo blanco + máscara.
+- [x] Verificado con `python -m src.evaluation.shortcut`: F1 solo-fondo 0,68 → 0,20 (azar 0,32). Queda un atajo de encuadre en HDF (silueta 0,64).
+- [x] Normalizar el encuadre (`python -m src.main crop`): silueta en HDF 0,64 → 0,37 (azar 0,31).
+- [x] Agrupar casi-duplicados de HDF (la misma fruta repetida cientos de veces): F1 en HDF 0,99 → 0,79.
+- [ ] `Mixed Quality`: no se usó (opcional en el enunciado); segmentarla queda como trabajo futuro.
+- [x] **Tercera iteración** (§3.11): excluir 1.816 imágenes con varias frutas (componentes de la máscara)
+      y revisión visual a ciegas de 2.522 grupos (etiquetas asignadas por IA, declarado) →
+      `data/processed/index_v3.csv` (`python -m src.data.revision`). κ con la re-anotación de Kaggle: 0,29.
+- [x] **Preprocesamiento** (`src/data/preprocess.py`): formato/orientación unificados, 128×128 sin
+      deformar, normalización [0, 1], caché incremental (`python -m src.main preprocess`).
+- [x] Data augmentation dentro de la CNN (giros, rotación, zoom, brillo/contraste).
+- [x] **Estimación de tamaño** (`src/features/size.py`): moneda de referencia (Hough + bordes por rayos;
+      12 monedas: error medio −1,8 %, desviación 1,2 %), máscara U²-Net, corrección de perspectiva con la
+      focal del EXIF, diámetro ecuatorial (largo en banano/mango), umbrales por fruta → Pequeño/Mediano/Grande.
+- [x] **Extracción de características** para ML tradicional (`src/features/`): histogramas de color
       (HSV), textura (GLCM/LBP), momentos de forma, área/perímetro.
-- [ ] **Manejo de desbalanceo**: class weights, SMOTE o augmentation dirigida.
-- [ ] **Splits** train/val/test estratificados y reproducibles (semilla fija).
+- [x] **Manejo de desbalanceo**: pesos por muestra (1/tamaño del grupo, clases equilibradas); SMOTE descartado.
+- [x] **Splits** train/val/test estables por hash y **agrupados** (copias aumentadas de Kaggle) — `src/data/split.py`.
 
 **Entregables:** datos en `data/processed/`, scripts de preparación, dataset propio anotado.
 
 ---
 
-## Fase 4 — Modelado  ⬜
+## Fase 4 — Modelado  ✅
 
 > **Rúbrica:** Criterio 4 (estrategia y justificación), Criterio 5 (fundamentos matemáticos).
 
 **Objetivo:** entrenar y ajustar modelos (≥ 2 ML tradicional + 1 CNN).
 
-- [ ] **Línea base** (baseline): clasificador de mayoría / trivial.
-- [ ] **ML tradicional** (`src/models/classic_ml.py`, `notebooks/03_modeling_ml.ipynb`):
-  - [ ] Elegir ≥ 2 modelos (p. ej. SVM, Random Forest, XGBoost, KNN, Reg. Logística).
-  - [ ] **Ajuste de hiperparámetros** con `GridSearchCV` / validación cruzada.
-- [ ] **CNN** (`src/models/cnn.py`, `notebooks/04_modeling_cnn.ipynb`):
-  - [ ] Arquitectura pequeña desde cero (2–3 conv + pooling + densas).
-  - [ ] Opcional: transfer learning con capas congeladas.
-  - [ ] Callbacks (early stopping, checkpoints en `experiments/checkpoints/`).
-- [ ] Registrar experimentos (logs/resultados en `experiments/`).
-- [ ] Justificar selección de modelos y **alternativas descartadas**.
+- [x] **Línea base**: mayoría (F1-macro val 0,27) y azar estratificado (0,34).
+- [x] **ML tradicional** (`src/models/classic_ml.py`, `python -m src.training.train --model classic`):
+  - [x] Regresión logística (0,76), **SVM RBF (0,84)** y Random Forest (0,84) — F1-macro en validación.
+  - [x] **Ajuste de hiperparámetros** con `GridSearchCV` y 5 pliegues estratificados por grupo.
+  - [x] Ablación de características y prueba entre fuentes (`python -m src.evaluation.ablation`).
+- [x] **CNN** (`src/models/cnn.py`, `python -m src.training.train --model cnn`): F1-macro val 0,88–0,91.
+  - [x] Arquitectura pequeña desde cero (4 bloques conv + BN + pooling, GAP, densa; 341 mil parámetros).
+  - [x] Búsqueda de 5 configuraciones (`--model cnn_search`).
+  - [x] Estabilizar el entrenamiento: búsqueda `cnn_estable` (lote 128, decaimiento coseno) en Colab con GPU
+        (`notebooks/colab_entrenar_cnn`); la oscilación del F1 de validación baja de ±0,1 a ±0,007.
+- [x] **Selección del modelo final solo con validación** (`config.FINAL_MODEL`, `docs/crisp-dm.md` §4.3):
+      CNN sin aumento de datos (F1 0,91, recall Podrida 0,94), +0,07 [0,01; 0,12] sobre el SVM.
+  - [x] Transfer learning (EfficientNetB0) como segunda iteración, autorizado por el profesor (§4.5).
+  - [x] Tercera iteración (§4.6): CNN y transfer finales reentrenados desde cero con `index_v3.csv`
+        (búsqueda `v3` en Colab).
+  - [x] Callbacks (mejor época por F1-macro de validación, parada temprana, checkpoints en `experiments/checkpoints/`).
+- [x] Registrar experimentos (`experiments/results/*.json`, `experiments/logs/`; figuras en `assets/modelado/`).
+- [x] Justificar selección de modelos y **alternativas descartadas** (`docs/crisp-dm.md` §4).
+- [x] Notebooks de trazabilidad `notebooks/03_modeling_ml.ipynb` y `04_modeling_cnn.ipynb`.
 
 **Entregables:** modelos entrenados, notebooks de modelado, logs de experimentos.
 
 ---
 
-## Fase 5 — Evaluación  ⬜
+## Fase 5 — Evaluación  🟨
 
 > **Rúbrica:** Criterio 6 (análisis e interpretación), Criterio 7 (conclusiones).
 
 **Objetivo:** medir desempeño real y analizar críticamente los resultados.
 
-- [ ] Evaluar en **conjunto de prueba** (`src/evaluation/evaluate.py`).
-- [ ] Métricas: accuracy, precision/recall/F1 (macro y por clase), matriz de confusión, ROC-AUC.
-- [ ] Métricas de tamaño (MAE / accuracy por bin).
-- [ ] **Análisis de errores** (casos mal clasificados, confusiones frecuentes).
-- [ ] Diagnóstico de **sobreajuste** (train vs. val/test, curvas de aprendizaje).
-- [ ] **Comparación**: modelos entre sí, vs. línea base y vs. literatura (NeurIPS/ICML/ICLR).
-- [ ] Extraer *insights* conectados con el problema.
+- [x] Módulo de evaluación con IC95 por bootstrap de grupos y lista de errores (`python -m src.evaluation.evaluate`).
+- [x] Evaluar **una sola vez** CNN y SVM en `test` y en las fotos propias (`--split test|externa --final`):
+      CNN test F1 0,80 (0,90 por grupo), recall Podrida 0,91; fotos propias F1 0,49, recall Podrida 0,27.
+- [x] Métricas: accuracy, precision/recall/F1 (macro y por clase), matriz de confusión, ROC-AUC (`notebooks/05_evaluation`).
+- [x] Métricas de tamaño (`python -m src.features.size validar`, 11 frutas medidas con regla):
+      diámetro ecuatorial MAE 0,57 cm, sesgo +0,38 cm, clase correcta 5/11 (no cumple el KPI; §5.5).
+- [x] **Análisis de errores** (una sesión de HDF domina los errores de test; Podrida → Defectuosa en fotos propias).
+- [x] Diagnóstico de **sobreajuste** (CNN train ≈ val; SVM train 1,00): la caída es cambio de dominio.
+- [x] **Comparación**: modelos entre sí, vs. línea base y vs. literatura (informe §V; referencias ICML/ICLR).
+- [x] Extraer *insights* conectados con el problema (`docs/crisp-dm.md` §5).
+- [x] **Segunda iteración** (§4.5, §5.4): FruQ como fuente solo de entrenamiento + transfer learning
+      (EfficientNetB0), elegido con validación y generalización entre fuentes. Test F1 0,85; fotos
+      propias 0,47 (segunda mirada, sin mejora: el límite son los datos, no el modelo).
+- [x] **Tercera iteración** (§5.6): etiquetas revisadas y sin varias frutas. Fotos propias (tercera
+      mirada): CNN 0,49 → 0,38 (peor, IC sin cero), transfer 0,47 → 0,52 (IC con cero). Resultado
+      negativo: el cuello de botella es la definición de Podrida; los modelos finales no cambian.
+- [x] **Cuarta iteración** (§3.12, §5.7): solo manzana, banano y naranja + 35 fotos nuevas como prueba limpia
+      (`python -m src.evaluation.iteracion4`). Fotos nuevas: 6/6 podridas detectadas, ~80 % de buenas
+      reconocidas (igual que el modelo actual). Fotos anteriores (3 frutas): recall Podrida 0,30 → 0,48
+      (`v4_0`, IC sin cero); F1 0,42 → 0,51 (`v4_1`, IC toca el cero). Decisión: la app sigue con
+      `tl_busqueda_4` (6 frutas); v4 queda como experimento.
 
 **Entregables:** tablas y figuras de resultados, sección de análisis en el informe.
 
 ---
 
-## Fase 6 — Despliegue  ⬜
+## Fase 6 — Despliegue  🟨
 
 > **Rúbrica:** Criterio 8 (calidad del entregable). Enunciado: GUI + video.
 
 **Objetivo:** poner el modelo a funcionar para un usuario final.
 
-- [ ] **Interfaz Streamlit** (`src/app/app.py`): cargar imagen o **capturar desde cámara** y mostrar
-      predicción (clase de calidad + tamaño) en tiempo real.
-- [ ] Cargar el mejor modelo entrenado y pipeline de preprocesamiento.
-- [ ] Guía de uso en `docs/instalacion.md` / `docs/arquitectura.md`.
+- [x] **Interfaz Streamlit** (`src/app/app.py`): subir una o varias imágenes o **capturar desde cámara**;
+      muestra calidad, probabilidades, lo que ve el modelo, aviso de baja confianza y tiempo (~0,4 s en CPU).
+- [x] Tamaño en la app: opción "Medir tamaño (foto con moneda)", con fruta y moneda; muestra el contorno medido.
+- [x] Cargar el mejor modelo (`config.FINAL_TRANSFER` por defecto; también la CNN y el SVM) y el mismo preprocesamiento del entrenamiento
+      (`segment_and_crop`, `src/models/predict.py`; verificado idéntico píxel a píxel a la caché).
+- [x] Guía de uso en `docs/instalacion.md` §6.
 - [ ] *(Opcional)* simulación de línea de empaque con cámara + Raspberry Pi.
 - [ ] **Video de presentación** (≤ 10 min): contexto, técnicas, resultados, logros.
 
@@ -194,12 +246,16 @@ objetivos, tareas, entregables y su **mapeo con la rúbrica** para asegurar que 
 
 **Objetivo:** consolidar toda la evidencia en el informe (máx. 7 págs., IEEE).
 
-- [ ] Redactar `docs/informe/` siguiendo la estructura: Título, Abstract, Introducción,
-      Fundamentos teóricos, Metodología, Resultados, Análisis, Conclusiones, Referencias (IEEE).
-- [ ] **Tabla de dilemas éticos** y su relación con el código de ética (PI1).
-- [ ] **Matriz de impactos** social/económico/ambiental/global + mitigaciones (PI2).
-- [ ] **Justificación matemática** completa del modelado (PI3).
-- [ ] Diagramas de calidad **vectorial** (CRISP-DM, arquitectura, resultados).
+- [x] Borrador completo en `docs/informe/informe_final.md` (≈ 4.200 palabras con tablas y referencias):
+      Título, Resumen, Introducción, Fundamentos, Metodología, Resultados, Análisis, Ética, Conclusiones, 20 referencias IEEE.
+- [x] Maquetado en LaTeX (IEEEtran): `docs/informe/latex/informe.tex` → `informe.pdf`, 6 páginas; figuras con
+      `python -m src.evaluation.figuras_informe`.
+- [x] Enlace al repositorio y acuerdo entre anotadores en el informe.
+- [ ] Revisión del equipo: leer las referencias citadas.
+- [x] **Tabla de dilemas éticos** y su relación con el código de ética ACM (PI1), en el informe §VI.
+- [x] **Matriz de impactos** social/económico/ambiental/global + mitigaciones (PI2), en el informe §VI.
+- [x] **Justificación matemática** del modelado (PI3), en el informe §III-A (pérdida ponderada, F1, bootstrap, geometría del tamaño).
+- [x] Diagrama CRISP-DM personalizado vectorial (`assets/informe/flujo_crisp_dm.svg`); resultados en `assets/`.
 - [ ] Verificar referencias en formato **IEEE** y documentación del código.
 - [ ] Revisión final contra la rúbrica (checklist abajo).
 

@@ -1,0 +1,8 @@
+# Correcciones de la 4.ª iteración sobre revision_v3.txt: <hoja> <celda> <letra>.
+# Regla nueva del banano (docs/criterios_anotacion.md): las pecas de maduración no son defecto;
+# Defectuosa solo si la cáscara está muy manchada o con golpes, Podrida si hay zonas negras grandes o
+# blandas. Al revisar de nuevo las 7 hojas de banano, solo cambian 3 cuadros de FruQ (amarillos con
+# pocas pecas); los bananos de Kaggle `Bad` están muy manchados o negros y se quedan igual.
+h029 24 B
+h033 13 B
+h034 15 B
