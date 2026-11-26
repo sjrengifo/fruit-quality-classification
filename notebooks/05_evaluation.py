@@ -103,7 +103,11 @@ for row, m in enumerate(MODELS):
         ax = axes[row, col]
         cm = np.array(evals[(m, s)]["matriz_confusion"])
         frac = cm / cm.sum(1, keepdims=True)
-        ax.imshow(frac, cmap="Blues", vmin=0, vmax=1)
+        # pcolormesh (no imshow) para que cada celda sea vectorial en el SVG/PDF del informe
+        ax.pcolormesh(np.arange(4) - 0.5, np.arange(4) - 0.5, frac, cmap="Blues", vmin=0, vmax=1)
+        ax.set_xlim(-0.5, 2.5)
+        ax.set_ylim(2.5, -0.5)
+        ax.set_aspect("equal")
         for i in range(3):
             for j in range(3):
                 ax.text(j, i, f"{frac[i, j]:.0%}\n{cm[i, j]}", ha="center", va="center", fontsize=8,
@@ -382,7 +386,10 @@ pd.DataFrame({m: {"F1-macro": r["f1_macro"], "recall Podrida": r["recall_podrida
 fig, axes = plt.subplots(1, 3, figsize=(11, 3.2))
 for ax, (m, r) in zip(axes, it4["externa_3_frutas"].items()):
     cm = np.array(r["matriz_confusion"])
-    ax.imshow(cm, cmap="Greens")
+    ax.pcolormesh(np.arange(4) - 0.5, np.arange(4) - 0.5, cm, cmap="Greens")
+    ax.set_xlim(-0.5, 2.5)
+    ax.set_ylim(2.5, -0.5)
+    ax.set_aspect("equal")
     for i in range(3):
         for j in range(3):
             ax.text(j, i, cm[i, j], ha="center", va="center", fontsize=10)

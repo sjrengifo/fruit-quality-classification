@@ -27,11 +27,13 @@ C = config.QUALITY_CLASSES
 
 
 def nov24_rows() -> list[dict]:
+    """Filas de `nov24/anotaciones.csv` (archivo, fruta, calidad) del segundo lote de fotos."""
     with open(config.NOV24_DIR / "anotaciones.csv", newline="", encoding="utf-8") as f:
         return list(csv.DictReader(f))
 
 
 def predict_nov24(model_name: str, rows: list[dict]) -> np.ndarray:
+    """Predice cada foto del segundo lote con el camino de la app (`Predictor`); devuelve índices de clase."""
     from src.models.predict import Predictor
 
     predictor = Predictor(model_name)
@@ -46,6 +48,7 @@ def bootstrap(values: np.ndarray, n_boot: int = 2000, seed: int = config.RANDOM_
 
 
 def nov24_metrics(y: np.ndarray, p: np.ndarray) -> dict:
+    """Métricas del segundo lote: Buena reconocida (con IC95) y Podrida detectada como dañada y como Podrida."""
     buena, podrida = C.index("Buena"), C.index("Podrida")
     ok_buena = (p[y == buena] == buena).astype(float)
     damaged = (p[y == podrida] != buena).astype(float)
@@ -62,6 +65,7 @@ def nov24_metrics(y: np.ndarray, p: np.ndarray) -> dict:
 
 
 def main() -> None:
+    """Evalúa la app y los modelos v4 en el segundo lote y en las fotos anteriores de 3 frutas (`iteracion4.json`)."""
     from src.evaluation.evaluate import f1_macro, paired_diff_ci, predict, recall_of
 
     results = {"modelos": list(MODELS), "nov24": {}, "nov24_limon": {}, "externa_3_frutas": {}}

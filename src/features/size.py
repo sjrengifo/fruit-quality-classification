@@ -120,6 +120,7 @@ def perspective_correct(length_mm: float, width_mm: float, height_mm: float) -> 
 
 
 def size_class(diameter_cm: float, fruit: str | None) -> str:
+    """Clase de tamaño (Pequeño/Mediano/Grande) de un diámetro en cm según los umbrales de la fruta."""
     from src.data.segment import diameter_to_size_class
 
     return diameter_to_size_class(diameter_cm, config.FRUIT_SIZE_CM.get(fruit, config.FRUIT_SIZE_CM["Otra"]))
@@ -238,6 +239,7 @@ def prepare_photos() -> int:
 
 
 def main() -> None:
+    """CLI de tamaño: `preparar` las fotos, verificar la detección de `monedas` o `validar` contra la regla."""
     import pandas as pd
 
     parser = argparse.ArgumentParser(description="Validación de la estimación de tamaño")

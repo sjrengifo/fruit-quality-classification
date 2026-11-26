@@ -60,6 +60,7 @@ def count_objects(mask) -> int:
 
 
 def write_objects() -> Counter:
+    """Cuenta los objetos de cada máscara y los guarda en `OBJECTS_CSV`; devuelve el conteo por fuente y clase."""
     import numpy as np
     from PIL import Image
 
@@ -99,6 +100,7 @@ def _cell(rows: list[dict]):
     from PIL import Image
 
     def load(r, px):
+        """Abre la imagen original de una fila y la reduce a `px` de lado."""
         im = Image.open(config.ROOT_DIR / "data" / r["ruta"]).convert("RGB")
         im.thumbnail((px, px))
         return im
@@ -114,6 +116,7 @@ def _cell(rows: list[dict]):
 
 
 def write_sheets() -> int:
+    """Genera las hojas de contacto numeradas (a ciegas) y el mapa hoja/celda → grupo; devuelve cuántas hay."""
     from PIL import Image, ImageDraw, ImageFont
 
     out_dir = REVISION_DIR / "hojas"
@@ -221,6 +224,7 @@ def summary() -> None:
 
 
 def main() -> None:
+    """CLI de la revisión: objetos, hojas, indice, indice4 o resumen."""
     cmd = sys.argv[1] if len(sys.argv) > 1 else "resumen"
     if cmd == "objetos":
         for k, n in sorted(write_objects().items()):

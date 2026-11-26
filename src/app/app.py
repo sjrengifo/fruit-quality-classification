@@ -53,6 +53,7 @@ def ensure_models() -> list[str]:
 
 @st.cache_resource(show_spinner="Cargando el modelo…")
 def load_predictor(model_name: str):
+    """Carga el modelo una sola vez por sesión de Streamlit (las predicciones siguientes reusan el objeto)."""
     from src.models.predict import Predictor
 
     return Predictor(model_name)
@@ -70,6 +71,7 @@ def model_metrics(model_name: str) -> dict[str, dict]:
 
 
 def sidebar() -> str:
+    """Barra lateral: elegir el modelo entre los disponibles y mostrar sus métricas guardadas. Devuelve su nombre."""
     st.sidebar.header("Modelo")
     available = [m for m in MODEL_LABELS
                  if any((config.CHECKPOINTS_DIR / f"{m}{ext}").exists() for ext in (".keras", ".joblib"))]
@@ -126,6 +128,7 @@ def measurement_overlay(source, size):
 
 
 def show_prediction(name: str, source, pred) -> None:
+    """Muestra una predicción: foto original, fruta recortada, clase con su confianza y, si se midió, el tamaño."""
     icon, color = CLASS_STYLE[pred.calidad]
     st.subheader(name)
     col_in, col_crop, col_out = st.columns([1, 1, 1.3])
@@ -160,6 +163,7 @@ def show_prediction(name: str, source, pred) -> None:
 
 
 def main() -> None:
+    """Punto de entrada de la app: carga o captura de imágenes, predicción y resumen de resultados."""
     st.set_page_config(page_title="Calidad de frutas", page_icon="🍎", layout="wide")
     st.title("🍎 Clasificación de calidad de frutas")
     st.caption("Cargue o capture la foto de **una fruta** sobre fondo simple. El sistema quita el fondo, "

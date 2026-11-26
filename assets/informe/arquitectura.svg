@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 250" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <!-- Arquitectura de software: el mismo camino de preprocesamiento en entrenamiento y en la app -->
+  <defs>
+    <marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M1 1 L9 5 L1 9" fill="none" stroke="#1b241c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <style>
+    .caja { fill: #fff; stroke: #1b241c; stroke-width: 1.2; }
+    .final { fill: #1b241c; }
+    .linea { fill: none; stroke: #1b241c; stroke-width: 1.2; }
+    .opc { fill: none; stroke: #c8553d; stroke-width: 1.2; stroke-dasharray: 4 3; }
+    .t { fill: #1b241c; font-size: 13px; font-weight: bold; }
+    .s { fill: #5c5a52; font-size: 10.5px; }
+    .tb { fill: #fff; font-size: 13px; font-weight: bold; }
+    .sb { fill: #cfd6cf; font-size: 10.5px; }
+    .r { fill: #c8553d; font-size: 10.5px; }
+    .m { fill: #8a877c; font-family: Menlo, monospace; font-size: 9px; }
+  </style>
+  <rect width="720" height="250" fill="#fff"/>
+
+  <!-- entrada -->
+  <rect class="caja" x="6" y="78" width="96" height="58" rx="6"/>
+  <text class="t" x="54" y="102" text-anchor="middle">Foto</text>
+  <text class="s" x="54" y="118" text-anchor="middle">archivo o cámara</text>
+  <path class="linea" d="M102 107 H124" marker-end="url(#f)"/>
+
+  <!-- preprocesamiento -->
+  <rect class="caja" x="126" y="62" width="150" height="90" rx="6"/>
+  <text class="m" x="136" y="78">preprocess · segment</text>
+  <text class="t" x="136" y="98">Preprocesamiento</text>
+  <text class="s" x="136" y="114">EXIF, RGB, 128×128</text>
+  <text class="s" x="136" y="128">U²-Net: fondo blanco</text>
+  <text class="s" x="136" y="142">recorte centrado</text>
+
+  <!-- ramas -->
+  <path class="linea" d="M276 92 H300 V40 H322" marker-end="url(#f)"/>
+  <path class="linea" d="M276 107 H322" marker-end="url(#f)"/>
+  <path class="linea" d="M276 122 H300 V174 H322" marker-end="url(#f)"/>
+
+  <rect class="caja" x="324" y="16" width="170" height="48" rx="6"/>
+  <text class="t" x="334" y="36">EfficientNetB0</text>
+  <text class="s" x="334" y="52">transfer learning · por defecto</text>
+  <rect class="caja" x="324" y="83" width="170" height="48" rx="6"/>
+  <text class="t" x="334" y="103">CNN desde cero</text>
+  <text class="s" x="334" y="119">341 mil parámetros</text>
+  <rect class="caja" x="324" y="150" width="170" height="48" rx="6"/>
+  <text class="t" x="334" y="170">φ(x) + SVM</text>
+  <text class="s" x="334" y="186" font-size="10">68 rasgos: color, textura y forma</text>
+
+  <path class="linea" d="M494 40 H516 V107 H538" marker-end="url(#f)"/>
+  <path class="linea" d="M494 107 H538"/>
+  <path class="linea" d="M494 174 H516 V107"/>
+
+  <!-- salida -->
+  <rect class="final" x="540" y="78" width="174" height="58" rx="6"/>
+  <text class="tb" x="552" y="102">Calidad + confianza</text>
+  <text class="sb" x="552" y="118">Buena · Defectuosa · Podrida</text>
+
+  <!-- tamaño (opcional) -->
+  <path class="opc" d="M54 136 V228 H538" marker-end="url(#f)"/>
+  <text class="r" x="70" y="222">opcional: moneda en la foto → escala → perspectiva (EXIF) → diámetro</text>
+  <rect class="caja" x="540" y="206" width="174" height="40" rx="6"/>
+  <text class="t" x="552" y="223">Tamaño</text>
+  <text class="s" x="552" y="238">cm → Pequeño/Mediano/Grande</text>
+</svg>

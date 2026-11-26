@@ -26,10 +26,12 @@ HELP = {
 
 @st.cache_data
 def sample() -> list[dict]:
+    """Muestra fija de `Bad` a re-anotar (ver `relabel.build_sample`), cacheada por Streamlit."""
     return relabel.build_sample()
 
 
 def main() -> None:
+    """Interfaz de anotación: muestra cada imagen de la muestra y guarda la etiqueta en el CSV del anotador."""
     st.set_page_config(page_title="Re-anotación de Bad", page_icon="🏷️", layout="wide")
     st.title("🏷️ Re-anotación de `Bad`")
 

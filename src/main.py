@@ -9,6 +9,7 @@ import argparse
 
 
 def main() -> None:
+    """CLI del pipeline: ejecuta una etapa (download, index, preprocess, segment, crop, features, train, evaluate)."""
     parser = argparse.ArgumentParser(description="Pipeline del proyecto de calidad de frutas")
     parser.add_argument(
         "stage",
