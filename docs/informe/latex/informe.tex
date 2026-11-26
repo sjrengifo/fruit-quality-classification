@@ -79,7 +79,9 @@ costoso; exactitud de tamaño $\geq 0{,}80$, y latencia menor de 1~s por imagen 
 \textbf{Contribuciones.} (i)~Un diagnóstico de tres fuentes de métricas infladas en datasets públicos
 de calidad de fruta, con sus correcciones; (ii)~una comparación de ML clásico, CNN desde cero y
 \emph{transfer learning} en tres escenarios: mismas fuentes, una fuente no vista y fotos propias;
-(iii)~una medición de tamaño con referencia física validada contra regla.
+(iii)~una medición de tamaño con referencia física validada contra regla, y (iv)~dos experimentos
+controlados ---revisar las etiquetas y reducir el alcance a tres frutas--- que muestran que el cuello
+de botella con fruta real es la definición de \emph{Podrida}, no el modelo.
 
 % ─────────────────────────────────────────────────────────────
 \section{Fundamentos teóricos}
@@ -100,6 +102,27 @@ entrenamiento; se optimiza con Adam \cite{kingma2015} y tasa de aprendizaje con 
 El \emph{transfer learning} reutiliza una red preentrenada en ImageNet (EfficientNetB0
 \cite{tan2019}): primero se entrena una cabeza nueva con la base congelada y luego se ajusta toda la
 red con una tasa baja.
+
+\textbf{Normalización.} Los modelos comparan magnitudes, así que las entradas deben estar en una
+escala común. La CNN divide cada píxel entre 255 para llevarlo a $[0,1]$, dentro del propio modelo
+para que la aplicación no pueda olvidar ese paso; EfficientNetB0 trae incorporada la normalización
+con la que se preentrenó. En el SVM cada rasgo se estandariza, $z_j=(\phi_j-\mu_j)/\sigma_j$, con
+$\mu_j$ y $\sigma_j$ calculadas solo con los datos de entrenamiento: el núcleo RBF depende de
+distancias, y sin estandarizar un rasgo con valores grandes (el área en píxeles) dominaría a uno
+pequeño (la circularidad, entre 0 y 1).
+
+\textbf{Métricas.} Para cada clase $k$, la precisión $P_k=\mathrm{VP}_k/(\mathrm{VP}_k+\mathrm{FP}_k)$
+mide cuántas predicciones de $k$ son correctas, y el \emph{recall}
+$R_k=\mathrm{VP}_k/(\mathrm{VP}_k+\mathrm{FN}_k)$, cuántos ejemplos de $k$ se encuentran. El F1 es su
+media armónica, que solo es alta si ambas lo son. El F1-macro promedia las tres clases sin
+ponderarlas por tamaño, de modo que Podrida, minoritaria, cuenta igual que Buena. El \emph{recall}
+de Podrida se vigila aparte porque una fruta podrida que pasa como buena es el error más costoso.
+
+\textbf{\emph{Bootstrap} por grupos} \cite{efron1993}. Para saber cuánto cambiaría una métrica con
+otra muestra de frutas, se remuestrean los \emph{grupos} (frutas o sesiones) con reemplazo, se
+recalcula la métrica y se repite 2.000 veces; los percentiles 2,5 y 97,5 dan el intervalo de
+confianza del 95\,\%. Remuestrear imágenes sería un error: 30 fotos de la misma fruta no son 30
+observaciones independientes, y el intervalo saldría artificialmente estrecho.
 
 \textbf{Aprendizaje por atajos} \cite{geirhos2020}. Una red aprende la regla más fácil que separa las
 clases en entrenamiento aunque no sea la causa real ---por ejemplo, el fondo en lugar de la fruta---, y
@@ -140,9 +163,10 @@ mecanismo contra el desbalanceo (5:1 entre Buena y el resto). Se descartó SMOTE
 frutas distintas no produce frutas plausibles.
 
 La métrica principal es el F1-macro, $\frac{1}{3}\sum_k 2P_kR_k/(P_k+R_k)$, porque con este
-desbalanceo predecir siempre Buena ya da 0,69 de exactitud. La incertidumbre se estima con
-\emph{bootstrap} de \emph{grupos} (2.000 remuestreos) \cite{efron1993}: las imágenes de un grupo no
-son independientes. Dos modelos se comparan con la diferencia pareada sobre los mismos remuestreos.
+desbalanceo predecir siempre Buena ya da 0,69 de exactitud. La incertidumbre se reporta como IC95 por
+\emph{bootstrap} de grupos, y dos modelos se comparan con la diferencia pareada sobre los mismos
+remuestreos: si su intervalo no contiene el cero, la diferencia no se explica por el azar de qué
+frutas cayeron en la muestra.
 
 \textbf{Tamaño.} Sea $D_m$ el diámetro de la moneda en píxeles. La escala es $s=D_m/26{,}7$~px/mm
 (moneda de \$1.000) y la altura de la cámara sale de la focal equivalente $f_{35}$ del EXIF:
@@ -333,24 +357,50 @@ públicas y nuestro criterio; ninguna se corrige con más capacidad del modelo. 
 dañada frente a buena, EfficientNetB0 detecta 49 de las 53 dañadas, pero acierta solo 13 de las 28
 Buena: serviría como primer filtro con revisión humana, no como clasificador autónomo.
 
-\textbf{Tercera iteración: ¿son las etiquetas?} Para probar el umbral de pudrición como causa, se
-excluyeron 1.816 imágenes con varias frutas (componentes de la máscara; casi todas Kaggle Buena, un
-atajo posible) y se revisaron a ciegas 2.522 grupos con nuestro criterio. Esa revisión la hizo un
-modelo de IA a pedido del equipo, por falta de tiempo para hacerla a mano. El acuerdo con la
-re-anotación previa de Kaggle fue $\kappa=0{,}29$, y la revisión hizo Podrida \emph{más} exigente
-(945 imágenes Podrida$\rightarrow$Defectuosa). Reentrenados desde cero con la misma configuración, los
-modelos no mejoraron con las fotos propias (tercera mirada a ese conjunto): CNN 0,49$\rightarrow$0,38
-(diferencia pareada $+0{,}11$ [0,003; 0,22]) y EfficientNetB0 0,47$\rightarrow$0,52 ($-0{,}05$
-[$-0{,}15$; 0,06]), con 21 de 30 Podrida aún como Defectuosa. El resultado negativo apunta a la
-\emph{definición operativa} de Podrida, no a la cantidad de datos ni a la arquitectura.
+\textbf{Tercera iteración: ¿son las etiquetas?} Si el problema fuera un umbral de pudrición distinto
+entre fuentes, corregir las etiquetas debería ayudar. Se excluyeron 1.816 imágenes con varias frutas
+(detectadas como varios objetos en la máscara; casi todas de Kaggle Buena, un atajo posible porque las
+fotos propias tienen una sola fruta) y se revisaron a ciegas 2.522 grupos con nuestro criterio. Esa
+revisión la hizo un modelo de IA a pedido del equipo, por falta de tiempo para hacerla a mano. El
+acuerdo con la re-anotación anterior de Kaggle fue apenas $\kappa=0{,}29$, y la revisión hizo Podrida
+\emph{más} exigente (945 imágenes pasaron a Defectuosa). Los modelos reentrenados desde cero no
+mejoraron con las fotos propias (Tabla~\ref{tab:iter}): la CNN empeoró de forma significativa y
+EfficientNetB0 subió sin significancia, con 21 de 30 Podrida todavía como Defectuosa. El resultado
+negativo indica que el límite es la \emph{definición operativa} de Podrida: dos etiquetados con el
+mismo criterio escrito no coinciden, y el modelo hereda esa ambigüedad.
 
-\textbf{Cuarta iteración: menos frutas.} Restringido a manzana, banano y naranja, donde el daño
-contrasta con la piel, EfficientNetB0 se evaluó con el segundo lote de fotos propias, no visto, y con las fotos del primer
-lote de esas frutas. En el segundo lote, todos los modelos detectan como dañadas 5--6 de 6 podridas y
-reconocen 20--21 de 26 buenas. En el primer lote, recortar el alcance sube el recall de Podrida de
-0,30 a 0,48 ($+0{,}19$ [0,04; 0,34]); con etiquetas revisadas, el F1 pasa de 0,42 a 0,51, sin
-significancia. Es una mejora de \emph{alcance}, no un modelo mejor para las seis frutas; la aplicación
-conserva el modelo de seis frutas.
+\textbf{Cuarta iteración: menos frutas.} En granada, guayaba o mango la pudrición se confunde con el
+color natural de la piel; en manzana, banano y naranja contrasta más. Se reentrenó EfficientNetB0 solo
+con esas tres frutas y se evaluó con el primer lote de fotos de esas frutas y con un segundo lote nuevo,
+nunca visto. En el primer lote, solo recortar el alcance subió el \emph{recall} de Podrida de 0,30 a
+0,48, con diferencia significativa; con etiquetas revisadas, el F1 llegó a 0,51 sin significancia
+(Tabla~\ref{tab:iter}). En el segundo lote los tres modelos detectan como dañadas 5--6 de 6 podridas y
+reconocen 20--21 de 26 buenas, sin diferencias demostrables con tan pocas fotos. Es una mejora de
+\emph{alcance}, no un modelo mejor para las seis frutas, por lo que la aplicación conserva el modelo
+de seis frutas.
+
+\begin{table}[t]
+\caption{Iteraciones de diagnóstico con fotos propias (lote 1): F1-macro, \emph{recall} de Podrida
+($R_P$) y diferencia pareada de F1 frente al modelo original [IC95]}
+\label{tab:iter}
+\centering\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Modelo & F1 & $R_P$ & $\Delta$F1 \\
+\midrule
+\multicolumn{4}{@{}l}{\emph{6 frutas (81 fotos)}} \\
+CNN, etiquetas originales & 0,49 & 0,27 & -- \\
+CNN, etiquetas revisadas & 0,38 & 0,13 & $-0{,}11$ [$-0{,}22$; $-0{,}003$] \\
+EfficientNetB0, originales & 0,47 & 0,30 & -- \\
+EfficientNetB0, revisadas & 0,52 & 0,27 & $+0{,}05$ [$-0{,}06$; $+0{,}15$] \\
+\midrule
+\multicolumn{4}{@{}l}{\emph{Manzana, banano y naranja (62 fotos)}} \\
+EfficientNetB0, 6 frutas & 0,42 & 0,30 & -- \\
+3 frutas, originales & 0,47 & \textbf{0,48} & $+0{,}05$ [$-0{,}06$; $+0{,}15$] \\
+3 frutas, revisadas & \textbf{0,51} & 0,37 & $+0{,}10$ [$-0{,}01$; $+0{,}21$] \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \textbf{Comparación con la literatura.} Con FruitNet, Morshed \emph{et~al.} \cite{morshed2022}
 reportan 99,67\,\% de exactitud en 3 niveles de calidad con una partición 60:20:20 cuyo método no se
@@ -396,6 +446,21 @@ fruta y variedades locales el modelo empeora (manzanas rayadas tipo Gala marcada
 mercado pequeño que lo adopte sin datos propios recibiría peor servicio que el dataset de origen; la
 mitigación es recolectar y validar con fruta local y reportar el desempeño por dominio, no solo el
 global (principio 1.4).
+
+\textbf{Impactos y su mitigación} (Tabla~\ref{tab:impactos}). \emph{Económico:} la merma por fruta
+mal clasificada tiene costo directo. Con fruta real el modelo marca como dañadas 15 de 28 Buena, así
+que usado solo descartaría alrededor de la mitad de la fruta sana, una pérdida mayor que la que evita.
+Usado como primer filtro, en cambio, sirve: casi ninguna fruta dañada pasa como buena (EfficientNetB0
+detecta 49 de 53), así que lo que aprueba puede seguir directo y solo lo marcado va a revisión humana.
+Reduce el trabajo de inspección sin decidir por el operario. \emph{Social:} un criterio
+uniforme reduce la subjetividad entre operarios, pero también puede generar confianza excesiva en
+una máquina; por eso la aplicación muestra la confianza de cada predicción y avisa cuando es baja.
+\emph{Ambiental:} cerca de un tercio de los alimentos se pierde o desperdicia \cite{fao2019,unep2021};
+clasificar mejor ayuda a destinar la fruta defectuosa a procesamiento en vez de botarla. El costo
+energético es bajo: la inferencia corre en CPU, sin GPU, en 0,34~s. \emph{Global:} es una herramienta
+barata (un celular y software libre) útil para mercados pequeños, pero se entrenó con fruta de India y
+Ecuador; antes de adoptarla en otra región hay que validarla con fruta local y reportar el desempeño
+en ese dominio, como se hizo aquí con las fotos propias.
 
 \begin{table*}[t]
 \caption{Dilemas éticos, principio del código de ética de la ACM y medida adoptada}
@@ -443,9 +508,10 @@ F1$\approx$0,47 y no son aptos para uso autónomo. Revisar las etiquetas no mejo
 restringir el alcance a frutas cuyo daño contrasta con la piel sí mejoró la detección de pudrición,
 aunque de forma modesta.
 
-Lo aprendido: en datasets públicos de calidad de fruta, copias, casi-duplicados y fondos
-correlacionados inflan las métricas, y la partición por grupos y una prueba externa son
-indispensables. Elegir la arquitectura importa menos que el dominio y el criterio de etiquetado: el
+Lo aprendido, en orden de importancia: (a)~en datasets públicos de calidad de fruta, copias,
+casi-duplicados y fondos correlacionados inflan las métricas, y la partición por grupos y una prueba
+externa son indispensables; un F1 de 0,99 resultó ser 0,79. (b)~Una métrica sin intervalo de
+confianza engaña: varias mejoras aparentes desaparecieron al compararlas de forma pareada. Elegir la arquitectura importa menos que el dominio y el criterio de etiquetado: el
 \emph{transfer learning} mejora la generalización entre fuentes, pero no cierra la brecha con fruta
 real, y un desacuerdo de $\kappa=0{,}29$ entre dos etiquetados con el mismo criterio muestra que la
 frontera Defectuosa/Podrida es el cuello de botella. La medición de tamaño con moneda tiene un error de 0,57~cm, aunque la clase de tamaño no alcanza
