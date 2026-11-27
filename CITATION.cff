@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "Si usas este proyecto, por favor cítalo con estos metadatos."
+title: "Clasificación Automática de Calidad de Frutas por Visión por Computadora"
+abstract: >-
+  Sistema de visión por computadora que clasifica la calidad (Buena, Defectuosa,
+  Podrida) y el tamaño de una fruta a partir de una foto, siguiendo la
+  metodología CRISP-DM. Proyecto final de Algoritmos y Programación III, 2026-2.
+type: software
+authors:
+  - given-names: "Juan Manuel"
+    family-names: "Ramírez"
+  - given-names: "Juan Sebastián"
+    family-names: "Poveda"
+  - given-names: "Samuel José"
+    family-names: "Rengifo"
+repository-code: "https://github.com/sjrengifo/fruit-quality-classification"
+url: "https://fruit-quality-classification-2026.streamlit.app"
+license: GPL-2.0-only
+date-released: "2026-11-26"
+keywords:
+  - computer vision
+  - fruit quality
+  - deep learning
+  - CRISP-DM
