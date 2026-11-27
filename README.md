@@ -8,6 +8,7 @@ Facultad de Ingeniería, Diseño y Ciencias Aplicadas · Departamento de Computa
 | | |
 |---|---|
 | 🌐 **App desplegada** | <https://fruit-quality-classification-2026.streamlit.app> |
+| 🎬 **Video de presentación** | <https://youtu.be/cBUN3ciaAEE> |
 | 📄 **Informe final (IEEE, 7 págs.)** | [`docs/informe/latex/informe.pdf`](docs/informe/latex/informe.pdf) |
 | 🗺️ **CRISP-DM fase por fase** | [`docs/crisp-dm.md`](docs/crisp-dm.md) · [`ROADMAP.md`](ROADMAP.md) |
 | 📓 **Notebooks con resultados** | [`notebooks/`](notebooks/) |
@@ -189,7 +190,7 @@ fruit-quality-classification/
 - [x] Informe final (7 págs., formato IEEE) — [`docs/informe/latex/informe.pdf`](docs/informe/latex/informe.pdf).
 - [x] Interfaz de despliegue funcional (Streamlit) — <https://fruit-quality-classification-2026.streamlit.app>.
 - [x] Análisis ético y de impactos (informe §VI y [`docs/etica.md`](docs/etica.md)).
-- [ ] Video de presentación (≤ 10 min).
+- [x] Video de presentación (≤ 10 min) — <https://youtu.be/cBUN3ciaAEE>.
 
 ---
 
